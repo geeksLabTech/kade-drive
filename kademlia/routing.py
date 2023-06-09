@@ -5,14 +5,16 @@ import asyncio
 
 from itertools import chain
 from collections import OrderedDict
+from kademlia.protocol import KademliaProtocol
 from kademlia.utils import shared_prefix, bytes_to_bit_string
+from node import Node
 
 
 class KBucket:
-    def __init__(self, rangeLower, rangeUpper, ksize, replacementNodeFactor=5):
+    def __init__(self, rangeLower: int, rangeUpper: int, ksize: int, replacementNodeFactor=5):
         self.range = (rangeLower, rangeUpper)
-        self.nodes = OrderedDict()
-        self.replacement_nodes = OrderedDict()
+        self.nodes: OrderedDict[bytes, Node] = OrderedDict()
+        self.replacement_nodes: OrderedDict[bytes, Node] = OrderedDict()
         self.touch_last_updated()
         self.ksize = ksize
         self.max_replacement_nodes = self.ksize * replacementNodeFactor
@@ -24,7 +26,7 @@ class KBucket:
         return list(self.nodes.values())
 
     def split(self):
-        midpoint = (self.range[0] + self.range[1]) // 2
+        midpoint: int = (self.range[0] + self.range[1]) // 2
         one = KBucket(self.range[0], midpoint, self.ksize)
         two = KBucket(midpoint + 1, self.range[1], self.ksize)
         nodes = chain(self.nodes.values(), self.replacement_nodes.values())
@@ -34,7 +36,7 @@ class KBucket:
 
         return (one, two)
 
-    def remove_node(self, node):
+    def remove_node(self, node: Node):
         if node.id in self.replacement_nodes:
             del self.replacement_nodes[node.id]
 
@@ -45,10 +47,10 @@ class KBucket:
                 newnode_id, newnode = self.replacement_nodes.popitem()
                 self.nodes[newnode_id] = newnode
 
-    def has_in_range(self, node):
+    def has_in_range(self, node: Node):
         return self.range[0] <= node.long_id <= self.range[1]
 
-    def is_new_node(self, node):
+    def is_new_node(self, node: Node):
         return node.id not in self.nodes
 
     def add_node(self, node):
@@ -89,7 +91,7 @@ class KBucket:
 
 
 class TableTraverser:
-    def __init__(self, table, startNode):
+    def __init__(self, table: 'RoutingTable', startNode):
         index = table.get_bucket_for(startNode)
         table.buckets[index].touch_last_updated()
         self.current_nodes = table.buckets[index].get_nodes()
@@ -100,7 +102,7 @@ class TableTraverser:
     def __iter__(self):
         return self
 
-    def __next__(self):
+    def __next__(self) -> Node:
         """
         Pop an item from the left subtree, then right, then left, etc.
         """
@@ -121,7 +123,7 @@ class TableTraverser:
 
 
 class RoutingTable:
-    def __init__(self, protocol, ksize, node):
+    def __init__(self, protocol: KademliaProtocol, ksize: int, node: Node):
         """
         @param node: The node that represents this server.  It won't
         be added to the routing table, but will be needed later to
@@ -135,7 +137,7 @@ class RoutingTable:
     def flush(self):
         self.buckets = [KBucket(0, 2 ** 160, self.ksize)]
 
-    def split_bucket(self, index):
+    def split_bucket(self, index: int):
         one, two = self.buckets[index].split()
         self.buckets[index] = one
         self.buckets.insert(index + 1, two)
@@ -148,15 +150,15 @@ class RoutingTable:
         hrago = time.monotonic() - 3600
         return [b for b in self.buckets if b.last_updated < hrago]
 
-    def remove_contact(self, node):
+    def remove_contact(self, node: Node):
         index = self.get_bucket_for(node)
         self.buckets[index].remove_node(node)
 
-    def is_new_node(self, node):
+    def is_new_node(self, node: Node):
         index = self.get_bucket_for(node)
         return self.buckets[index].is_new_node(node)
 
-    def add_contact(self, node):
+    def add_contact(self, node: Node):
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
 
@@ -172,24 +174,32 @@ class RoutingTable:
         else:
             asyncio.ensure_future(self.protocol.call_ping(bucket.head()))
 
-    def get_bucket_for(self, node):
+    def get_bucket_for(self, node: Node):
         """
         Get the index of the bucket that the given node would fall into.
         """
+        node_index: int | None = None
         for index, bucket in enumerate(self.buckets):
-            if node.long_id < bucket.range[1]:
-                return index
-        # we should never be here, but make linter happy
-        return None
+            if node.long_id >= bucket.range[1]:
+                continue
 
-    def find_neighbors(self, node, k=None, exclude=None):
+            node_index = index
+            break
+        # we should never be here, but make linter happy
+        if node_index is None:
+            raise Exception(f'The node {node} does not have any valid bucket to fall into')
+        
+        return node_index
+
+    def find_neighbors(self, node: Node, k: int | None = None, exclude: Node|None = None):
         k = k or self.ksize
-        nodes = []
+        nodes: list[tuple[int, Node]] = []
         for neighbor in TableTraverser(self, node):
-            notexcluded = exclude is None or not neighbor.same_home_as(exclude)
-            if neighbor.id != node.id and notexcluded:
+            not_excluded = exclude is None or not neighbor.same_home_as(exclude)
+            if neighbor.id != node.id and not_excluded:
                 heapq.heappush(nodes, (node.distance_to(neighbor), neighbor))
             if len(nodes) == k:
                 break
 
-        return list(map(operator.itemgetter(1), heapq.nsmallest(k, nodes)))
+        return [item[1] for item in heapq.nsmallest(k, nodes)]
+        # return list(map(operator.itemgetter(1), heapq.nsmallest(k, nodes)))

@@ -41,7 +41,8 @@ class IStorage(ABC):
         """
         Get the iterator for this storage, should yield tuple of (key, value)
         """
-
+        while False:
+            yield None
 
 class ForgetfulStorage(IStorage):
     def __init__(self, ttl=604800):

@@ -25,7 +25,7 @@ class Server:
 
     protocol_class = KademliaProtocol
 
-    def __init__(self, ksize=20, alpha=3, node_id=None, storage=None):
+    def __init__(self, ksize=20, alpha=3, node_id: bytes|None=None, storage=None):
         """
         Create a server instance.  This will start listening on the given port.
 
@@ -166,7 +166,7 @@ class Server:
         dkey = digest(key)
         return await self.set_digest(dkey, value)
 
-    async def set_digest(self, dkey, value):
+    async def set_digest(self, dkey: bytes, value):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
@@ -192,7 +192,7 @@ class Server:
         # return true only if at least one store call succeeded
         return any(await asyncio.gather(*results))
 
-    def save_state(self, fname):
+    def save_state(self, fname: str):
         """
         Save the state of this node (the alpha/ksize/id/immediate neighbors)
         to a cache file with the given fname.
@@ -211,7 +211,7 @@ class Server:
             pickle.dump(data, file)
 
     @classmethod
-    async def load_state(cls, fname, port, interface='0.0.0.0'):
+    async def load_state(cls, fname: str, port: str, interface='0.0.0.0'):
         """
         Load the state of this node (the alpha/ksize/id/immediate neighbors)
         from a cache file with the given fname and then bootstrap the node
@@ -226,7 +226,7 @@ class Server:
             await svr.bootstrap(data['neighbors'])
         return svr
 
-    def save_state_regularly(self, fname, frequency=600):
+    def save_state_regularly(self, fname: str, frequency=600):
         """
         Save the state of node with a given regularity to the given
         filename.

@@ -13,7 +13,7 @@ class SpiderCrawl:
     """
     Crawl the network and look for given 160-bit keys.
     """
-    def __init__(self, protocol, node, peers, ksize, alpha):
+    def __init__(self, protocol, node: Node, peers, ksize: int, alpha):
         """
         Create a new C{SpiderCrawl}er.
 

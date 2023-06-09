@@ -1,5 +1,6 @@
 from operator import itemgetter
 import heapq
+from typing import Self
 
 
 class Node:
@@ -9,12 +10,12 @@ class Node:
     This class should generally not be instantiated directly, as it is a low
     level construct mostly used by the router.
     """
-    def __init__(self, node_id, ip=None, port=None):
+    def __init__(self, node_id: bytes, ip: str|None = None, port: str|None = None):
         """
         Create a Node instance.
 
         Args:
-            node_id (int): A value between 0 and 2^160
+            node_id (bytes): A number of bytes that represent values between 0 and 2^160
             ip (string): Optional IP address where this Node lives
             port (int): Optional port for this Node (set when IP is set)
         """
@@ -23,10 +24,10 @@ class Node:
         self.port = port
         self.long_id = int(node_id.hex(), 16)
 
-    def same_home_as(self, node):
+    def same_home_as(self, node: 'Node'):
         return self.ip == node.ip and self.port == node.port
 
-    def distance_to(self, node):
+    def distance_to(self, node: 'Node'):
         """
         Get the distance between this node and another.
         """
@@ -49,15 +50,15 @@ class NodeHeap:
     """
     A heap of nodes ordered by distance to a given node.
     """
-    def __init__(self, node, maxsize):
+    def __init__(self, node: Node, maxsize: int):
         """
         Constructor.
 
-        @param node: The node to measure all distnaces from.
+        @param node: The node to measure all distances from.
         @param maxsize: The maximum size that this heap can grow to.
         """
         self.node = node
-        self.heap = []
+        self.heap: list[tuple[int, Node]] = []
         self.contacted = set()
         self.maxsize = maxsize
 
@@ -72,13 +73,13 @@ class NodeHeap:
         peers = set(peers)
         if not peers:
             return
-        nheap = []
+        new_heap: list[tuple[int, Node]] = []
         for distance, node in self.heap:
             if node.id not in peers:
-                heapq.heappush(nheap, (distance, node))
-        self.heap = nheap
+                heapq.heappush(new_heap, (distance, node))
+        self.heap = new_heap
 
-    def get_node(self, node_id):
+    def get_node(self, node_id: bytes):
         for _, node in self.heap:
             if node.id == node_id:
                 return node
@@ -115,9 +116,10 @@ class NodeHeap:
 
     def __iter__(self):
         nodes = heapq.nsmallest(self.maxsize, self.heap)
-        return iter(map(itemgetter(1), nodes))
+        yield from (item[1] for item in nodes)
+        # return iter(map(itemgetter(1), nodes))
 
-    def __contains__(self, node):
+    def __contains__(self, node: Node):
         for _, other in self.heap:
             if node.id == other.id:
                 return True
