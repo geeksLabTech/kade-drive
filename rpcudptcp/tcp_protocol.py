@@ -13,7 +13,7 @@ from functools import wraps
 
 import umsgpack
 
-from rpcudp.exceptions import MalformedMessage
+from rpcudptcp.exceptions import MalformedMessage
 
 LOG = logging.getLogger(__name__)
 
