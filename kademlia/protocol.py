@@ -103,28 +103,35 @@ class KademliaProtocol(RPCProtocol):
         return {'value': value}
 
     async def call_find_node(self, node_to_ask: Node, node_to_find: Node):
-        # async function to call the find node method previously described
+        """
+        async function to call the find node method previously described
+        """
         address = (node_to_ask.ip, node_to_ask.port)
         result = await self.find_node(address, self.source_node.id,
                                       node_to_find.id)
         return self.handle_call_response(result, node_to_ask)
 
     async def call_find_value(self, node_to_ask: Node, node_to_find: Node):
-        # async function to call the find value method previously described
+        """
+        async function to call the find value method previously described
+        """
         address = (node_to_ask.ip, node_to_ask.port)
         result = await self.find_value(address, self.source_node.id,
                                        node_to_find.id)
         return self.handle_call_response(result, node_to_ask)
 
     async def call_ping(self, node_to_ask: Node):
-        # async function to call the ping method previously described
+        """
+        async function to call the ping method previously described
+        """
         address = (node_to_ask.ip, node_to_ask.port)
         result = await self.ping(address, self.source_node.id)
         return self.handle_call_response(result, node_to_ask)
 
     async def call_store(self, node_to_ask: Node, key: bytes, value):
-        # async function to call the find store method previously described
-
+        """
+        async function to call the find store method previously described
+        """
         address = (node_to_ask.ip, node_to_ask.port)
         result = await self.store(address, self.source_node.id, key, value)
         return self.handle_call_response(result, node_to_ask)
