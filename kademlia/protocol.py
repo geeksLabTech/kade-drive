@@ -90,8 +90,7 @@ class KademliaProtocol(RPCProtocol):
         neighbors = self.router.find_neighbors(node, exclude=source)
         return list(map(tuple, neighbors))
 
-    def rpc_find_value(self, sender, nodeid: bytes, key: bytes):
-
+    def rpc_find_value(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         self.welcome_if_new(source)
@@ -150,14 +149,14 @@ class KademliaProtocol(RPCProtocol):
         is closer than the closest in that list, then store the key/value
         on the new node (per section 2.5 of the paper)
         """
-        # if the node is in teh table, do nothing
+        # if the node is in the table, do nothing
         if not self.router.is_new_node(node):
             return
 
         log.info("never seen %s before, adding to router", node)
         # iterate over storage
         for key, value in self.storage:
-            # creqate fictional node to calculate distance
+            # Create fictional node to calculate distance
             keynode = Node(digest(key))
             neighbors = self.router.find_neighbors(keynode)
             new_node_close = False

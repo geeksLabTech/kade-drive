@@ -8,7 +8,7 @@ import logging
 
 from kademlia.protocol import KademliaProtocol
 from kademlia.utils import digest
-from kademlia.storage import ForgetfulStorage
+from kademlia.storage import ForgetfulStorage, IStorage, PersistentStorage
 from kademlia.node import Node
 from kademlia.crawling import ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
@@ -25,7 +25,7 @@ class Server:
 
     protocol_class = KademliaProtocol
 
-    def __init__(self, ksize=20, alpha=3, node_id: bytes|None=None, storage=None):
+    def __init__(self, ksize=20, alpha=3, node_id: bytes|None=None, storage: PersistentStorage|None = None):
         """
         Create a server instance.  This will start listening on the given port.
 
@@ -40,7 +40,7 @@ class Server:
         self.alpha = alpha
         self.storage = storage or ForgetfulStorage()
         self.node = Node(node_id or digest(random.getrandbits(255)))
-        self.transport = None
+        self.transport: asyncio.DatagramTransport|None = None
         self.protocol = None
         self.refresh_loop = None
         self.save_state_loop = None
