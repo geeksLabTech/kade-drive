@@ -114,7 +114,7 @@ class RPCProtocol(DatagramProtocol):
                 address = method_args[index_of_sender_in_args]
                 func_name = f.__name__
                 msg_id = sha1(os.urandom(32)).digest()
-                data = umsgpack.packb([func_name, method_args, method_args])
+                data = umsgpack.packb([func_name, method_args, method_kwargs])
                 if len(data) > 8192:
                     raise MalformedMessage("Total length of function "
                                         "name and arguments cannot exceed 8K")
