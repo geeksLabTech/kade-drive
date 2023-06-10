@@ -11,6 +11,11 @@ from node import Node
 
 
 class KBucket:
+    '''
+    K is the number of entries in a bucket, their node IDs are expected to be randomly distributed within the ID-range the bucket covers
+    Each node is putted in a bucket based on how far away they are from the source node.
+    This way when you are looking for some node you don't have to bother all possible nodes
+    '''
     def __init__(self, rangeLower: int, rangeUpper: int, ksize: int, replacementNodeFactor=5):
         self.range = (rangeLower, rangeUpper)
         self.nodes: OrderedDict[bytes, Node] = OrderedDict()

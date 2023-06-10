@@ -30,8 +30,8 @@ class Server:
         Create a server instance.  This will start listening on the given port.
 
         Args:
-            ksize (int): The k parameter from the paper
-            alpha (int): The alpha parameter from the paper
+            ksize (int): Replication factor, determines to how many closest peers a record is replicated
+            alpha (int): concurrency parameter, determines how many parallel asynchronous FIND_NODE RPC send
             node_id: The id for this node on the network.
             storage: An instance that implements the interface
                      :class:`~kademlia.storage.IStorage`
@@ -112,7 +112,7 @@ class Server:
         neighbors = self.protocol.router.find_neighbors(self.node)
         return [tuple(n)[-2:] for n in neighbors]
 
-    async def bootstrap(self, addrs):
+    async def bootstrap(self, addrs: list[tuple[str, str]]):
         """
         Bootstrap the server by connecting to other known nodes in the network.
 
@@ -129,7 +129,7 @@ class Server:
                                  self.ksize, self.alpha)
         return await spider.find()
 
-    async def bootstrap_node(self, addr):
+    async def bootstrap_node(self, addr: tuple[str, str]):
         result = await self.protocol.ping(addr, self.node.id)
         return Node(result[1], addr[0], addr[1]) if result[0] else None
 
