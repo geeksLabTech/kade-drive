@@ -307,7 +307,7 @@ class KademliaTCPProtocol(TCPProtocol):
 
     async def call_store(self, node_to_ask: Node, key: bytes, value):
         """
-        async function to call the find store method previously described
+        async function to call the store method previously described
         """
         address = (node_to_ask.ip, node_to_ask.port)
         result = await self.store(address, self.source_node.id, key, value)
