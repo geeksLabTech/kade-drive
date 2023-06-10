@@ -8,7 +8,8 @@ import logging
 import os
 from base64 import b64encode
 from hashlib import sha1
-from typing import Any
+from typing import Any, Callable
+from functools import wraps
 
 import umsgpack
 
@@ -96,6 +97,43 @@ class RPCProtocol(DatagramProtocol):
                   "id %s within %i seconds", *args)
         self._outstanding[msg_id][0].set_result((False, None))
         del self._outstanding[msg_id]
+
+    @classmethod
+    def rpc_function(cls, index_of_sender_in_args: int):
+        """
+        Use this function to decorate class methods that you need to be
+        called on remote machines
+
+        Args:
+            index_of_sender_in_args (int): index of argument that refers to sender address starting in 1,
+            (self doesn't count)
+        """
+        def _wrapper(f: Callable):
+            @wraps(f)
+            def _impl(self, *method_args, **method_kwargs):
+                address = method_args[index_of_sender_in_args]
+                func_name = f.__name__
+                msg_id = sha1(os.urandom(32)).digest()
+                data = umsgpack.packb([func_name, method_args, method_args])
+                if len(data) > 8192:
+                    raise MalformedMessage("Total length of function "
+                                        "name and arguments cannot exceed 8K")
+                txdata = b'\x00' + msg_id + data
+                LOG.debug("calling remote function %s on %s (msgid %s)",
+                        func_name, address, b64encode(msg_id))
+                self.transport.sendto(txdata, address)
+
+                loop = asyncio.get_event_loop()
+                if hasattr(loop, 'create_future'):
+                    future = loop.create_future()
+                else:
+                    future = asyncio.Future()
+                timeout = loop.call_later(self._wait_timeout,
+                                        self._timeout, msg_id)
+                self._outstanding[msg_id] = (future, timeout)
+                return future
+            return _impl
+        return _wrapper
 
     def __getattr__(self, name):
         """
