@@ -2,6 +2,7 @@
 import asyncio
 from asyncio import DatagramTransport, BaseProtocol, Transport
 import logging
+from math import log
 import os
 from base64 import b64encode
 from hashlib import sha1
@@ -22,6 +23,7 @@ async def _process_data(protocol: BaseProtocol, data: bytes, address: tuple[str|
                     " ignoring", address)
         return
     msg_id = data[1:21]
+    LOG.warning('proceso data')
     data = umsgpack.unpackb(data[21:])
     if data[:1] == b'\x00':
         # schedule accepting request and returning the result
@@ -30,7 +32,7 @@ async def _process_data(protocol: BaseProtocol, data: bytes, address: tuple[str|
         _accept_response(protocol, msg_id, data, address)
     else:
         # otherwise, don't know the format, don't do anything
-        LOG.debug("Received unknown message from %s, ignoring", address)
+        LOG.warning("Received unknown message from %s, ignoring", address)
 
 def _accept_response(protocol: BaseProtocol, msg_id, data, address: tuple[str|Any, int]|None = None):
     msgargs = (b64encode(msg_id), address)
@@ -48,7 +50,7 @@ def _accept_response(protocol: BaseProtocol, msg_id, data, address: tuple[str|An
 async def _accept_request(protocol: BaseProtocol, msg_id, data, address: tuple[str|Any, int]|None = None):
     if not isinstance(data, list) or len(data) != 2:
         raise MalformedMessage("Could not read packet: %s" % data)
-    funcname, args = data
+    funcname, args, kwargs = data
     func = getattr(protocol, funcname, None)
     if func is None or not callable(func):
         msgargs = (protocol.__class__.__name__, funcname)
@@ -57,7 +59,8 @@ async def _accept_request(protocol: BaseProtocol, msg_id, data, address: tuple[s
         return
     if not asyncio.iscoroutinefunction(func):
         func = asyncio.coroutine(func)
-    response = await func(address, *args)
+    LOG.warning('Calling function')
+    response = await func(address, *args, *kwargs)
     LOG.warning("sending response %s for msg id %s to %s",
               response, b64encode(msg_id), address)
     txdata = b'\x01' + msg_id + umsgpack.packb(response)
@@ -95,7 +98,7 @@ def rpc_udp(index_of_sender_in_args: int):
         def _wrapper(f: Callable):
             @wraps(f)
             def _impl(self, *method_args, **method_kwargs):
-                return __decorator_impl(self, f, index_of_sender_in_args, method_args, method_kwargs)
+                return __decorator_impl(self, f, index_of_sender_in_args, *method_args, **method_kwargs)
             return _impl
         return _wrapper
 
@@ -112,14 +115,15 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
     print('PRUBEAAA')
     if index_of_sender_in_args >= 0:
         address = method_args[index_of_sender_in_args]
-        LOG.warning(f'Address es {type(address)}')
+        LOG.warning(f'method args are {method_args}')
+        LOG.warning(f'Address es {address}')
         LOG.warning(f'txdata es {type(txdata)}')
         LOG.warning("calling remote function %s on %s using UDP, (msgid %s)",
-                func_name, address[0], b64encode(msg_id))
-        try:
-            self.transport.sendto(txdata, address[0])
-        except:
-            LOG.warning('Failed sendto')
+                func_name, address, b64encode(msg_id))
+        
+        self.transport.sendto(txdata, address)
+        
+            # LOG.warning('Failed sendto')
 
 
     else:
@@ -132,7 +136,9 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
         future = loop.create_future()
     else:
         future = asyncio.Future()
+    
     timeout = loop.call_later(self._wait_timeout,
                             self._timeout, msg_id)
     self._outstanding[msg_id] = (future, timeout)
+    LOG.warning('Termino')
     return future
