@@ -63,18 +63,23 @@ class Server:
 
         Provide interface="::" to accept ipv6 address
         """
-        loop = asyncio.get_event_loop()
 
-        listen_udp = loop.create_datagram_endpoint(self.protocol.create_udp_protocol,
-                                                   local_addr=(interface, port))
-        
-        listen_tcp = loop.create_connection(
-            self.protocol.create_tcp_protocol, port=port, local_addr=(interface, port))
-        
+        loop = asyncio.get_event_loop()
+        import socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listen_udp = loop.create_datagram_endpoint(
+            self.protocol.create_udp_protocol, sock=sock)
         await listen_udp
+
+        socktcp = socket.socket(socket.AF_INET)
+        socktcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        listen_tcp = loop.create_connection(
+            self.protocol.create_tcp_protocol, sock=socktcp)
+
         await listen_tcp
         log.info("Node %i listening on %s:%i",
-                 self.node.long_id, interface, port)
+                 self.node.long_id, interface, 8888)
         # self.transport, self.protocol = await listen
         # finally, schedule refreshing table
         self.refresh_table()
