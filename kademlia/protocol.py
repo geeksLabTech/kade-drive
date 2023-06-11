@@ -26,11 +26,11 @@ class KademliaUDPProtocol(RPCUDPProtocol):
         RPCUDPProtocol.__init__(self)
         self.filesystem_protocol = filesystem_protocol
 
-    @rpc_udp(1)
+    @rpc_udp(0)
     def rpc_stun(self, sender):  # pylint: disable=no-self-use
         return sender
 
-    @rpc_udp(1)
+    @rpc_udp(0)
     def rpc_ping(self, sender, nodeid: bytes):
         """Porbe a Node to see if pc is online
 
@@ -48,7 +48,7 @@ class KademliaUDPProtocol(RPCUDPProtocol):
         return self.filesystem_protocol.source_node.id
 
 
-    @rpc_udp(1)
+    @rpc_udp(0)
     def rpc_find_node(self, sender, nodeid: bytes, key: bytes):
         log.info("finding neighbors of %i in local table",
                  int(nodeid.hex(), 16))

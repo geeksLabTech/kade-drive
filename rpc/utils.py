@@ -58,17 +58,18 @@ async def _accept_request(protocol: BaseProtocol, msg_id, data, address: tuple[s
     if not asyncio.iscoroutinefunction(func):
         func = asyncio.coroutine(func)
     response = await func(address, *args)
-    LOG.debug("sending response %s for msg id %s to %s",
+    LOG.warning("sending response %s for msg id %s to %s",
               response, b64encode(msg_id), address)
     txdata = b'\x01' + msg_id + umsgpack.packb(response)
-
+    LOG.warning(f'tipo de dato sendto, {type(txdata)}')
     if isinstance(protocol.transport, DatagramTransport):
         protocol.transport.sendto(txdata, address)
         
     elif isinstance(protocol.transport, Transport):
         protocol.transport.write(txdata)
     
-    LOG.error('Protocol class does not have transport attribute')
+    else:
+        LOG.error('Protocol class does not have transport attribute')
 
 
 def rpc_tcp(f: Callable):
@@ -78,7 +79,7 @@ def rpc_tcp(f: Callable):
     """
     @wraps(f)
     def _impl(self, *method_args, **method_kwargs):
-        return __decorator_impl(self, f, 0, method_args, method_kwargs)
+        return __decorator_impl(self, f, -1, method_args, method_kwargs)
     return _impl
 
 
@@ -106,13 +107,22 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
         raise MalformedMessage("Total length of function "
                             "name and arguments cannot exceed 8K")
     txdata = b'\x00' + msg_id + data
-    if index_of_sender_in_args > 0:
+    # assert type(txdata) == str or type(txdata) == bytes or type(txdata) == bytearray
+    LOG.warning(f'tipo de dato sendto, {type(txdata)}')
+    print('PRUBEAAA')
+    if index_of_sender_in_args >= 0:
         address = method_args[index_of_sender_in_args]
-        LOG.debug("calling remote function %s on %s using UDP, (msgid %s)",
+        LOG.warning(f'Address es {type(address)}')
+        LOG.warning("calling remote function %s on %s using UDP, (msgid %s)",
                 func_name, address, b64encode(msg_id))
-        self.transport.sendto(txdata, address)
+        try:
+            self.transport.sendto(txdata, address)
+        except:
+            LOG.warning('Failed sendto')
+
+
     else:
-        LOG.debug("calling remote function %s using TCP, (msgid %s)",
+        LOG.warning("calling remote function %s using TCP, (msgid %s)",
                 func_name, b64encode(msg_id))
         self.transport.write(txdata)
 

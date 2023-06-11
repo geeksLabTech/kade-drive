@@ -199,9 +199,11 @@ class Server:
         """
         Set the given string key to the given value in the network.
         """
+
         if not check_dht_value_type(value):
+            print('eel valor es: ', value)
             raise TypeError(
-                "Value must be of type int, float, bool, str, or bytes"
+                f"Value must be of type int, float, bool, str, or bytes, received {value}"
             )
         log.info("setting '%s' = '%s' on network", key, value)
         if apply_hash_to_key:
