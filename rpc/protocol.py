@@ -7,12 +7,10 @@ from asyncio import DatagramProtocol, DatagramTransport, Protocol, Transport
 import logging
 from base64 import b64encode
 from typing import Any
-from utils import _process_data
+from rpc.utils import _process_data
 
 
 LOG = logging.getLogger(__name__)
-
-
 
 
 class RPCUDPProtocol(DatagramProtocol):
@@ -20,6 +18,7 @@ class RPCUDPProtocol(DatagramProtocol):
     Protocol implementation using msgpack to encode messages and asyncio
     to handle async sending / recieving.
     """
+
     def __init__(self, wait_timeout=5):
         """
         Create a protocol instance.
@@ -29,12 +28,12 @@ class RPCUDPProtocol(DatagramProtocol):
         """
         self._wait_timeout = wait_timeout
         self._outstanding = {}
-        self.transport : DatagramTransport | None = None
+        self.transport: DatagramTransport | None = None
 
     def connection_made(self, transport: DatagramTransport):
         self.transport = transport
 
-    def datagram_received(self, data: bytes, addr: tuple[str|Any, int]):
+    def datagram_received(self, data: bytes, addr: tuple[str | Any, int]):
         LOG.debug("received datagram from %s", addr)
         asyncio.ensure_future(_process_data(self, data, addr))
 
@@ -45,8 +44,6 @@ class RPCUDPProtocol(DatagramProtocol):
         self._outstanding[msg_id][0].set_result((False, None))
         del self._outstanding[msg_id]
 
-   
-    
     # def __getattr__(self, name):
     #     """
     #     If name begins with "_" or "rpc_", returns the value of
@@ -91,6 +88,7 @@ class RPCUDPProtocol(DatagramProtocol):
     #         return future
 
     #     return func
+
 
 class RPCTCPProtocol(Protocol):
     """

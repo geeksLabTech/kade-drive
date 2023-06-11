@@ -10,7 +10,7 @@ from functools import wraps
 
 import umsgpack
 
-from exceptions import MalformedMessage
+from rpc.exceptions import MalformedMessage
 
 LOG = logging.getLogger(__name__)
 

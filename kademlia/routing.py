@@ -6,7 +6,7 @@ import asyncio
 from itertools import chain
 from collections import OrderedDict
 from kademlia.utils import shared_prefix, bytes_to_bit_string
-from node import Node
+from kademlia.node import Node
 
 
 class KBucket:

@@ -26,7 +26,7 @@ class Server:
 
     protocol_class = FileSystemProtocol
 
-    def __init__(self, ksize=20, alpha=3, node_id: bytes|None=None, storage: PersistentStorage|None = None):
+    def __init__(self, ksize=20, alpha=3, node_id: bytes | None = None, storage: PersistentStorage | None = None):
         """
         Create a server instance.  This will start listening on the given port.
 
@@ -64,11 +64,14 @@ class Server:
         Provide interface="::" to accept ipv6 address
         """
         loop = asyncio.get_event_loop()
-        
+
         listen_udp = loop.create_datagram_endpoint(self.protocol.create_udp_protocol,
-                                               local_addr=(interface, port))
-        
-        listen_tcp = loop.create_connection(self.protocol.create_tcp_protocol, local_addr=(interface, port))
+                                                   local_addr=(interface, port))
+
+        listen_tcp = loop.create_connection(
+            self.protocol.create_tcp_protocol, local_addr=(interface, port))
+        await listen_udp
+        await listen_tcp
         log.info("Node %i listening on %s:%i",
                  self.node.long_id, interface, port)
         # self.transport, self.protocol = await listen
@@ -132,7 +135,7 @@ class Server:
         return await spider.find()
 
     async def bootstrap_node(self, addr: tuple[str, str]):
-        result = await self.protocol.udp_protocol.rpc_ping(addr, self.node.id)
+        result = await self.protocol.udp_proti.rpc_ping(addr, self.node.id)
         return Node(result[1], addr[0], addr[1]) if result[0] else None
 
     async def get(self, key, apply_hash_to_key=True):
@@ -156,7 +159,7 @@ class Server:
         spider = ValueSpiderCrawl(self.protocol, node, nearest,
                                   self.ksize, self.alpha)
         return await spider.find()
-    
+
     async def get_file_chunks(self, hashed_chunks):
         results = [await self.get(chunk, False) for chunk in hashed_chunks]
         data_chunks = [f.data for f in results if f is File]
@@ -178,15 +181,15 @@ class Server:
         """Split data into chunks of less than chunk_size, it must be less than 16mb"""
         fixed_chunks = len(data) // chunk_size
         last_chunk_size = len(data) - fixed_chunks * chunk_size
-        start_of_last_chunk = len(data)-last_chunk_size 
+        start_of_last_chunk = len(data)-last_chunk_size
         last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
-        chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)] 
+        chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)]
         if last_chunk_size > 0:
             chunks.append(last_chunk)
-        
+
         return chunks
 
-    async def set(self, key, value, apply_hash_to_key = True):
+    async def set(self, key, value, apply_hash_to_key=True):
         """
         Set the given string key to the given value in the network.
         """
