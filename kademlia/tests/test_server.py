@@ -4,20 +4,18 @@ import pytest
 
 from kademlia.network import Server
 from kademlia.protocol import FileSystemProtocol, KademliaTCPProtocol, KademliaUDPProtocol
+from kademlia.storage import PersistentStorage
 
 
 
 @pytest.mark.asyncio
 async def test_server_storing(bootstrap_node):
+    storage = PersistentStorage('127.0.0.1', '8888')
     server = Server()
     await server.listen(bootstrap_node[1] + 1)
-    print("listen")
     await server.bootstrap([bootstrap_node])
-    print("bootstrap")
     await server.set('key', 'value')
-    print("set")
     result = await server.get('key')
-    print("result")
     assert result == 'value'
     
 

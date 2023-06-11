@@ -72,7 +72,7 @@ class Server:
             self.protocol.create_udp_protocol, sock=sock)
         await listen_udp
 
-        socktcp = socket.socket(socket.AF_INET)
+        socktcp = socket.socket(socket.AF_INET, )
         socktcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listen_tcp = loop.create_connection(
             self.protocol.create_tcp_protocol, sock=socktcp)
