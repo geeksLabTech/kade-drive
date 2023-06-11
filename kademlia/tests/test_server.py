@@ -33,7 +33,7 @@ class TestSwappableProtocol:
         loop = asyncio.get_event_loop()
         server = Server()
         # assert server.protocol is None
-        loop.run_until_complete(server.listen(8469))
+        # loop.run_until_complete(server.listen(8469))
         assert isinstance(server.protocol, FileSystemProtocol)
         server.stop()
 

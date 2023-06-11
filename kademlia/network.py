@@ -70,6 +70,7 @@ class Server:
 
         listen_tcp = loop.create_connection(
             self.protocol.create_tcp_protocol, local_addr=(interface, port))
+        
         await listen_udp
         await listen_tcp
         log.info("Node %i listening on %s:%i",
