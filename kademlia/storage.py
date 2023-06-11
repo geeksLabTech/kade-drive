@@ -104,8 +104,9 @@ class PersistentStorage(IStorage):
     This class allows to persist files on disk using mongodb.
     The class acts as an OrderedDict that his keys are the hash of an 
     specific file chunk and the value is the (ip, port) of the node that 
-    has the chunk in his mongodb instance. To get the chunk you must use the
-    {get_data_from_db} method.
+    has the chunk in his mongodb instance. In the current implementation
+    the values of the dict are not used. The get method directly access to
+    mongodb and retrieve the data that correspond to the given dict
     """
     def __init__(self, ip: str, port: str, db_name='file_system', ttl=604800):
         """
