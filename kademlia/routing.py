@@ -5,7 +5,6 @@ import asyncio
 
 from itertools import chain
 from collections import OrderedDict
-from kademlia.protocol import FileSystemProtocol
 from kademlia.utils import shared_prefix, bytes_to_bit_string
 from node import Node
 
@@ -128,11 +127,12 @@ class TableTraverser:
 
 
 class RoutingTable:
-    def __init__(self, protocol: FileSystemProtocol, ksize: int, node: Node):
+    def __init__(self, protocol, ksize: int, node: Node):
         """
         @param node: The node that represents this server.  It won't
         be added to the routing table, but will be needed later to
         determine which buckets to split or not.
+        
         """
         self.node = node
         self.protocol = protocol
