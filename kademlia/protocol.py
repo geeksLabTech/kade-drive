@@ -13,7 +13,6 @@ from kademlia.utils import digest
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-
 class KademliaUDPProtocol(RPCUDPProtocol):
     def __init__(self, filesystem_protocol):
         """Instantiation class for the Protocol
@@ -41,12 +40,12 @@ class KademliaUDPProtocol(RPCUDPProtocol):
         Returns:
             bytes: node id if alive, None if not 
         """
+        log.warning("remote function called")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         self.filesystem_protocol.welcome_if_new(source)
 
         return self.filesystem_protocol.source_node.id
-
 
     @rpc_udp(0)
     def rpc_find_node(self, sender, nodeid: bytes, key: bytes):
@@ -59,11 +58,11 @@ class KademliaUDPProtocol(RPCUDPProtocol):
         # create a fictional node to perform the search
         node = Node(key)
         # ask for the neighbors of the node
-        neighbors = self.filesystem_protocol.router.find_neighbors(node, exclude=source)
+        neighbors = self.filesystem_protocol.router.find_neighbors(
+            node, exclude=source)
         return list(map(tuple, neighbors))
-    
 
-    
+
 class KademliaTCPProtocol(RPCTCPProtocol):
     def __init__(self, filesystem_protocol):
         """Instantiation class for the Protocol
@@ -112,23 +111,24 @@ class KademliaTCPProtocol(RPCTCPProtocol):
         #     return self.rpc_find_node(sender, nodeid, key)
         # return {'value': value}
 
+
 class FileSystemProtocol:
     def __init__(self, source_node: Node, storage: IStorage, ksize: int) -> None:
         self.source_node = source_node
         self.ksize = ksize
         self.storage = storage
         self.router = RoutingTable(self, ksize, source_node)
-        self.tcp_protocol: KademliaTCPProtocol|None = None
-        self.udp_protocol: KademliaUDPProtocol|None = None
+        self.tcp_protocol: KademliaTCPProtocol | None = None
+        self.udp_protocol: KademliaUDPProtocol | None = None
 
     def create_tcp_protocol(self):
         self.tcp_protocol = KademliaTCPProtocol(self)
         return self.tcp_protocol
-    
+
     def create_udp_protocol(self):
         self.udp_protocol = KademliaUDPProtocol(self)
         return self.udp_protocol
-    
+
     def close_trasports(self):
         if self.tcp_protocol and self.tcp_protocol.transport:
             self.tcp_protocol.transport.close()
@@ -152,7 +152,7 @@ class FileSystemProtocol:
         """
         address = (node_to_ask.ip, node_to_ask.port)
         result = await self.udp_protocol.rpc_find_node(address, self.source_node.id,
-                                      node_to_find.id)
+                                                       node_to_find.id)
         return self.handle_call_response(result, node_to_ask)
 
     async def call_find_value(self, node_to_ask: Node, node_to_find: Node):
@@ -161,10 +161,10 @@ class FileSystemProtocol:
         """
         address = (node_to_ask.ip, node_to_ask.port)
         result = await self.tcp_protocol.rpc_find_value(address, self.source_node.id,
-                                       node_to_find.id)
+                                                        node_to_find.id)
         if result is None:
             result = await self.udp_protocol.rpc_find_node(address, self.source_node.id,
-                                       node_to_find.id)
+                                                           node_to_find.id)
         return self.handle_call_response(result, node_to_ask)
 
     async def call_ping(self, node_to_ask: Node):
@@ -222,7 +222,6 @@ class FileSystemProtocol:
         # add node to table
         self.router.add_contact(node)
 
-
     def handle_call_response(self, result, node: Node):
         """
         If we get a response, add the node to the routing table.  If
@@ -236,4 +235,3 @@ class FileSystemProtocol:
         log.info("got successful response from %s", node)
         self.welcome_if_new(node)
         return result
-    
