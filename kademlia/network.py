@@ -67,9 +67,9 @@ class Server:
 
         listen_udp = loop.create_datagram_endpoint(self.protocol.create_udp_protocol,
                                                    local_addr=(interface, port))
-
+        
         listen_tcp = loop.create_connection(
-            self.protocol.create_tcp_protocol, local_addr=(interface, port))
+            self.protocol.create_tcp_protocol, port=port, local_addr=(interface, port))
         
         await listen_udp
         await listen_tcp
