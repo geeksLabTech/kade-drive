@@ -113,10 +113,11 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
     if index_of_sender_in_args >= 0:
         address = method_args[index_of_sender_in_args]
         LOG.warning(f'Address es {type(address)}')
+        LOG.warning(f'txdata es {type(txdata)}')
         LOG.warning("calling remote function %s on %s using UDP, (msgid %s)",
-                func_name, address, b64encode(msg_id))
+                func_name, address[0], b64encode(msg_id))
         try:
-            self.transport.sendto(txdata, address)
+            self.transport.sendto(txdata, address[0])
         except:
             LOG.warning('Failed sendto')
 
