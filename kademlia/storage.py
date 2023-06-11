@@ -117,11 +117,10 @@ class PersistentStorage(IStorage):
         self.address = (ip, port)
 
 
-    def get_data_from_db(self, key: bytes):
-        data = self.db.find_one(File, File.id == key)
-        assert data is not None, 'Tried to get data that is not in db'
-        return data
-
+    # def get_data_from_db(self, key: bytes):
+    #     data = self.db.find_one(File, File.id == key)
+    #     assert data is not None, 'Tried to get data that is not in db'
+    #     return data
 
     def __setitem__(self, key, value):
         if key in self.data:
@@ -144,12 +143,17 @@ class PersistentStorage(IStorage):
     def get(self, key, default=None):
         self.cull()
         if key in self.data:
-            return self[key]
+            result = self.db.find_one(File, File.id == key)
+            assert result is not None, 'Tried to get data that is not in db'
+            return result
         return default
 
     def __getitem__(self, key):
         self.cull()
-        return self.data[key][1]
+        result = self.db.find_one(File, File.id == key)
+        if result is None:
+            raise KeyError()
+        return result
 
     def __repr__(self):
         self.cull()
@@ -170,6 +174,7 @@ class PersistentStorage(IStorage):
     def __iter__(self):
         self.cull()
         ikeys = self.data.keys()
-        ivalues = map(operator.itemgetter(1), self.data.values())
+        # ivalues = map(operator.itemgetter(1), self.data.values())
+        ivalues = self.db.find(File)
         return zip(ikeys, ivalues)
     

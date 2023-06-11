@@ -6,12 +6,13 @@ import pickle
 import asyncio
 import logging
 
-from kademlia.protocol import KademliaProtocol
+from kademlia.protocol import FileSystemProtocol
 from kademlia.utils import digest
 from kademlia.storage import ForgetfulStorage, IStorage, PersistentStorage
 from kademlia.node import Node
 from kademlia.crawling import ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
+from models.file import File
 
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -23,7 +24,7 @@ class Server:
     created to start listening as an active node on the network.
     """
 
-    protocol_class = KademliaProtocol
+    protocol_class = FileSystemProtocol
 
     def __init__(self, ksize=20, alpha=3, node_id: bytes|None=None, storage: PersistentStorage|None = None):
         """
@@ -40,14 +41,12 @@ class Server:
         self.alpha = alpha
         self.storage = storage or ForgetfulStorage()
         self.node = Node(node_id or digest(random.getrandbits(255)))
-        self.transport: asyncio.DatagramTransport|None = None
-        self.protocol = None
+        self.protocol = FileSystemProtocol(self.node, self.storage, ksize)
         self.refresh_loop = None
         self.save_state_loop = None
 
     def stop(self):
-        if self.transport is not None:
-            self.transport.close()
+        self.protocol.close_trasports()
 
         if self.refresh_loop:
             self.refresh_loop.cancel()
@@ -65,11 +64,14 @@ class Server:
         Provide interface="::" to accept ipv6 address
         """
         loop = asyncio.get_event_loop()
-        listen = loop.create_datagram_endpoint(self._create_protocol,
+        
+        listen_udp = loop.create_datagram_endpoint(self.protocol.create_udp_protocol,
                                                local_addr=(interface, port))
+        
+        listen_tcp = loop.create_connection(self.protocol.create_tcp_protocol, local_addr=(interface, port))
         log.info("Node %i listening on %s:%i",
                  self.node.long_id, interface, port)
-        self.transport, self.protocol = await listen
+        # self.transport, self.protocol = await listen
         # finally, schedule refreshing table
         self.refresh_table()
 
@@ -130,10 +132,10 @@ class Server:
         return await spider.find()
 
     async def bootstrap_node(self, addr: tuple[str, str]):
-        result = await self.protocol.ping(addr, self.node.id)
+        result = await self.protocol.udp_protocol.rpc_ping(addr, self.node.id)
         return Node(result[1], addr[0], addr[1]) if result[0] else None
 
-    async def get(self, key):
+    async def get(self, key, apply_hash_to_key=True):
         """
         Get a key if the network has it.
 
@@ -141,11 +143,12 @@ class Server:
             :class:`None` if not found, the value otherwise.
         """
         log.info("Looking up key %s", key)
-        dkey = digest(key)
+        if apply_hash_to_key:
+            key = digest(key)
         # if this node has it, return it
-        if self.storage.get(dkey) is not None:
-            return self.storage.get(dkey)
-        node = Node(dkey)
+        if self.storage.get(key) is not None:
+            return self.storage.get(key)
+        node = Node(key)
         nearest = self.protocol.router.find_neighbors(node)
         if not nearest:
             log.warning("There are no known neighbors to get key %s", key)
@@ -153,8 +156,37 @@ class Server:
         spider = ValueSpiderCrawl(self.protocol, node, nearest,
                                   self.ksize, self.alpha)
         return await spider.find()
+    
+    async def get_file_chunks(self, hashed_chunks):
+        results = [await self.get(chunk, False) for chunk in hashed_chunks]
+        data_chunks = [f.data for f in results if f is File]
 
-    async def set(self, key, value):
+        if len(hashed_chunks) != len(data_chunks):
+            log.warning('Failed to retrieve all data for chunks')
+
+        data = b''.join(data_chunks)
+        return data
+
+    async def upload_file(self, data: bytes):
+        # 1000000 bytes is equivalent to 1mb
+        chunks = self.split_data(data, 1000000)
+        processed_chunks = ((digest(c), c) for c in chunks)
+        for c in processed_chunks:
+            await self.set(c[0], c[1], False)
+
+    def split_data(self, data: bytes, chunk_size: int):
+        """Split data into chunks of less than chunk_size, it must be less than 16mb"""
+        fixed_chunks = len(data) // chunk_size
+        last_chunk_size = len(data) - fixed_chunks * chunk_size
+        start_of_last_chunk = len(data)-last_chunk_size 
+        last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
+        chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)] 
+        if last_chunk_size > 0:
+            chunks.append(last_chunk)
+        
+        return chunks
+
+    async def set(self, key, value, apply_hash_to_key = True):
         """
         Set the given string key to the given value in the network.
         """
@@ -163,8 +195,9 @@ class Server:
                 "Value must be of type int, float, bool, str, or bytes"
             )
         log.info("setting '%s' = '%s' on network", key, value)
-        dkey = digest(key)
-        return await self.set_digest(dkey, value)
+        if apply_hash_to_key:
+            key = digest(key)
+        return await self.set_digest(key, value)
 
     async def set_digest(self, dkey: bytes, value):
         """
