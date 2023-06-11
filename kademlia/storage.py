@@ -146,7 +146,7 @@ class PersistentStorage(IStorage):
         if key in self.data:
             result = self.db.find_one(File, File.id == key)
             assert result is not None, 'Tried to get data that is not in db'
-            return result
+            return result.data
         return default
 
     def __getitem__(self, key):

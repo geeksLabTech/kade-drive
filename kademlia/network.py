@@ -136,7 +136,7 @@ class Server:
         return await spider.find()
 
     async def bootstrap_node(self, addr: tuple[str, str]):
-        result = await self.protocol.udp_proti.rpc_ping(addr, self.node.id)
+        result = await self.protocol.udp_protocol.rpc_ping(addr, self.node.id)
         return Node(result[1], addr[0], addr[1]) if result[0] else None
 
     async def get(self, key, apply_hash_to_key=True):
@@ -163,7 +163,7 @@ class Server:
 
     async def get_file_chunks(self, hashed_chunks):
         results = [await self.get(chunk, False) for chunk in hashed_chunks]
-        data_chunks = [f.data for f in results if f is File]
+        data_chunks = [f for f in results if f is File]
 
         if len(hashed_chunks) != len(data_chunks):
             log.warning('Failed to retrieve all data for chunks')

@@ -1,3 +1,4 @@
+import asyncio
 import random
 import hashlib
 # pylint: disable=no-name-in-module
@@ -11,6 +12,11 @@ from kademlia.routing import RoutingTable
 
 
 @pytest.fixture()
+def event_loop():
+    return asyncio.get_event_loop()
+
+
+@pytest.fixture()
 def bootstrap_node(event_loop):
     server = Server()
     event_loop.run_until_complete(server.listen(8468))
@@ -20,6 +26,7 @@ def bootstrap_node(event_loop):
     finally:
         server.stop()
 
+    event_loop.close()
 
 # pylint: disable=redefined-outer-name
 @pytest.fixture()

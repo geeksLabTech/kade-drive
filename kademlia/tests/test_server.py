@@ -3,7 +3,8 @@ import asyncio
 import pytest
 
 from kademlia.network import Server
-from kademlia.protocol import FileSystemProtocol
+from kademlia.protocol import FileSystemProtocol, KademliaTCPProtocol, KademliaUDPProtocol
+
 
 
 @pytest.mark.asyncio
@@ -18,6 +19,7 @@ async def test_server_storing(bootstrap_node):
     result = await server.get('key')
     print("result")
     assert result == 'value'
+    
 
     server.stop()
 
@@ -35,6 +37,8 @@ class TestSwappableProtocol:
         # assert server.protocol is None
         loop.run_until_complete(server.listen(8469))
         assert isinstance(server.protocol, FileSystemProtocol)
+        assert isinstance(server.protocol.tcp_protocol, KademliaTCPProtocol)
+        assert isinstance(server.protocol.udp_protocol, KademliaUDPProtocol)
         server.stop()
 
     
