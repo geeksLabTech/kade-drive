@@ -108,14 +108,14 @@ class PersistentStorage(IStorage):
     the values of the dict are not used. The get method directly access to
     mongodb and retrieve the data that correspond to the given dict
     """
-    def __init__(self, ip: str, port: str, db_name='file_system', ttl=604800):
+    def __init__(self, db_name='file_system', ttl=604800):
         """
         By default, max age is a week.
         """
         self.db = SyncEngine(database=db_name)
         self.data = OrderedDict()
         self.ttl = ttl
-        self.address = (ip, port)
+        # self.address = (ip, port)
 
 
     # def get_data_from_db(self, key: bytes):
@@ -128,7 +128,7 @@ class PersistentStorage(IStorage):
             del self.data[key]
             self.db.remove(File, File.id == key)
 
-        self.data[key] = (time.monotonic(), self.address)
+        self.data[key] = (time.monotonic())
         file_to_save = File(id=key, data=value)
         self.db.save(file_to_save)
         self.cull()

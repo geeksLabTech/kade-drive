@@ -10,14 +10,14 @@ from kademlia.storage import PersistentStorage
 
 @pytest.mark.asyncio
 async def test_server_storing(bootstrap_node):
-    storage = PersistentStorage('127.0.0.1', '8888')
-    server = Server()
+    storage = PersistentStorage()
+    server = Server(storage=storage)
     await server.listen(bootstrap_node[1] + 1)
     await server.bootstrap([bootstrap_node])
     await server.set('key', 'value')
     result = await server.get('key')
     assert result == 'value'
-    
+
 
     server.stop()
 
