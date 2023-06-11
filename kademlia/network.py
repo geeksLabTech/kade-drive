@@ -68,12 +68,14 @@ class Server:
         import socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # sock.bind((interface,port))
         listen_udp = loop.create_datagram_endpoint(
             self.protocol.create_udp_protocol, sock=sock)
         await listen_udp
 
-        socktcp = socket.socket(socket.AF_INET, )
+        socktcp = socket.socket(socket.AF_INET)
         socktcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # socktcp.bind((interface,port))
         listen_tcp = loop.create_connection(
             self.protocol.create_tcp_protocol, sock=socktcp)
 
