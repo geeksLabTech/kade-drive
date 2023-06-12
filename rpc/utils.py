@@ -24,6 +24,7 @@ async def _process_data(protocol: BaseProtocol, data: bytes, address: tuple[str 
     msg_id = data[1:21]
     LOG.warning('proceso data')
     data = umsgpack.unpackb(data[21:])
+    # LOG.warning('la data', data)
     if data[:1] == b'\x00':
         # schedule accepting request and returning the result
         asyncio.ensure_future(_accept_request(protocol, msg_id, data, address))
@@ -99,7 +100,7 @@ def rpc_udp(index_of_sender_in_args: int):
     def _wrapper(f: Callable):
         @wraps(f)
         def _impl(self, *method_args, **method_kwargs):
-            return __decorator_impl(self, f, index_of_sender_in_args, method_args, method_kwargs)
+            return __decorator_impl(self, f, index_of_sender_in_args, *method_args, *method_kwargs)
         return _impl
     return _wrapper
 
@@ -121,10 +122,10 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
         LOG.warning(f'Address es {address}')
         LOG.warning(f'txdata es {type(txdata)}')
         LOG.warning("calling remote function %s on %s using UDP, (msgid %s)",
-                    func_name, address[0], b64encode(msg_id))
+                    func_name, address, b64encode(msg_id))
         try:
             LOG.warning(self.transport)
-            self.transport.sendto(txdata, address[0])
+            self.transport.sendto(txdata, address)
         except:
             LOG.warning('Failed sendto')
 
