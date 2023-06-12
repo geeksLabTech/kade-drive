@@ -75,14 +75,17 @@ async def _accept_request(protocol: BaseProtocol, msg_id, data, address: tuple[s
                 response, b64encode(msg_id), address)
     txdata = b'\x01' + msg_id + umsgpack.packb(response)
     LOG.warning(f'tipo de dato sendto, {type(txdata)}')
-    if isinstance(protocol.transport, DatagramTransport):
+    LOG.warning(f'transport es {protocol.transport}')
+
+    try:
         protocol.transport.sendto(txdata, address)
-
-    elif isinstance(protocol.transport, Transport):
+        return
+    except NotImplementedError:
         protocol.transport.write(txdata)
-
-    else:
-        LOG.error('Protocol class does not have transport attribute')
+        return
+    # elif isinstance(protocol.transport, Transport):
+        
+    # LOG.error('Protocol class does not have transport attribute')
 
 
 def rpc_tcp(f: Callable):
