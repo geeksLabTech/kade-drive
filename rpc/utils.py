@@ -57,17 +57,20 @@ async def _accept_request(protocol: BaseProtocol, msg_id, data, address: tuple[s
     # LOG.warning('data to unpack ', data)
     funcname, args, kwargs = data
     func = getattr(protocol, funcname, None)
-    if func is None or not callable(func):
+    LOG.warning(f'decorator, {func}')
+    LOG.warning(f'wrapable {func.__wrapped__}')
+    # LOG.warning(f'doble wrap {func.__wrapped__.__wrapped__}')
+    if func.__wrapped__ is None or not callable(func):
         msgargs = (protocol.__class__.__name__, funcname)
         LOG.warning("%s has no callable method "
                     "%s; ignoring request", *msgargs)
         return
     LOG.warning('Going to convert to coroutine')
-    if not asyncio.iscoroutinefunction(func):
-        func = asyncio.coroutine(func)
+    if not asyncio.iscoroutinefunction(func.__wrapped__):
+        func = asyncio.coroutine(func.__wrapped__)
     LOG.warning(f'Calling function {funcname}, getted function {func}')
     LOG.warning(f'arguments for {funcname} are {address} and {args}')
-    response = await func(address, args)
+    response = await func(protocol, address, *args)
     LOG.warning("sending response %s for msg id %s to %s",
                 response, b64encode(msg_id), address)
     txdata = b'\x01' + msg_id + umsgpack.packb(response)
@@ -107,6 +110,7 @@ def rpc_udp(index_of_sender_in_args: int):
         def _impl(self, *method_args, **method_kwargs):
             return __decorator_impl(self, f, index_of_sender_in_args, *method_args, *method_kwargs)
         return _impl
+    
     return _wrapper
 
 
