@@ -51,7 +51,7 @@ def _accept_response(protocol: BaseProtocol, msg_id, data, address: tuple[str | 
 
 
 async def _accept_request(protocol: BaseProtocol, msg_id, data, address: tuple[str | Any, int] | None = None):
-    if not isinstance(data, list) or len(data) != 2:
+    if not isinstance(data, list) or len(data) != 3:
         raise MalformedMessage("Could not read packet: %s" % data)
     funcname, args, kwargs = data
     func = getattr(protocol, funcname, None)
@@ -116,7 +116,7 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
     txdata = b'\x00' + msg_id + data
     # assert type(txdata) == str or type(txdata) == bytes or type(txdata) == bytearray
     LOG.warning(f'tipo de dato sendto, {type(txdata)}')
-    print('PRUBEAAA')
+    # print('PRUBEAAA')
     if index_of_sender_in_args >= 0:
         address = method_args[index_of_sender_in_args]
         LOG.warning(f'method args are {method_args}')
@@ -140,7 +140,7 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
         future = loop.create_future()
     else:
         future = asyncio.Future()
-    
+
     timeout = loop.call_later(self._wait_timeout,
                               self._timeout, msg_id)
     self._outstanding[msg_id] = (future, timeout)

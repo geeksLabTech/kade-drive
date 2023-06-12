@@ -9,3 +9,4 @@ kademlia.egg-info
 docs/_build
 .coverage
 .coverage.*
+log.txt
