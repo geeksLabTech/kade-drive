@@ -149,7 +149,7 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
         future = loop.create_future()
     else:
         future = asyncio.Future()
-    
+
     timeout = loop.call_later(self._wait_timeout,
                               self._timeout, msg_id)
     self._outstanding[msg_id] = (future, timeout)
