@@ -42,7 +42,7 @@ def _accept_response(protocol: BaseProtocol, msg_id, data, address: tuple[str | 
         LOG.warning("received unknown message %s "
                     "from %s; ignoring", *msgargs)
         return
-    LOG.debug("received response %s for message "
+    LOG.warning("received response %s for message "
               "id %s from %s", data, *msgargs)
     future, timeout = protocol._outstanding[msg_id]
     timeout.cancel()
@@ -51,8 +51,10 @@ def _accept_response(protocol: BaseProtocol, msg_id, data, address: tuple[str | 
 
 
 async def _accept_request(protocol: BaseProtocol, msg_id, data, address: tuple[str | Any, int] | None = None):
-    if not isinstance(data, list) or len(data) != 2:
+    if not isinstance(data, list) or len(data) != 3:
+        LOG.warning('va a explotar')
         raise MalformedMessage("Could not read packet: %s" % data)
+    # LOG.warning('data to unpack ', data)
     funcname, args, kwargs = data
     func = getattr(protocol, funcname, None)
     if func is None or not callable(func):
@@ -60,10 +62,12 @@ async def _accept_request(protocol: BaseProtocol, msg_id, data, address: tuple[s
         LOG.warning("%s has no callable method "
                     "%s; ignoring request", *msgargs)
         return
+    LOG.warning('Going to convert to coroutine')
     if not asyncio.iscoroutinefunction(func):
         func = asyncio.coroutine(func)
-    LOG.warning('Calling function')
-    response = await func(address, *args, *kwargs)
+    LOG.warning(f'Calling function {funcname}, getted function {func}')
+    LOG.warning(f'arguments for {funcname} are {address} and {args}')
+    response = await func(address, args)
     LOG.warning("sending response %s for msg id %s to %s",
                 response, b64encode(msg_id), address)
     txdata = b'\x01' + msg_id + umsgpack.packb(response)
@@ -109,6 +113,10 @@ def rpc_udp(index_of_sender_in_args: int):
 def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: int, *method_args, **method_kwargs):
     func_name = f.__name__
     msg_id = sha1(os.urandom(32)).digest()
+    address: tuple[str, str]|None = None 
+    if index_of_sender_in_args >= 0:
+        address = method_args[index_of_sender_in_args]
+        method_args = method_args[:index_of_sender_in_args] + method_args[index_of_sender_in_args+1:] 
     data = umsgpack.packb([func_name, method_args, method_kwargs])
     if len(data) > 8192:
         raise MalformedMessage("Total length of function "
@@ -116,9 +124,9 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
     txdata = b'\x00' + msg_id + data
     # assert type(txdata) == str or type(txdata) == bytes or type(txdata) == bytearray
     LOG.warning(f'tipo de dato sendto, {type(txdata)}')
-    print('PRUBEAAA')
-    if index_of_sender_in_args >= 0:
-        address = method_args[index_of_sender_in_args]
+    # print('PRUBEAAA')
+    if address is not None:
+        # address = method_args[index_of_sender_in_args]
         LOG.warning(f'method args are {method_args}')
         LOG.warning(f'Address es {address}')
         LOG.warning(f'txdata es {type(txdata)}')
@@ -133,6 +141,7 @@ def __decorator_impl(self: BaseProtocol, f: Callable, index_of_sender_in_args: i
     else:
         LOG.warning("calling remote function %s using TCP, (msgid %s)",
                     func_name, b64encode(msg_id))
+        assert isinstance(self.transport, Transport)
         self.transport.write(txdata)
 
     loop = asyncio.get_event_loop()

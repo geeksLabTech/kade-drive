@@ -40,7 +40,7 @@ class KademliaUDPProtocol(RPCUDPProtocol):
         Returns:
             bytes: node id if alive, None if not 
         """
-        log.warning("remote function called")
+        log.warning("rpc ping called")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         self.filesystem_protocol.welcome_if_new(source)
