@@ -139,10 +139,11 @@ class PersistentStorage(IStorage):
         """
         Check if there exist data older that {self.ttl} and remove it.
         """
-        for _ in self.iter_older_than(self.ttl):
-            key, _ = self.data.popitem(last=False)
-            self.db.remove(File, File.id == key)
-
+        # for _ in self.iter_older_than(self.ttl):
+        #     key, _ = self.data.popitem(last=False)
+        #     self.db.remove(File, File.id == key)
+        pass
+    
     def get(self, key, default=None):
         self.cull()
         if key in self.data:
@@ -163,7 +164,7 @@ class PersistentStorage(IStorage):
         return repr(self.data)
 
     def iter_older_than(self, seconds_old):
-        # log.warning("iterating")
+        log.warning("iterating")
         min_birthday = time.monotonic() - seconds_old
         zipped = self._triple_iter()
         matches = takewhile(lambda r: min_birthday >= r[1], zipped)
@@ -172,6 +173,7 @@ class PersistentStorage(IStorage):
             return list(matches)
         except TypeError:
             return [matches]
+        # return []
 
     def _triple_iter(self):
         ikeys = self.data.keys()

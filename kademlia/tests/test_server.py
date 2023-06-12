@@ -16,8 +16,8 @@ async def test_server_storing(bootstrap_node):
     await server.bootstrap([bootstrap_node])
     await server.set('key', 'value')
     result = await server.get('key')
+    result = result.decode()
     assert result == 'value'
-
 
     server.stop()
 
