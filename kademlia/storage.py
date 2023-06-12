@@ -6,6 +6,7 @@ from abc import abstractmethod, ABC
 from odmantic import SyncEngine
 from models.file import File
 
+
 class IStorage(ABC):
     """
     Local storage for this node.
@@ -44,6 +45,7 @@ class IStorage(ABC):
         """
         while False:
             yield None
+
 
 class ForgetfulStorage(IStorage):
     def __init__(self, ttl=604800):
@@ -108,6 +110,7 @@ class PersistentStorage(IStorage):
     the values of the dict are not used. The get method directly access to
     mongodb and retrieve the data that correspond to the given dict
     """
+
     def __init__(self, db_name='file_system', ttl=604800):
         """
         By default, max age is a week.
@@ -116,7 +119,6 @@ class PersistentStorage(IStorage):
         self.data = OrderedDict()
         self.ttl = ttl
         # self.address = (ip, port)
-
 
     # def get_data_from_db(self, key: bytes):
     #     data = self.db.find_one(File, File.id == key)
@@ -137,7 +139,7 @@ class PersistentStorage(IStorage):
         """
         Check if there exist data older that {self.ttl} and remove it.
         """
-        for _, _ in self.iter_older_than(self.ttl):
+        for _ in self.iter_older_than(self.ttl):
             key, _ = self.data.popitem(last=False)
             self.db.remove(File, File.id == key)
 
@@ -161,16 +163,20 @@ class PersistentStorage(IStorage):
         return repr(self.data)
 
     def iter_older_than(self, seconds_old):
+        # log.warning("iterating")
         min_birthday = time.monotonic() - seconds_old
         zipped = self._triple_iter()
         matches = takewhile(lambda r: min_birthday >= r[1], zipped)
-        return list(map(operator.itemgetter(0, 2), matches))
+        print(matches)
+        try:
+            return list(matches)
+        except TypeError:
+            return [matches]
 
     def _triple_iter(self):
         ikeys = self.data.keys()
         ibirthday = map(operator.itemgetter(0), self.data.values())
-        ivalues = map(operator.itemgetter(1), self.data.values())
-        return zip(ikeys, ibirthday, ivalues)
+        return zip(ikeys, ibirthday)
 
     def __iter__(self):
         self.cull()
@@ -178,4 +184,3 @@ class PersistentStorage(IStorage):
         # ivalues = map(operator.itemgetter(1), self.data.values())
         ivalues = self.db.find(File)
         return zip(ikeys, ivalues)
-    
