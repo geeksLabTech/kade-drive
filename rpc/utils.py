@@ -23,11 +23,14 @@ async def _process_data(protocol: BaseProtocol, data: bytes, address: tuple[str 
         return
     msg_id = data[1:21]
     LOG.warning('proceso data')
-    data = umsgpack.unpackb(data[21:])
+
     if data[:1] == b'\x00':
         # schedule accepting request and returning the result
+        LOG.warning("ENTROOOOOO")
+        data = umsgpack.unpackb(data[21:])
         asyncio.ensure_future(_accept_request(protocol, msg_id, data, address))
     elif data[:1] == b'\x01':
+        data = umsgpack.unpackb(data[21:])
         _accept_response(protocol, msg_id, data, address)
     else:
         # otherwise, don't know the format, don't do anything
