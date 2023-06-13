@@ -50,7 +50,7 @@ class FileServerFactory(protocol.Factory):
             return response
         except socket.error as e:
             print('Error al enviar los datos:', e)
-            return b'Error en la conexión'
+            return b'Error en la conexion'
 
 # Configuración del servidor
 HOST = 'localhost'
