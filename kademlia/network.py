@@ -109,8 +109,8 @@ class Server:
         await asyncio.gather(*results)
 
         # now republish keys older than one hour
-        for dkey, value in self.storage.iter_older_than(3600):
-            await self.set_digest(dkey, value)
+        # for dkey, value in self.storage.iter_older_than(3600):
+        #     await self.set_digest(dkey, value)
 
     def bootstrappable_neighbors(self):
         """
