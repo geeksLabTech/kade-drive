@@ -13,7 +13,7 @@ from kademlia.node import Node
 from kademlia.crawling import ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
 from models.file import File
-
+import socket
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
@@ -65,7 +65,7 @@ class Server:
         """
 
         loop = asyncio.get_event_loop()
-        import socket
+        
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((interface,port))
@@ -73,7 +73,7 @@ class Server:
             self.protocol.create_udp_protocol, sock=sock)
         await listen_udp
 
-        socktcp = socket.socket(socket.AF_INET)
+        socktcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socktcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         socktcp.bind((interface,port))
         listen_tcp = loop.create_connection(
@@ -109,8 +109,8 @@ class Server:
         await asyncio.gather(*results)
 
         # now republish keys older than one hour
-        for dkey, value in self.storage.iter_older_than(3600):
-            await self.set_digest(dkey, value)
+        # for dkey, value in self.storage.iter_older_than(3600):
+        #     await self.set_digest(dkey, value)
 
     def bootstrappable_neighbors(self):
         """

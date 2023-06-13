@@ -31,12 +31,12 @@ class IStorage(ABC):
         Get given key.  If not found, return default.
         """
 
-    @abstractmethod
-    def iter_older_than(self, seconds_old):
-        """
-        Return the an iterator over (key, value) tuples for items older
-        than the given secondsOld.
-        """
+    # @abstractmethod
+    # def iter_older_than(self, seconds_old):
+    #     """
+    #     Return the an iterator over (key, value) tuples for items older
+    #     than the given secondsOld.
+    #     """
 
     @abstractmethod
     def __iter__(self):
@@ -142,8 +142,6 @@ class PersistentStorage(IStorage):
         # for _ in self.iter_older_than(self.ttl):
         #     key, _ = self.data.popitem(last=False)
         #     self.db.remove(File, File.id == key)
-        pass
-    
     def get(self, key, default=None):
         self.cull()
         if key in self.data:
@@ -163,17 +161,16 @@ class PersistentStorage(IStorage):
         self.cull()
         return repr(self.data)
 
-    def iter_older_than(self, seconds_old):
-        log.warning("iterating")
-        min_birthday = time.monotonic() - seconds_old
-        zipped = self._triple_iter()
-        matches = takewhile(lambda r: min_birthday >= r[1], zipped)
-        print(matches)
-        try:
-            return list(matches)
-        except TypeError:
-            return [matches]
-        # return []
+    # def iter_older_than(self, seconds_old):
+        #     # log.warning("iterating")
+    #     min_birthday = time.monotonic() - seconds_old
+    #     zipped = self._triple_iter()
+    #     matches = takewhile(lambda r: min_birthday >= r[1], zipped)
+    #     print(matches)
+    #     try:
+    #         return list(matches)
+    #     except TypeError:
+    #         return [matches]
 
     def _triple_iter(self):
         ikeys = self.data.keys()
