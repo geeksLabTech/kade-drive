@@ -2,9 +2,6 @@ import random
 import asyncio
 import logging
 
-from rpc.protocol import RPCUDPProtocol, RPCTCPProtocol
-from rpc.utils import rpc_tcp, rpc_udp
-
 from kademlia.node import Node
 # from kademlia.routing import RoutingTable
 from kademlia.storage import IStorage, PersistentStorage
