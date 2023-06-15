@@ -2,7 +2,7 @@ import heapq
 import time
 import operator
 import asyncio
-
+from kademlia.protocol import FileSystemProtocol
 from itertools import chain
 from collections import OrderedDict
 from kademlia.utils import shared_prefix, bytes_to_bit_string
@@ -136,7 +136,7 @@ class TableTraverser:
 
 
 class RoutingTable:
-    def __init__(self, protocol, ksize: int, node: Node):
+    def __init__(self, ksize: int, node: Node):
         """
         @param node: The node that represents this server.  It won't
         be added to the routing table, but will be needed later to
@@ -144,7 +144,6 @@ class RoutingTable:
 
         """
         self.node = node
-        self.protocol = protocol
         self.ksize = ksize
         self.flush()
 
@@ -186,7 +185,7 @@ class RoutingTable:
             self.split_bucket(index)
             self.add_contact(node)
         else:
-            asyncio.ensure_future(self.protocol.call_ping(bucket.head()))
+            asyncio.ensure_future(FileSystemProtocol.call_ping(bucket.head()))
 
     def get_bucket_for(self, node: Node):
         """

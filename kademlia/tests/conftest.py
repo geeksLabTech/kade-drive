@@ -11,22 +11,21 @@ from kademlia.node import Node
 from kademlia.routing import RoutingTable
 
 
-@pytest.fixture()
-def event_loop():
-    return asyncio.get_event_loop()
+# @pytest.fixture()
+# def event_loop():
+#     return asyncio.get_event_loop()
 
 
-@pytest.fixture()
-def bootstrap_node(event_loop):
-    server = Server()
-    event_loop.run_until_complete(server.listen(8468))
+# @pytest.fixture()
+# def bootstrap_node():
+#     server = Server()
+#     server.listen(8468)
 
-    try:
-        yield ('127.0.0.1', 8468)
-    finally:
-        server.stop()
-
-    event_loop.close()
+    # try:
+    #     yield ('127.0.0.1', 8468)
+    # finally:
+    #     server.stop()
+    #     event_loop.close()
 
 # pylint: disable=redefined-outer-name
 @pytest.fixture()
@@ -47,7 +46,7 @@ def mknode():
 # pylint: disable=too-few-public-methods
 class FakeProtocol:  # pylint: disable=too-few-public-methods
     def __init__(self, source_id, ksize=20):
-        self.router = RoutingTable(self, ksize, Node(source_id))
+        self.router = RoutingTable(ksize, Node(source_id))
         self.storage = {}
         self.source_id = source_id
 
