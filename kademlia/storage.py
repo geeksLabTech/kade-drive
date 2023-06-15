@@ -111,7 +111,7 @@ class PersistentStorage(IStorage):
     mongodb and retrieve the data that correspond to the given dict
     """
 
-    def __init__(self, db_name='file_system', ttl=604800):
+    def __init__(self, db_name='filesystem', ttl=604800):
         """
         By default, max age is a week.
         """

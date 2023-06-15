@@ -1,9 +1,13 @@
-FROM docker.uclv.cu/python:latest
+FROM docker.uclv.cu/python:3.10.10
 
 LABEL Mantainer="JOramas"
 
 WORKDIR /usr/app/src
 
-COPY * ./
+COPY kademlia .
+COPY models .
+COPY requirements.txt .
+COPY main.py .
+RUN pip install -r requirements.txt
 
-CMD ["python", "./run_server.py"]
+CMD ["python", "./main.py"]
