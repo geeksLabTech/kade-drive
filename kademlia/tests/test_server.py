@@ -5,18 +5,22 @@ import pytest
 from kademlia.network import Server
 from kademlia.protocol import FileSystemProtocol
 from kademlia.storage import PersistentStorage
+import time
 
 
-
-@pytest.mark.asyncio
-async def test_server_storing():
+# @pytest.mark.asyncio
+def test_server_storing():
     bootstrap_node = Server(storage=PersistentStorage())
     bootstrap_node.listen(8468)
+    time.sleep(0.5)
     storage = PersistentStorage()
     server = Server(storage=storage)
     server.listen(8469)
+    time.sleep(0.5)
     bootstrap_address = (bootstrap_node.node.ip, bootstrap_node.node.port)
+    
     server.bootstrap([bootstrap_address])
+    time.sleep(0.5)
     server.set('key', 'value')
     result = server.get('key')
     bootstrap_node.stop()
