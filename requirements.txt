@@ -1,4 +1,7 @@
+netifaces==0.11.0
 odmantic==0.9.2
 pytest==7.3.2
-setuptools==65.5.0
+rpyc==5.3.1
+Twisted==22.10.0
+typer==0.9.0
 u_msgpack_python==2.8.0
