@@ -1,5 +1,6 @@
-import time
+import os
 from itertools import takewhile
+import time
 import operator
 from collections import OrderedDict
 from abc import abstractmethod, ABC
@@ -115,7 +116,8 @@ class PersistentStorage(IStorage):
         """
         By default, max age is a week.
         """
-        self.db = SyncEngine(database=db_name)
+        self.db_path = 'static'
+        self.db = []
         self.data = OrderedDict()
         self.ttl = ttl
         # self.address = (ip, port)
@@ -125,14 +127,27 @@ class PersistentStorage(IStorage):
     #     assert data is not None, 'Tried to get data that is not in db'
     #     return data
 
+    def get_value(self, key):
+        with open(os.path.join(self.db_path, key), "rb") as f:
+            result = f.read()
+            # result = self.db.find_one(File, File.id == key)
+        assert result is not None, 'Tried to get data that is not in db'
+        return result
+
+    def set_value(self, key, value):
+        with open(os.path.join(self.db_path, key), "wb") as f:
+            f.write(value)
+
     def __setitem__(self, key, value):
         if key in self.data:
             del self.data[key]
-            self.db.remove(File, File.id == key)
+            os.remove(os.path.join(self.db_path, key))
+            # self.db.remove(File, File.id == key)``
 
         self.data[key] = (time.monotonic())
-        file_to_save = File(id=key, data=value)
-        self.db.save(file_to_save)
+        # file_to_save = File(id=key, data=value)
+        self.set_value(key, value)
+        # self.db.save(file_to_save)
         self.cull()
 
     def cull(self):
@@ -142,17 +157,17 @@ class PersistentStorage(IStorage):
         # for _ in self.iter_older_than(self.ttl):
         #     key, _ = self.data.popitem(last=False)
         #     self.db.remove(File, File.id == key)
+
     def get(self, key, default=None):
         self.cull()
         if key in self.data:
-            result = self.db.find_one(File, File.id == key)
-            assert result is not None, 'Tried to get data that is not in db'
-            return result.data
+            result = self.get_value(key)
+            return result
         return default
 
     def __getitem__(self, key):
         self.cull()
-        result = self.db.find_one(File, File.id == key)
+        result = self.get_value(key)
         if result is None:
             raise KeyError()
         return result
@@ -181,5 +196,5 @@ class PersistentStorage(IStorage):
         self.cull()
         ikeys = self.data.keys()
         # ivalues = map(operator.itemgetter(1), self.data.values())
-        ivalues = self.db.find(File)
+        ivalues = self.get_value(File.id)
         return zip(ikeys, ivalues)
