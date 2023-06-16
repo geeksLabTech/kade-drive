@@ -1,4 +1,5 @@
 import os
+import json
 from itertools import takewhile
 import time
 import operator
@@ -120,7 +121,15 @@ class PersistentStorage(IStorage):
         self.db = []
         self.data = OrderedDict()
         self.ttl = ttl
+
+        if os.path.exists(os.path.join(self.db_path, "data_dict.json")):
+            with os.open(os.path.join(self.db_path, "data_dict.json"), 'r') as file:
+                self.data = json.load(file, object_pairs_hook=OrderedDict)
         # self.address = (ip, port)
+
+    def update_dict(self):
+        with open(os.path.join(self.db_path, "data_dict.json"), 'w') as file:
+            json.dump(self.data, file)
 
     # def get_data_from_db(self, key: bytes):
     #     data = self.db.find_one(File, File.id == key)
@@ -145,6 +154,7 @@ class PersistentStorage(IStorage):
             # self.db.remove(File, File.id == key)``
 
         self.data[key] = (time.monotonic())
+        self.update_dict()
         # file_to_save = File(id=key, data=value)
         self.set_value(key, value)
         # self.db.save(file_to_save)
