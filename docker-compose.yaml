@@ -2,6 +2,8 @@ services:
   filesystem-app:
     build: .
     image: filesystem-app
+    stdin_open: true
+    tty: true
     environment:
       - MONGODB_URL=mongodb://mongodb:27017/filesystem
     ports:
@@ -22,6 +24,7 @@ services:
 
 volumes:
   dbdata:
+
 
 networks:
   filesystem-network:
