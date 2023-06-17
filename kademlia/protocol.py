@@ -40,9 +40,9 @@ log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class FileSystemProtocol:
-    source_node: Node|None = None 
-    ksize: int|None = None
-    storage: PersistentStorage|None = None
+    source_node: Node
+    ksize: int
+    storage: PersistentStorage
     router: None = None
 
     @staticmethod
