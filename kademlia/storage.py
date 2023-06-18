@@ -7,6 +7,7 @@ from collections import OrderedDict
 from abc import abstractmethod, ABC
 from odmantic import SyncEngine
 from models.file import File
+import pickle
 
 
 class IStorage(ABC):
@@ -122,17 +123,20 @@ class PersistentStorage(IStorage):
         self.data = OrderedDict()
         self.ttl = ttl
 
-        if os.path.exists(os.path.join(self.db_path, "data_dict.json")):
-            with os.open(os.path.join(self.db_path, "data_dict.json"), 'r') as file:
-                self.data = json.load(file, object_pairs_hook=OrderedDict)
-        # self.address = (ip, port)
+        if os.path.exists(os.path.join(self.db_path)):
+            with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
+                print("loading orderedDict")
+                self.data = pickle.load(file)
+            print(self.data)
+            # self.address = (ip, port)
+
 
     def update_dict(self):
         if not os.path.exists(os.path.join(self.db_path)):
             os.mkdir(self.db_path)
 
-        # with open(os.path.join(self.db_path, "data_dict.json"), 'w') as file:
-        #     json.dump(self.data, file)
+        with open(os.path.join(self.db_path, "data_dict.json"), 'wb') as f:
+            pickle.dump(self.data, f)
 
     # def get_data_from_db(self, key: bytes):
     #     data = self.db.find_one(File, File.id == key)
@@ -154,11 +158,11 @@ class PersistentStorage(IStorage):
                 f.write(value)
             except:
                 f.write(value.encode("unicode_escape"))
-                
+
     def __setitem__(self, key, value):
         if key in self.data:
             del self.data[key]
-            os.remove(os.path.join(self.db_path,str(key)))
+            os.remove(os.path.join(self.db_path, str(key)))
             # self.db.remove(File, File.id == key)``
 
         self.data[key] = (time.monotonic())
