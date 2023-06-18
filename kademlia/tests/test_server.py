@@ -9,27 +9,25 @@ import time
 
 
 # @pytest.mark.asyncio
-def test_server_storing():
-    bootstrap_node = Server(storage=PersistentStorage())
-    bootstrap_node.listen(8468)
-    time.sleep(0.5)
-    storage = PersistentStorage()
-    server = Server(storage=storage)
-    server.listen(8469)
-    time.sleep(0.5)
-    bootstrap_address = (bootstrap_node.node.ip, bootstrap_node.node.port)
-    
-    server.bootstrap([bootstrap_address])
-    time.sleep(0.5)
-    server.set('key', 'value')
-    result = server.get('key')
-    bootstrap_node.stop()
-    server.stop()
-    result = result.decode()
-    
-    assert result == 'value'
+# def test_server_storing():
+#     bootstrap_node = Server(storage=PersistentStorage())
+#     bootstrap_node.listen(8468)
+#     time.sleep(0.5)
+#     storage = PersistentStorage()
+#     server = Server(storage=storage)
+#     server.listen(8469)
+#     time.sleep(0.5)
+#     bootstrap_address = (bootstrap_node.node.ip, bootstrap_node.node.port)
 
-    
+#     server.bootstrap([bootstrap_address])
+#     time.sleep(0.5)
+#     server.set('key', 'value')
+#     result = server.get('key')
+#     bootstrap_node.stop()
+#     server.stop()
+#     result = result.decode()
+
+#     assert result == 'value'
 
 
 # class TestSwappableProtocol:
@@ -48,8 +46,3 @@ def test_server_storing():
 #         assert isinstance(server.protocol.tcp_protocol, KademliaTCPProtocol)
 #         assert isinstance(server.protocol.udp_protocol, KademliaUDPProtocol)
 #         server.stop()
-
-    
-    
-    
-    

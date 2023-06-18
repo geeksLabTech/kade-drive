@@ -128,6 +128,9 @@ class PersistentStorage(IStorage):
         # self.address = (ip, port)
 
     def update_dict(self):
+        if not os.path.exists(os.path.join(self.db_path)):
+            os.mkdir(self.db_path)
+            
         with open(os.path.join(self.db_path, "data_dict.json"), 'w') as file:
             json.dump(self.data, file)
 
