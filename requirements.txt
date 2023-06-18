@@ -3,3 +3,4 @@ pytest==7.3.2
 rpyc==5.3.1
 typer==0.9.0
 u_msgpack_python==2.8.0
+twisted==22.10.0
