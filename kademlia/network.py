@@ -27,7 +27,7 @@ class Server:
     ksize: int
     alpha: int
     storage: PersistentStorage
-    node: Node 
+    node: Node
     routing: RoutingTable
 
     @staticmethod
@@ -43,11 +43,12 @@ class Server:
         Server.ksize = ksize
         Server.alpha = alpha
         Server.storage = storage or PersistentStorage()
-        Server.node = Node(node_id or digest(random.getrandbits(255)), ip=ip, port=str(port))
+        Server.node = Node(node_id or digest(
+            random.getrandbits(255)), ip=ip, port=str(port))
         Server.routing = RoutingTable(Server.ksize, Server.node)
         FileSystemProtocol.init(Server.routing, Server.storage)
         threading.Thread(target=Server.listen, args=(port, ip)).start()
-        
+
     @staticmethod
     def listen(port, interface='0.0.0.0'):
         """
@@ -58,7 +59,7 @@ class Server:
         Server.node.ip = interface
         Server.node.port = port
         t = ThreadedServer(ServerService, port=port, hostname=interface, protocol_config={
-        'allow_public_attrs': True,
+            'allow_public_attrs': True,
         })
         t.start()
         # finally, schedule refreshing table
@@ -87,9 +88,9 @@ class Server:
         response = None
         with ServerSession(addr[0], addr[1]) as conn:
             response = conn.rpc_ping(addr, Server.node.id)
-        
+
         return Node(response[1], addr[0], addr[1]) if response[0] else None
-    
+
     @staticmethod
     def split_data(data: bytes, chunk_size: int):
         """Split data into chunks of less than chunk_size, it must be less than 16mb"""
@@ -128,10 +129,11 @@ class Server:
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest:
             Server.storage[dkey] = value
-        results = [FileSystemProtocol.call_store(n, dkey, value) for n in nodes]
+        results = [FileSystemProtocol.call_store(
+            n, dkey, value) for n in nodes]
         # return true only if at least one store call succeeded
         return any(results)
-    
+
     # def refresh_table(self):
     #     log.debug("Refreshing routing table")
     #     self._refresh_table()
@@ -152,9 +154,11 @@ class Server:
     #         results.append(spider.find())
 
 # pylint: disable=too-many-instance-attributes
+
+
 @rpyc.service
 class ServerService(Service):
-    
+
     # def stop(self):
     #     if self.thread:
     #         self.thread.join()
@@ -168,16 +172,14 @@ class ServerService(Service):
     # def _create_protocol(self):
     #     return self.protocol_class(self.node, self.storage, self.ksize)
 
-    
+    #
 
-    # 
+    # do our crawling
+    # await asyncio.gather(*results)
 
-        # do our crawling
-        # await asyncio.gather(*results)
-
-        # now republish keys older than one hour
-        # for dkey, value in self.storage.iter_older_than(3600):
-        #     self.set_digest(dkey, value)
+    # now republish keys older than one hour
+    # for dkey, value in self.storage.iter_older_than(3600):
+    #     self.set_digest(dkey, value)
     @rpyc.exposed
     def bootstrappable_neighbors(self):
         """
@@ -191,8 +193,6 @@ class ServerService(Service):
         """
         neighbors = FileSystemProtocol.router.find_neighbors(Server.node)
         return [tuple(n)[-2:] for n in neighbors]
-
-    
 
     @rpyc.exposed
     def get(self, key, apply_hash_to_key=True):
@@ -235,7 +235,6 @@ class ServerService(Service):
         processed_chunks = ((digest(c), c) for c in chunks)
         for c in processed_chunks:
             self.set_key(c[0], c[1], False)
-    
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
@@ -251,8 +250,6 @@ class ServerService(Service):
         if apply_hash_to_key:
             key = digest(key)
         return Server.set_digest(key, value)
-
-    
 
     # def save_state(self, fname: str):
     #     """

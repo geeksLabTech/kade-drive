@@ -32,4 +32,4 @@ def start(bootstrap_nodes: Optional[str] = None):
 
 
 if __name__ == '__main__':
-    start()
+    start("192.168.26.6 8086")
