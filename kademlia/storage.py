@@ -5,7 +5,7 @@ import time
 import operator
 from collections import OrderedDict
 from abc import abstractmethod, ABC
-from odmantic import SyncEngine
+# from odmantic import SyncEngine
 from models.file import File
 import pickle
 
