@@ -115,7 +115,9 @@ class Server:
         if not nearest:
             log.warning("There are no known neighbors to set key %s",
                         dkey.hex())
-            return False
+            log.warning('storing in current server')
+            Server.storage[dkey] = value
+            return True
 
         spider = NodeSpiderCrawl(node, nearest,
                                  Server.ksize, Server.alpha)
@@ -240,7 +242,6 @@ class ServerService(Service):
         """
         Set the given string key to the given value in the network.
         """
-
         if not check_dht_value_type(value):
             print('eel valor es: ', value)
             raise TypeError(

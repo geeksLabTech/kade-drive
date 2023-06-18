@@ -20,6 +20,7 @@ class ClientSession:
         return result
     
     def put(self, key, value):
+        print(f'key: {key}, value: {value}')
         self.connection.root.set_key(key, value)
         print(f'value putted')
 
@@ -29,10 +30,19 @@ client_session: ClientSession|None = None
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        raise Exception("Please specify ip and port to connect client")
-    
-    ip, port = sys.argv[1], sys.argv[2]
-    client_session = ClientSession(ip, int(port))
+        print('Initiating client with local ip and default port')
+        host_ip = socket.gethostbyname(socket.gethostname())
+        client_session = ClientSession(ip=host_ip)
+
+    if len(sys.argv) == 2:
+        ip = sys.argv[1]
+        client_session = ClientSession(ip=ip)
+
+    if len(sys.argv) == 3:    
+        ip, port = sys.argv[1], sys.argv[2]
+        client_session = ClientSession(ip, int(port))
+
+    assert client_session is not None
     print('Connecting client to server')
     client_session.connect()
     print('Client shell started')
@@ -47,6 +57,7 @@ if __name__ == "__main__":
             print('not finded command with that name')
             continue
         print(f'calling {func} with arguments: {args}')
+        print()
         result = func(client_session, *args)
         if result:
             print(f'Result is: {result}')
