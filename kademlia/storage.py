@@ -130,7 +130,7 @@ class PersistentStorage(IStorage):
     def update_dict(self):
         if not os.path.exists(os.path.join(self.db_path)):
             os.mkdir(self.db_path)
-            
+
         with open(os.path.join(self.db_path, "data_dict.json"), 'w') as file:
             json.dump(self.data, file)
 
@@ -147,6 +147,8 @@ class PersistentStorage(IStorage):
         return result
 
     def set_value(self, key, value):
+        self.data[key] = (time.monotonic())
+        self.update_dict()
         with open(os.path.join(self.db_path, key), "wb") as f:
             f.write(value)
 
