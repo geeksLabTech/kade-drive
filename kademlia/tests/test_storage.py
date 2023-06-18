@@ -1,4 +1,4 @@
-from kademlia.storage import ForgetfulStorage
+from kademlia.storage import ForgetfulStorage, PersistentStorage
 
 
 class ForgetfulStorageTest:
@@ -25,3 +25,12 @@ class ForgetfulStorageTest:
         for key, value in storage.iter_older_than(0):
             assert key == 'one'
             assert value == 'two'
+
+
+def test_set_value():
+    storage = PersistentStorage()
+
+    storage.set_value('a', ('a').encode())
+    val = storage.get_value('a')
+    print(val)
+    assert val.decode() == 'a'
