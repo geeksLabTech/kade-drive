@@ -131,8 +131,8 @@ class PersistentStorage(IStorage):
         if not os.path.exists(os.path.join(self.db_path)):
             os.mkdir(self.db_path)
 
-        with open(os.path.join(self.db_path, "data_dict.json"), 'w') as file:
-            json.dump(self.data, file)
+        # with open(os.path.join(self.db_path, "data_dict.json"), 'w') as file:
+        #     json.dump(self.data, file)
 
     # def get_data_from_db(self, key: bytes):
     #     data = self.db.find_one(File, File.id == key)
@@ -140,8 +140,8 @@ class PersistentStorage(IStorage):
     #     return data
 
     def get_value(self, key):
-        with open(os.path.join(self.db_path, key), "rb") as f:
-            result = f.read()
+        with open(os.path.join(self.db_path, str(key)), "rb") as f:
+            result = f.read().decode()
             # result = self.db.find_one(File, File.id == key)
         assert result is not None, 'Tried to get data that is not in db'
         return result
@@ -149,13 +149,16 @@ class PersistentStorage(IStorage):
     def set_value(self, key, value):
         self.data[key] = (time.monotonic())
         self.update_dict()
-        with open(os.path.join(self.db_path, key), "wb") as f:
-            f.write(value)
-
+        with open(os.path.join(self.db_path, str(key)), "wb") as f:
+            try:
+                f.write(value)
+            except:
+                f.write(value.encode("unicode_escape"))
+                
     def __setitem__(self, key, value):
         if key in self.data:
             del self.data[key]
-            os.remove(os.path.join(self.db_path, key))
+            os.remove(os.path.join(self.db_path,str(key)))
             # self.db.remove(File, File.id == key)``
 
         self.data[key] = (time.monotonic())
