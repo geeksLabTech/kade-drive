@@ -102,7 +102,7 @@ class FileSystemProtocol:
         with ServerSession(address[0], address[1]) as conn:
             response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
                                            node_to_find.id)
-
+            print(response)
             return FileSystemProtocol.process_response(response, node_to_ask)
 
     @staticmethod
