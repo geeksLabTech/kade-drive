@@ -1,4 +1,4 @@
-import typer
+from typer import Typer, Argument
 from typing import Optional
 import socket
 from kademlia.storage import PersistentStorage
@@ -8,7 +8,7 @@ import time
 import sys
 
 
-def start(bootstrap_nodes: Optional[str] = None):
+def start_(bootstrap_nodes: Optional[str] = None):
     host_ip = socket.gethostbyname(socket.gethostname())
 
     if len(sys.argv) < 2:
@@ -31,6 +31,16 @@ def start(bootstrap_nodes: Optional[str] = None):
     print(f'Server started at {host_ip}')
 
 
+app = Typer()
+
+
+@app.command()
+def start(bootstrap_nodes=Argument(None)):
+    if bootstrap_nodes:
+        start_(bootstrap_nodes)
+    else:
+        start_()
+
+
 if __name__ == '__main__':
-    start("192.168.26.6 8086")
-    # start()
+    app()
