@@ -70,7 +70,7 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         with ServerSession(address[0], address[1]) as conn:
             response = conn.rpc_store(
-                (FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id, key, value)
+                address, FileSystemProtocol.source_node.id, key, value)
 
         return FileSystemProtocol.process_response(response, node_to_ask)
 
@@ -84,9 +84,9 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         print(address)
         with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_find_node((FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id,
+            response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
                                           node_to_find.id)
-            # print(response)
+            print(response)
 
         return FileSystemProtocol.process_response(response, node_to_ask)
 
@@ -98,7 +98,7 @@ class FileSystemProtocol:
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
         with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_find_value((FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id,
+            response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
                                            node_to_find.id)
 
         return FileSystemProtocol.process_response(response, node_to_ask)
@@ -112,7 +112,7 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         with ServerSession(address[0], address[1]) as conn:
             response = conn.rpc_ping(
-                (FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id)
+                address, FileSystemProtocol.source_node.id)
 
         return FileSystemProtocol.process_response(response, node_to_ask)
 
@@ -154,7 +154,7 @@ class FileSystemProtocol:
                     keynode) < first
             # if not neighbors, store data in the node
             if not neighbors or (new_node_close and this_closest):
-                    FileSystemProtocol.call_store(node, key, value)
+                FileSystemProtocol.call_store(node, key, value)
         # add node to table
         print('Adding new node to contacts')
         FileSystemProtocol.router.add_contact(node)

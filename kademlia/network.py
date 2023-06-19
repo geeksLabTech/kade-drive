@@ -99,7 +99,7 @@ class Server:
         with ServerSession(addr[0], addr[1]) as conn:
             response = conn.rpc_ping(
                 (Server.node.ip, Server.node.port), Server.node.id)
-        # print(bytes(response))
+        print(response)
         return Node(response, addr[0], addr[1]) if response else None
 
     @staticmethod
