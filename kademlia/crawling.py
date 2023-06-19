@@ -66,16 +66,17 @@ class SpiderCrawl:
             print("Peer", peer)
             with ServerSession(peer.ip, peer.port) as conn:
                 print("Calling ", rpcmethod)
-                rpcmethod(conn, peer, self.node)
+                ans = rpcmethod(conn, peer, self.node)
                 # print(FileSystemProtocol.last_response)
-                ans = FileSystemProtocol.last_response
-                # print("response", ans)
+                # ans = FileSystemProtocol.last_response
+                print("response", ans)
                 dicts[peer.id] = ans
-                # print("DICT SSSSSS " ,dicts)
                 self.nearest.mark_contacted(peer)
                 print("mark contacted successful")
             # found = await gather_dict(dicts)
-        return self._nodes_found(dicts)
+            # print("DICT SSSSSS ", dicts)
+                # TODO hacer esto fuera del for
+                return self._nodes_found(dicts)
 
     def _nodes_found(self, responses):
         raise NotImplementedError
@@ -104,6 +105,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         # iterate over responses
         for peerid, response in responses.items():
             response = RPCFindResponse(response)
+            print(response)
             # if node didnt reponded, set it to be removed
             if not response.happened():
                 toremove.append(peerid)
@@ -175,6 +177,7 @@ class NodeSpiderCrawl(SpiderCrawl):
         for peerid, response in responses.items():
             response = RPCFindResponse(response)
             # if node didnt responded, remove it
+            print("Response!", response)
             if not response.happened():
                 toremove.append(peerid)
             # else, push the node to ask for value later (add to nearest)
