@@ -79,7 +79,7 @@ class FileSystemProtocol:
         """
         async function to call the find node rpc method
         """
-        print("inside call Node")
+        print("inside call find Node")
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
         print(address)
@@ -138,6 +138,7 @@ class FileSystemProtocol:
         print("never seen %s before, adding to router", node)
         # iterate over storage
         for key, value in FileSystemProtocol.storage:
+            print('entry for')
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
             neighbors = FileSystemProtocol.router.find_neighbors(keynode)
@@ -153,8 +154,9 @@ class FileSystemProtocol:
                     keynode) < first
             # if not neighbors, store data in the node
             if not neighbors or (new_node_close and this_closest):
-                    FileSystemProtocol.call_store(node, key, value)
+                FileSystemProtocol.call_store(node, key, value)
         # add node to table
+        print('Adding new node to contacts')
         FileSystemProtocol.router.add_contact(node)
 
     @staticmethod
