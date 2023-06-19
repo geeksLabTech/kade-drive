@@ -160,7 +160,7 @@ class FileSystemProtocol:
         If we get a response, add the node to the routing table.  If
         we get no response, make sure it's removed from the routing table.
         """
-        if not response[0]:
+        if not response:
             log.warning("no response from %s, removing from router", node)
             FileSystemProtocol.router.remove_contact(node)
             return response
