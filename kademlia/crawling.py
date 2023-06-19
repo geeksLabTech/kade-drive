@@ -63,10 +63,14 @@ class SpiderCrawl:
         # perform the rpc protocol method call
         # return the info from those nodes
         for peer in self.nearest.get_uncontacted()[:count]:
-            print("Peer" , peer)
-            dicts[peer.id] = rpcmethod(peer, self.node)
-            print(dicts[peer.id])
+            print("Peer", peer)
+            print("Calling ", rpcmethod)
+            ans = rpcmethod(peer, self.node)
+            print("response",ans)
+            dicts[peer.id] = ans
+            # print("DICT SSSSSS " ,dicts)
             self.nearest.mark_contacted(peer)
+            print("mark contacted successful")
         # found = await gather_dict(dicts)
         return self._nodes_found(dicts)
 
@@ -91,6 +95,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         Handle the result of an iteration in _find.
         """
+        print("entry node Found Vaue Spider")
         toremove = []
         found_values = []
         # iterate over responses
@@ -159,6 +164,8 @@ class NodeSpiderCrawl(SpiderCrawl):
         """
         Handle the result of an iteration in _find.
         """
+        print("entering nodes found Node Spider")
+
         toremove = []
         # iterate over responses
         for peerid, response in responses.items():

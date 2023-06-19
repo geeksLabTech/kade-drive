@@ -74,6 +74,7 @@ class FileSystemProtocol:
 
             return FileSystemProtocol.process_response(response, node_to_ask)
         return None
+
     @staticmethod
     def call_find_node(node_to_ask: Node, node_to_find: Node):
         """
@@ -86,7 +87,7 @@ class FileSystemProtocol:
         with ServerSession(address[0], address[1]) as conn:
             response = conn.rpc_find_node(address, node_to_ask.id,
                                           node_to_find.id)
-            
+            print(response)
             return FileSystemProtocol.process_response(response, node_to_ask)
         return None
 
