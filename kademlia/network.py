@@ -234,13 +234,16 @@ class ServerService(Service):
         print(f"finding neighbors of {int(nodeid.hex(), 16)} in local table")
 
         source = Node(nodeid, sender[0], sender[1])
+
+        print('node id', nodeid)
         # if a new node is sending the request, give all data it should contain
         FileSystemProtocol.welcome_if_new(source)
         # create a fictional node to perform the search
+        print('fictional key ', key)
         node = Node(key)
         # ask for the neighbors of the node
         neighbors = FileSystemProtocol.router.find_neighbors(
-            node, exclude=source)
+            node, exclude=node)
         print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
 

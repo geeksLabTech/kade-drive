@@ -105,7 +105,9 @@ class TableTraverser:
         index = table.get_bucket_for(startNode)
         print(f'table.buckets, {table.buckets}, {index}')
         table.buckets[index].touch_last_updated()
+        print('nodes in bucket', table.buckets[index].nodes.values())
         self.current_nodes = table.buckets[index].get_nodes()
+        print('current nodes', self.current_nodes)
         self.left_buckets = table.buckets[:index]
         self.right_buckets = table.buckets[(index + 1):]
         self.left = True
@@ -217,6 +219,7 @@ class RoutingTable:
         for neighbor in TableTraverser(self, node):
             not_excluded = exclude is None or not neighbor.same_home_as(
                 exclude)
+            print('not excluded ', not_excluded)
             if neighbor.id != node.id and not_excluded:
                 heapq.heappush(nodes, (node.distance_to(neighbor), neighbor))
             if len(nodes) == k:
