@@ -84,11 +84,11 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         print(address)
         with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
+            response = conn.rpc_find_node(address, node_to_ask.id,
                                           node_to_find.id)
-            print(response)
-
-        return FileSystemProtocol.process_response(response, node_to_ask)
+            
+            return FileSystemProtocol.process_response(response, node_to_ask)
+        return None
 
     @staticmethod
     def call_find_value(node_to_ask: Node, node_to_find: Node):
