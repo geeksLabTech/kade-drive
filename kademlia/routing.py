@@ -2,6 +2,8 @@ import heapq
 import time
 import operator
 import asyncio
+
+from sympy import print_rcode
 from kademlia.protocol import FileSystemProtocol
 from itertools import chain
 from collections import OrderedDict
@@ -101,6 +103,7 @@ class KBucket:
 class TableTraverser:
     def __init__(self, table: 'RoutingTable', startNode):
         index = table.get_bucket_for(startNode)
+        print(f'table.buckets, {table.buckets}, {index}')
         table.buckets[index].touch_last_updated()
         self.current_nodes = table.buckets[index].get_nodes()
         self.left_buckets = table.buckets[:index]
@@ -175,7 +178,7 @@ class RoutingTable:
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
         print()
-        print('previous nodes in bucket ', bucket.get_nodes())
+        print('previous nodes in bucket of index ', index, bucket.get_nodes())
         # this will succeed unless the bucket is full
         if bucket.add_node(node):
             # print('add node with id :')
