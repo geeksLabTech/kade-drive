@@ -3,6 +3,8 @@ import time
 import operator
 import asyncio
 
+from sympy import print_rcode
+from kademlia.protocol import FileSystemProtocol
 from itertools import chain
 from collections import OrderedDict
 from kademlia.utils import shared_prefix, bytes_to_bit_string
@@ -101,8 +103,11 @@ class KBucket:
 class TableTraverser:
     def __init__(self, table: 'RoutingTable', startNode):
         index = table.get_bucket_for(startNode)
+        print(f'table.buckets, {table.buckets}, {index}')
         table.buckets[index].touch_last_updated()
+        print('nodes in bucket', table.buckets[index].nodes.values())
         self.current_nodes = table.buckets[index].get_nodes()
+        print('current nodes', self.current_nodes)
         self.left_buckets = table.buckets[:index]
         self.right_buckets = table.buckets[(index + 1):]
         self.left = True
@@ -114,29 +119,29 @@ class TableTraverser:
         """
         Pop an item from the left subtree, then right, then left, etc.
         """
-        log.warning(self.current_nodes)
+        print(self.current_nodes)
         if self.current_nodes and len(self.current_nodes) > 0:
             return self.current_nodes.pop()
 
-        log.warning(self.__dict__)
+        print(self.__dict__)
         if self.left and self.left_buckets:
             self.current_nodes = self.left_buckets.pop().get_nodes()
-            log.warning(self.current_nodes)
+            print(self.current_nodes)
             self.left = False
             return next(self)
 
         if self.right_buckets:
             self.current_nodes = self.right_buckets.pop(0).get_nodes()
             self.left = True
-            log.warning(self.current_nodes)
+            print(self.current_nodes)
 
             return next(self)
-        log.warning("Not found")
+        print("Not found")
         raise StopIteration
 
 
 class RoutingTable:
-    def __init__(self, protocol, ksize: int, node: Node):
+    def __init__(self, ksize: int, node: Node):
         """
         @param node: The node that represents this server.  It won't
         be added to the routing table, but will be needed later to
@@ -144,7 +149,6 @@ class RoutingTable:
 
         """
         self.node = node
-        self.protocol = protocol
         self.ksize = ksize
         self.flush()
 
@@ -175,9 +179,12 @@ class RoutingTable:
     def add_contact(self, node: Node):
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
-
+        print()
+        print('previous nodes in bucket of index ', index, bucket.get_nodes())
         # this will succeed unless the bucket is full
         if bucket.add_node(node):
+            # print('add node with id :')
+            print('Bucket nodes: ', bucket.get_nodes())
             return
 
         # Per section 4.2 of paper, split if the bucket has the node
@@ -186,7 +193,7 @@ class RoutingTable:
             self.split_bucket(index)
             self.add_contact(node)
         else:
-            asyncio.ensure_future(self.protocol.call_ping(bucket.head()))
+            FileSystemProtocol.call_ping(bucket.head())
 
     def get_bucket_for(self, node: Node):
         """
@@ -212,6 +219,7 @@ class RoutingTable:
         for neighbor in TableTraverser(self, node):
             not_excluded = exclude is None or not neighbor.same_home_as(
                 exclude)
+            print('not excluded ', not_excluded)
             if neighbor.id != node.id and not_excluded:
                 heapq.heappush(nodes, (node.distance_to(neighbor), neighbor))
             if len(nodes) == k:

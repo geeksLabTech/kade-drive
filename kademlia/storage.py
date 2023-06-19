@@ -1,10 +1,13 @@
-import time
+import os
+import json
 from itertools import takewhile
+import time
 import operator
 from collections import OrderedDict
 from abc import abstractmethod, ABC
-from odmantic import SyncEngine
+# from odmantic import SyncEngine
 from models.file import File
+import pickle
 
 
 class IStorage(ABC):
@@ -111,28 +114,64 @@ class PersistentStorage(IStorage):
     mongodb and retrieve the data that correspond to the given dict
     """
 
-    def __init__(self, db_name='file_system', ttl=604800):
+    def __init__(self, ttl=604800):
         """
         By default, max age is a week.
         """
-        self.db = SyncEngine(database=db_name)
+        self.db_path = 'static'
+        self.db = []
         self.data = OrderedDict()
         self.ttl = ttl
-        # self.address = (ip, port)
+
+        if os.path.exists(os.path.join(self.db_path)):
+            try:
+                with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
+                    print("loading orderedDict")
+                    self.data = pickle.load(file)
+                print(self.data)
+            except:
+                pass
+            # self.address = (ip, port)
+
+    def update_dict(self):
+        if not os.path.exists(os.path.join(self.db_path)):
+            os.mkdir(self.db_path)
+
+        with open(os.path.join(self.db_path, "data_dict.json"), 'wb') as f:
+            pickle.dump(self.data, f)
 
     # def get_data_from_db(self, key: bytes):
     #     data = self.db.find_one(File, File.id == key)
     #     assert data is not None, 'Tried to get data that is not in db'
     #     return data
 
+    def get_value(self, key):
+        with open(os.path.join(self.db_path, str(key)), "rb") as f:
+            result = f.read().decode()
+            # result = self.db.find_one(File, File.id == key)
+        assert result is not None, 'Tried to get data that is not in db'
+        return result
+
+    def set_value(self, key, value):
+        self.data[key] = (time.monotonic())
+        self.update_dict()
+        with open(os.path.join(self.db_path, str(key)), "wb") as f:
+            try:
+                f.write(value)
+            except:
+                f.write(value.encode("unicode_escape"))
+
     def __setitem__(self, key, value):
         if key in self.data:
             del self.data[key]
-            self.db.remove(File, File.id == key)
+            os.remove(os.path.join(self.db_path, str(key)))
+            # self.db.remove(File, File.id == key)``
 
         self.data[key] = (time.monotonic())
-        file_to_save = File(id=key, data=value)
-        self.db.save(file_to_save)
+        self.update_dict()
+        # file_to_save = File(id=key, data=value)
+        self.set_value(key, value)
+        # self.db.save(file_to_save)
         self.cull()
 
     def cull(self):
@@ -142,17 +181,17 @@ class PersistentStorage(IStorage):
         # for _ in self.iter_older_than(self.ttl):
         #     key, _ = self.data.popitem(last=False)
         #     self.db.remove(File, File.id == key)
+
     def get(self, key, default=None):
         self.cull()
         if key in self.data:
-            result = self.db.find_one(File, File.id == key)
-            assert result is not None, 'Tried to get data that is not in db'
-            return result.data
+            result = self.get_value(key)
+            return result
         return default
 
     def __getitem__(self, key):
         self.cull()
-        result = self.db.find_one(File, File.id == key)
+        result = self.get_value(key)
         if result is None:
             raise KeyError()
         return result
@@ -181,5 +220,9 @@ class PersistentStorage(IStorage):
         self.cull()
         ikeys = self.data.keys()
         # ivalues = map(operator.itemgetter(1), self.data.values())
-        ivalues = self.db.find(File)
+
+        ivalues = []
+
+        for ik in ikeys:
+            ivalues.append(self.get_value(ik))
         return zip(ikeys, ivalues)

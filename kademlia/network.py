@@ -5,8 +5,10 @@ import random
 import pickle
 import asyncio
 import logging
+from re import S
 
-from kademlia.protocol import FileSystemProtocol
+from kademlia.protocol import FileSystemProtocol, ServerSession
+from kademlia.routing import RoutingTable
 from kademlia.utils import digest
 from kademlia.storage import ForgetfulStorage, IStorage, PersistentStorage
 from kademlia.node import Node
@@ -14,22 +16,23 @@ from kademlia.crawling import ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
 from models.file import File
 import socket
+from rpyc import Service
+from rpyc.utils.server import ThreadedServer
+import rpyc
+import threading
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
-# pylint: disable=too-many-instance-attributes
 class Server:
-    """
-    High level view of a node instance.  This is the object that should be
-    created to start listening as an active node on the network.
-    """
+    ksize: int
+    alpha: int
+    storage: PersistentStorage
+    node: Node
+    routing: RoutingTable
 
-    protocol_class = FileSystemProtocol
-
-    def __init__(self, ksize=20, alpha=3, node_id: bytes | None = None, storage: PersistentStorage | None = None):
+    @staticmethod
+    def init(ksize=20, alpha=3, ip: str = '0.0.0.0', port: int = 8086, node_id: bytes | None = None, storage: PersistentStorage | None = None):
         """
-        Create a server instance.  This will start listening on the given port.
-
         Args:
             ksize (int): Replication factor, determines to how many closest peers a record is replicated
             alpha (int): concurrency parameter, determines how many parallel asynchronous FIND_NODE RPC send
@@ -37,95 +40,37 @@ class Server:
             storage: An instance that implements the interface
                      :class:`~kademlia.storage.IStorage`
         """
-        self.ksize = ksize
-        self.alpha = alpha
-        self.storage = storage or ForgetfulStorage()
-        self.node = Node(node_id or digest(random.getrandbits(255)))
-        self.protocol = FileSystemProtocol(self.node, self.storage, ksize)
-        self.refresh_loop = None
-        self.save_state_loop = None
+        Server.ksize = ksize
+        Server.alpha = alpha
+        Server.storage = storage or PersistentStorage()
+        Server.node = Node(node_id or digest(
+            random.getrandbits(255)), ip=ip, port=str(port))
+        print("NODE ID", Server.node.id)
+        Server.routing = RoutingTable(Server.ksize, Server.node)
+        FileSystemProtocol.init(Server.routing, Server.storage)
+        print(port, ip)
+        threading.Thread(target=Server.listen, args=(port, ip)).start()
 
-    def stop(self):
-        self.protocol.close_trasports()
-
-        if self.refresh_loop:
-            self.refresh_loop.cancel()
-
-        if self.save_state_loop:
-            self.save_state_loop.cancel()
-
-    def _create_protocol(self):
-        return self.protocol_class(self.node, self.storage, self.ksize)
-
-    async def listen(self, port, interface='0.0.0.0'):
+    @staticmethod
+    def listen(port, interface='0.0.0.0'):
         """
         Start listening on the given port.
 
         Provide interface="::" to accept ipv6 address
         """
+        print(interface, port)
+        Server.node.ip = interface
+        Server.node.port = port
 
-        loop = asyncio.get_event_loop()
-        
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind((interface,port))
-        listen_udp = loop.create_datagram_endpoint(
-            self.protocol.create_udp_protocol, sock=sock)
-        await listen_udp
-
-        socktcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socktcp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        socktcp.bind((interface,port))
-        listen_tcp = loop.create_connection(
-            self.protocol.create_tcp_protocol, sock=socktcp)
-
-        await listen_tcp
-        log.info("Node %i listening on %s:%i",
-                 self.node.long_id, interface, 8888)
-        # self.transport, self.protocol = await listen
+        t = ThreadedServer(ServerService, port=port, hostname=interface, protocol_config={
+            'allow_public_attrs': True,
+        })
+        t.start()
         # finally, schedule refreshing table
-        self.refresh_table()
+        # Server.refresh_table()
 
-    def refresh_table(self):
-        log.debug("Refreshing routing table")
-        asyncio.ensure_future(self._refresh_table())
-        loop = asyncio.get_event_loop()
-        self.refresh_loop = loop.call_later(3600, self.refresh_table)
-
-    async def _refresh_table(self):
-        """
-        Refresh buckets that haven't had any lookups in the last hour
-        (per section 2.3 of the paper).
-        """
-        results = []
-        for node_id in self.protocol.get_refresh_ids():
-            node = Node(node_id)
-            nearest = self.protocol.router.find_neighbors(node, self.alpha)
-            spider = NodeSpiderCrawl(self.protocol, node, nearest,
-                                     self.ksize, self.alpha)
-            results.append(spider.find())
-
-        # do our crawling
-        await asyncio.gather(*results)
-
-        # now republish keys older than one hour
-        # for dkey, value in self.storage.iter_older_than(3600):
-        #     await self.set_digest(dkey, value)
-
-    def bootstrappable_neighbors(self):
-        """
-        Get a :class:`list` of (ip, port) :class:`tuple` pairs suitable for
-        use as an argument to the bootstrap method.
-
-        The server should have been bootstrapped
-        already - this is just a utility for getting some neighbors and then
-        storing them if this server is going down for a while.  When it comes
-        back up, the list of nodes can be used to bootstrap.
-        """
-        neighbors = self.protocol.router.find_neighbors(self.node)
-        return [tuple(n)[-2:] for n in neighbors]
-
-    async def bootstrap(self, addrs: list[tuple[str, str]]):
+    @staticmethod
+    def bootstrap(addrs: list[tuple[str, str]]):
         """
         Bootstrap the server by connecting to other known nodes in the network.
 
@@ -133,59 +78,33 @@ class Server:
             addrs: A `list` of (ip, port) `tuple` pairs.  Note that only IP
                    addresses are acceptable - hostnames will cause an error.
         """
-        log.debug("Attempting to bootstrap node with %i initial contacts",
-                  len(addrs))
-        cos = list(map(self.bootstrap_node, addrs))
-        gathered = await asyncio.gather(*cos)
-        nodes = [node for node in gathered if node is not None]
-        spider = NodeSpiderCrawl(self.protocol, self.node, nodes,
-                                 self.ksize, self.alpha)
-        return await spider.find()
+        print(
+            f"Attempting to bootstrap node with {len(addrs)} initial contacts")
+        cos = list(map(Server.bootstrap_node, addrs))
+        # gathered = await asyncio.gather(*cos)
+        # print(cos)
+        nodes = [node for node in cos if node is not None]
+        # print(nodes)
+        spider = NodeSpiderCrawl(Server.node, nodes,
+                                 Server.ksize, Server.alpha)
+        # print(spider)
+        res = spider.find()
+        print('results of spider find: ', res)
+        print(res)
 
-    async def bootstrap_node(self, addr: tuple[str, str]):
-        result = await self.protocol.udp_protocol.rpc_ping(addr, self.node.id)
-        return Node(result[1], addr[0], addr[1]) if result[0] else None
+        return res
 
-    async def get(self, key, apply_hash_to_key=True):
-        """
-        Get a key if the network has it.
+    @staticmethod
+    def bootstrap_node(addr: tuple[str, str]):
+        response = None
+        with ServerSession(addr[0], addr[1]) as conn:
+            response = conn.rpc_ping(
+                (Server.node.ip, Server.node.port), Server.node.id)
+        # print(bytes(response))
+            return Node(response, addr[0], addr[1]) if response else None
 
-        Returns:
-            :class:`None` if not found, the value otherwise.
-        """
-        log.info("Looking up key %s", key)
-        if apply_hash_to_key:
-            key = digest(key)
-        # if this node has it, return it
-        if self.storage.get(key) is not None:
-            return self.storage.get(key)
-        node = Node(key)
-        nearest = self.protocol.router.find_neighbors(node)
-        if not nearest:
-            log.warning("There are no known neighbors to get key %s", key)
-            return None
-        spider = ValueSpiderCrawl(self.protocol, node, nearest,
-                                  self.ksize, self.alpha)
-        return await spider.find()
-
-    async def get_file_chunks(self, hashed_chunks):
-        results = [await self.get(chunk, False) for chunk in hashed_chunks]
-        data_chunks = [f for f in results if f is File]
-
-        if len(hashed_chunks) != len(data_chunks):
-            log.warning('Failed to retrieve all data for chunks')
-
-        data = b''.join(data_chunks)
-        return data
-
-    async def upload_file(self, data: bytes):
-        # 1000000 bytes is equivalent to 1mb
-        chunks = self.split_data(data, 1000000)
-        processed_chunks = ((digest(c), c) for c in chunks)
-        for c in processed_chunks:
-            await self.set(c[0], c[1], False)
-
-    def split_data(self, data: bytes, chunk_size: int):
+    @staticmethod
+    def split_data(data: bytes, chunk_size: int):
         """Split data into chunks of less than chunk_size, it must be less than 16mb"""
         fixed_chunks = len(data) // chunk_size
         last_chunk_size = len(data) - fixed_chunks * chunk_size
@@ -197,97 +116,296 @@ class Server:
 
         return chunks
 
-    async def set(self, key, value, apply_hash_to_key=True):
-        """
-        Set the given string key to the given value in the network.
-        """
-
-        if not check_dht_value_type(value):
-            print('eel valor es: ', value)
-            raise TypeError(
-                f"Value must be of type int, float, bool, str, or bytes, received {value}"
-            )
-        log.info("setting '%s' = '%s' on network", key, value)
-        if apply_hash_to_key:
-            key = digest(key)
-        return await self.set_digest(key, value)
-
-    async def set_digest(self, dkey: bytes, value):
+    @staticmethod
+    def set_digest(dkey: bytes, value):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
         """
         node = Node(dkey)
 
-        nearest = self.protocol.router.find_neighbors(node)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
-            log.warning("There are no known neighbors to set key %s",
-                        dkey.hex())
-            return False
+            print("There are no known neighbors to set key %s",
+                  dkey.hex())
+            print('storing in current server')
+            Server.storage[dkey] = value
+            return True
 
-        spider = NodeSpiderCrawl(self.protocol, node, nearest,
-                                 self.ksize, self.alpha)
-        nodes = await spider.find()
-        log.info("setting '%s' on %s", dkey.hex(), list(map(str, nodes)))
+        spider = NodeSpiderCrawl(node, nearest,
+                                 Server.ksize, Server.alpha)
+        nodes = spider.find()
+        print("setting '%s' on %s", dkey.hex(), list(map(str, nodes)))
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
-        if self.node.distance_to(node) < biggest:
-            self.storage[dkey] = value
-        results = [self.protocol.call_store(n, dkey, value) for n in nodes]
+        if Server.node.distance_to(node) < biggest:
+            Server.storage[dkey] = value
+
+        any_result = False
+        for n in nodes:
+            address = (n.ip, n.port)
+            with ServerSession(address[0], address[1]) as conn:
+                result = FileSystemProtocol.call_store(conn, n, dkey, value)
+                if result:
+                    any_result = True
+
         # return true only if at least one store call succeeded
-        return any(await asyncio.gather(*results))
+        return any_result
 
-    def save_state(self, fname: str):
-        """
-        Save the state of this node (the alpha/ksize/id/immediate neighbors)
-        to a cache file with the given fname.
-        """
-        log.info("Saving state to %s", fname)
-        data = {
-            'ksize': self.ksize,
-            'alpha': self.alpha,
-            'id': self.node.id,
-            'neighbors': self.bootstrappable_neighbors()
-        }
-        if not data['neighbors']:
-            log.warning("No known neighbors, so not writing to cache.")
-            return
-        with open(fname, 'wb') as file:
-            pickle.dump(data, file)
+    # def refresh_table(self):
+    #     print("Refreshing routing table")
+    #     self._refresh_table()
+    #     loop = asyncio.get_event_loop()
+    #     self.refresh_loop = loop.call_later(3600, self.refresh_table)
 
-    @classmethod
-    async def load_state(cls, fname: str, port: str, interface='0.0.0.0'):
-        """
-        Load the state of this node (the alpha/ksize/id/immediate neighbors)
-        from a cache file with the given fname and then bootstrap the node
-        (using the given port/interface to start listening/bootstrapping).
-        """
-        log.info("Loading state from %s", fname)
-        with open(fname, 'rb') as file:
-            data = pickle.load(file)
-        svr = cls(data['ksize'], data['alpha'], data['id'])
-        await svr.listen(port, interface)
-        if data['neighbors']:
-            await svr.bootstrap(data['neighbors'])
-        return svr
+    # def _refresh_table(self):
+    #     """
+    #     Refresh buckets that haven't had any lookups in the last hour
+    #     (per section 2.3 of the paper).
+    #     """
+    #     results = []
+    #     for node_id in FileSystemProtocol.get_refresh_ids():
+    #         node = Node(node_id)
+    #         nearest = FileSystemProtocol.router.find_neighbors(node, self.alpha)
+    #         spider = NodeSpiderCrawl(FileSystemProtocol, node, nearest,
+    #                                  self.ksize, self.alpha)
+    #         results.append(spider.find())
 
-    def save_state_regularly(self, fname: str, frequency=600):
-        """
-        Save the state of node with a given regularity to the given
-        filename.
+# pylint: disable=too-many-instance-attributes
+
+
+@rpyc.service
+class ServerService(Service):
+
+    @rpyc.exposed
+    def rpc_store(self, sender, nodeid: bytes, key: bytes, value):
+        """Instructs a node to store a value
 
         Args:
-            fname: File name to save retularly to
-            frequency: Frequency in seconds that the state should be saved.
-                        By default, 10 minutes.
+            sender : Sender Node  
+            nodeid (bytes): Node to be told to store info
+            key (bytes): key to the value to store
+            value : value to store
+
+        Returns:
+            bool: True if operation successful
         """
-        self.save_state(fname)
-        loop = asyncio.get_event_loop()
-        self.save_state_loop = loop.call_later(frequency,
-                                               self.save_state_regularly,
-                                               fname,
-                                               frequency)
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+
+        print("got a store request from %s, storing '%s'='%s'",
+              sender, key.hex(), value)
+        # store values and report success
+        FileSystemProtocol.storage[key] = value
+        return True
+
+    @rpyc.exposed
+    def rpc_find_value(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        # get value from storage
+        value = FileSystemProtocol.storage.get(key, None)
+        return value
+        # if not value found, ask the info for the value to the nodes
+        # if value is None:
+        #     return self.rpc_find_node(sender, nodeid, key)
+        # return {'value': value}
+
+    @rpyc.exposed
+    def rpc_stun(self, sender):  # pylint: disable=no-self-use
+        return sender
+
+    @rpyc.exposed
+    def rpc_ping(self, sender, nodeid: bytes):
+        """Probe a Node to see if pc is online
+
+        Args:
+            sender : sender node
+            nodeid (bytes): node to be probed
+
+        Returns:
+            bytes: node id if alive, None if not 
+        """
+        print(f"rpc ping called from {nodeid}, {sender[0]}, {sender[1]}")
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        print("return ping")
+        return FileSystemProtocol.source_node.id
+
+    @rpyc.exposed
+    def rpc_find_node(self, sender, nodeid: bytes, key: bytes):
+        print(f"finding neighbors of {int(nodeid.hex(), 16)} in local table")
+
+        source = Node(nodeid, sender[0], sender[1])
+
+        print('node id', nodeid)
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        # create a fictional node to perform the search
+        print('fictional key ', key)
+        node = Node(key)
+        # ask for the neighbors of the node
+        neighbors = FileSystemProtocol.router.find_neighbors(
+            node, exclude=node)
+        print('neighbors of find_node: ', neighbors)
+        return list(map(tuple, neighbors))
+
+    # def stop(self):
+    #     if self.thread:
+    #         self.thread.join()
+
+    #     if self.refresh_loop:
+    #         self.refresh_loop.cancel()
+
+    #     if self.save_state_loop:
+    #         self.save_state_loop.cancel()
+
+    # def _create_protocol(self):
+    #     return self.protocol_class(self.node, self.storage, self.ksize)
+
+    #
+
+    # do our crawling
+    # await asyncio.gather(*results)
+
+    # now republish keys older than one hour
+    # for dkey, value in self.storage.iter_older_than(3600):
+    #     self.set_digest(dkey, value)
+
+    @rpyc.exposed
+    def bootstrappable_neighbors(self):
+        """
+        Get a :class:`list` of (ip, port) :class:`tuple` pairs suitable for
+        use as an argument to the bootstrap method.
+
+        The server should have been bootstrapped
+        already - this is just a utility for getting some neighbors and then
+        storing them if this server is going down for a while.  When it comes
+        back up, the list of nodes can be used to bootstrap.
+        """
+        neighbors = FileSystemProtocol.router.find_neighbors(Server.node)
+        return [tuple(n)[-2:] for n in neighbors]
+
+    @rpyc.exposed
+    def get(self, key, apply_hash_to_key=True):
+        """
+        Get a key if the network has it.
+
+        Returns:
+            :class:`None` if not found, the value otherwise.
+        """
+        print("Looking up key %s", key)
+        if apply_hash_to_key:
+            key = digest(key)
+        # if this node has it, return it
+        if Server.storage.get(key) is not None:
+            return Server.storage.get(key)
+        node = Node(key)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
+        if not nearest:
+            print("There are no known neighbors to get key %s", key)
+            return None
+        spider = ValueSpiderCrawl(node, nearest,
+                                  Server.ksize, Server.alpha)
+        return spider.find()
+
+    @rpyc.exposed
+    def get_file_chunks(self, hashed_chunks):
+        results = [self.get(chunk, False) for chunk in hashed_chunks]
+        data_chunks = [f for f in results if f is File]
+
+        if len(hashed_chunks) != len(data_chunks):
+            print('Failed to retrieve all data for chunks')
+
+        data = b''.join(data_chunks)
+        return data
+
+    @rpyc.exposed
+    def upload_file(self, data: bytes):
+        # 1000000 bytes is equivalent to 1mb
+        chunks = Server.split_data(data, 1000000)
+        processed_chunks = ((digest(c), c) for c in chunks)
+        for c in processed_chunks:
+            self.set_key(c[0], c[1], False)
+
+    @rpyc.exposed
+    def set_key(self, key, value, apply_hash_to_key=True):
+        """
+        Set the given string key to the given value in the network.
+        """
+        if not check_dht_value_type(value):
+            print('eel valor es: ', value)
+            raise TypeError(
+                f"Value must be of type int, float, bool, str, or bytes, received {value}"
+            )
+        print("setting '%s' = '%s' on network", key, value)
+        if apply_hash_to_key:
+            key = digest(key)
+        return Server.set_digest(key, value)
+
+    # def save_state(self, fname: str):
+    #     """
+    #     Save the state of this node (the alpha/ksize/id/immediate neighbors)
+    #     to a cache file with the given fname.
+    #     """
+    #     print("Saving state to %s", fname)
+    #     data = {
+    #         'ksize': self.ksize,
+    #         'alpha': self.alpha,
+    #         'id': self.node.id,
+    #         'neighbors': self.bootstrappable_neighbors()
+    #     }
+    #     if not data['neighbors']:
+    #         print("No known neighbors, so not writing to cache.")
+    #         return
+    #     with open(fname, 'wb') as file:
+    #         pickle.dump(data, file)
+
+    # @classmethod
+    # def load_state(cls, fname: str, port: str, interface='0.0.0.0'):
+    #     """
+    #     Load the state of this node (the alpha/ksize/id/immediate neighbors)
+    #     from a cache file with the given fname and then bootstrap the node
+    #     (using the given port/interface to start listening/bootstrapping).
+    #     """
+    #     print("Loading state from %s", fname)
+    #     with open(fname, 'rb') as file:
+    #         data = pickle.load(file)
+    #     svr = cls(data['ksize'], data['alpha'], data['id'])
+    #     await svr.listen(port, interface)
+    #     if data['neighbors']:
+    #         await svr.bootstrap(data['neighbors'])
+    #     return svr
+
+    # def save_state_regularly(self, fname: str, frequency=600):
+    #     """
+    #     Save the state of node with a given regularity to the given
+    #     filename.
+
+    #     Args:
+    #         fname: File name to save retularly to
+    #         frequency: Frequency in seconds that the state should be saved.
+    #                     By default, 10 minutes.
+    #     """
+    #     self.save_state(fname)
+    #     loop = asyncio.get_event_loop()
+    #     self.save_state_loop = loop.call_later(frequency,
+    #                                            self.save_state_regularly,
+    #                                            fname,
+    #                                            frequency)
 
 
 def check_dht_value_type(value):
