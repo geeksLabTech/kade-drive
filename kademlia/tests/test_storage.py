@@ -33,4 +33,4 @@ def test_set_value():
     storage.set_value('a', ('a').encode())
     val = storage.get_value('a')
     print(val)
-    assert val.decode() == 'a'
+    assert val == 'a'
