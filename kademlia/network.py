@@ -47,6 +47,7 @@ class Server:
             random.getrandbits(255)), ip=ip, port=str(port))
         Server.routing = RoutingTable(Server.ksize, Server.node)
         FileSystemProtocol.init(Server.routing, Server.storage)
+        print(port,ip)
         threading.Thread(target=Server.listen, args=(port, ip)).start()
 
     @staticmethod
@@ -56,8 +57,10 @@ class Server:
 
         Provide interface="::" to accept ipv6 address
         """
+        print(interface, port)
         Server.node.ip = interface
         Server.node.port = port
+        
         t = ThreadedServer(ServerService, port=port, hostname=interface, protocol_config={
             'allow_public_attrs': True,
         })

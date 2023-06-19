@@ -20,7 +20,7 @@ def start_(bootstrap_nodes: Optional[str] = None):
         host_ip = sys.argv[1]
         # client_session = ClientSession(ip=ip)
 
-    Server.init(ip=host_ip)
+    Server.init(ip=host_ip.split(" ")[0])
     # Server.init(ip="192.168.26.2")
     time.sleep(0.3)
     if bootstrap_nodes:
