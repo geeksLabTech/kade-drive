@@ -124,10 +124,13 @@ class PersistentStorage(IStorage):
         self.ttl = ttl
 
         if os.path.exists(os.path.join(self.db_path)):
-            with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
-                print("loading orderedDict")
-                self.data = pickle.load(file)
-            print(self.data)
+            try:
+                with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
+                    print("loading orderedDict")
+                    self.data = pickle.load(file)
+                print(self.data)
+            except:
+                pass
             # self.address = (ip, port)
 
     def update_dict(self):
