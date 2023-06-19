@@ -3,7 +3,7 @@ import logging
 
 from kademlia.node import Node, NodeHeap
 from kademlia.utils import gather_dict
-from kademlia.protocol import FileSystemProtocol
+from kademlia.protocol import FileSystemProtocol, ServerSession
 
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -64,15 +64,17 @@ class SpiderCrawl:
         # return the info from those nodes
         for peer in self.nearest.get_uncontacted()[:count]:
             print("Peer", peer)
-            print("Calling ", rpcmethod)
-            rpcmethod(peer, self.node)
-            ans = FileSystemProtocol.last_response
-            print("response",ans)
-            dicts[peer.id] = ans
-            # print("DICT SSSSSS " ,dicts)
-            self.nearest.mark_contacted(peer)
-            print("mark contacted successful")
-        # found = await gather_dict(dicts)
+            with ServerSession(peer[0], peer[1]) as conn:
+                print("Calling ", rpcmethod)
+                rpcmethod(conn, peer, self.node)
+                # print(FileSystemProtocol.last_response)
+                ans = FileSystemProtocol.last_response
+                # print("response", ans)
+                dicts[peer.id] = ans
+                # print("DICT SSSSSS " ,dicts)
+                self.nearest.mark_contacted(peer)
+                print("mark contacted successful")
+            # found = await gather_dict(dicts)
         return self._nodes_found(dicts)
 
     def _nodes_found(self, responses):
