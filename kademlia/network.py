@@ -7,7 +7,7 @@ import asyncio
 import logging
 from re import S
 
-from kademlia.protocol import FileSystemProtocol, ServerSessionService, ServerSession
+from kademlia.protocol import FileSystemProtocol, ServerSession
 from kademlia.routing import RoutingTable
 from kademlia.utils import digest
 from kademlia.storage import ForgetfulStorage, IStorage, PersistentStorage
