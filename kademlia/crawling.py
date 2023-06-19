@@ -65,7 +65,8 @@ class SpiderCrawl:
         for peer in self.nearest.get_uncontacted()[:count]:
             print("Peer", peer)
             print("Calling ", rpcmethod)
-            ans = rpcmethod(peer, self.node)
+            rpcmethod(peer, self.node)
+            ans = FileSystemProtocol.last_response
             print("response",ans)
             dicts[peer.id] = ans
             # print("DICT SSSSSS " ,dicts)

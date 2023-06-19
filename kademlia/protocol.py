@@ -42,6 +42,7 @@ class FileSystemProtocol:
     ksize: int
     storage: PersistentStorage
     router: None = None
+    last_response = None
 
     @staticmethod
     def init(routing_table, storage: PersistentStorage):
@@ -87,7 +88,7 @@ class FileSystemProtocol:
         with ServerSession(address[0], address[1]) as conn:
             response = conn.rpc_find_node(address, node_to_ask.id,
                                           node_to_find.id)
-            print(response)
+            FileSystemProtocol.last_response = response
             return FileSystemProtocol.process_response(response, node_to_ask)
         return None
 
