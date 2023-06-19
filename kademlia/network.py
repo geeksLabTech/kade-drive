@@ -47,7 +47,7 @@ class Server:
             random.getrandbits(255)), ip=ip, port=str(port))
         Server.routing = RoutingTable(Server.ksize, Server.node)
         FileSystemProtocol.init(Server.routing, Server.storage)
-        print(port,ip)
+        print(port, ip)
         threading.Thread(target=Server.listen, args=(port, ip)).start()
 
     @staticmethod
@@ -60,7 +60,7 @@ class Server:
         print(interface, port)
         Server.node.ip = interface
         Server.node.port = port
-        
+
         t = ThreadedServer(ServerService, port=port, hostname=interface, protocol_config={
             'allow_public_attrs': True,
         })
@@ -77,8 +77,8 @@ class Server:
             addrs: A `list` of (ip, port) `tuple` pairs.  Note that only IP
                    addresses are acceptable - hostnames will cause an error.
         """
-        log.debug("Attempting to bootstrap node with %i initial contacts",
-                  len(addrs))
+        print("Attempting to bootstrap node with %i initial contacts",
+                len(addrs))
         cos = list(map(Server.bootstrap_node, addrs))
         # gathered = await asyncio.gather(*cos)
         nodes = [node for node in cos if node is not None]
@@ -117,9 +117,9 @@ class Server:
 
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
-            log.warning("There are no known neighbors to set key %s",
+            print("There are no known neighbors to set key %s",
                         dkey.hex())
-            log.warning('storing in current server')
+            print('storing in current server')
             Server.storage[dkey] = value
             return True
 
@@ -138,7 +138,7 @@ class Server:
         return any(results)
 
     # def refresh_table(self):
-    #     log.debug("Refreshing routing table")
+    #     print("Refreshing routing table")
     #     self._refresh_table()
     #     loop = asyncio.get_event_loop()
     #     self.refresh_loop = loop.call_later(3600, self.refresh_table)
@@ -179,7 +179,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         FileSystemProtocol.welcome_if_new(source)
 
-        log.debug("got a store request from %s, storing '%s'='%s'",
+        print("got a store request from %s, storing '%s'='%s'",
                   sender, key.hex(), value)
         # store values and report success
         FileSystemProtocol.storage[key] = value
@@ -213,7 +213,7 @@ class ServerService(Service):
         Returns:
             bytes: node id if alive, None if not 
         """
-        log.warning("rpc ping called")
+        print("rpc ping called")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         FileSystemProtocol.welcome_if_new(source)
@@ -234,7 +234,6 @@ class ServerService(Service):
         neighbors = FileSystemProtocol.router.find_neighbors(
             node, exclude=source)
         return list(map(tuple, neighbors))
-
 
     # def stop(self):
     #     if self.thread:
@@ -257,6 +256,7 @@ class ServerService(Service):
     # now republish keys older than one hour
     # for dkey, value in self.storage.iter_older_than(3600):
     #     self.set_digest(dkey, value)
+
     @rpyc.exposed
     def bootstrappable_neighbors(self):
         """
@@ -288,7 +288,7 @@ class ServerService(Service):
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
-            log.warning("There are no known neighbors to get key %s", key)
+            print("There are no known neighbors to get key %s", key)
             return None
         spider = ValueSpiderCrawl(node, nearest,
                                   Server.ksize, Server.alpha)
@@ -300,7 +300,7 @@ class ServerService(Service):
         data_chunks = [f for f in results if f is File]
 
         if len(hashed_chunks) != len(data_chunks):
-            log.warning('Failed to retrieve all data for chunks')
+            print('Failed to retrieve all data for chunks')
 
         data = b''.join(data_chunks)
         return data
@@ -341,7 +341,7 @@ class ServerService(Service):
     #         'neighbors': self.bootstrappable_neighbors()
     #     }
     #     if not data['neighbors']:
-    #         log.warning("No known neighbors, so not writing to cache.")
+    #         print("No known neighbors, so not writing to cache.")
     #         return
     #     with open(fname, 'wb') as file:
     #         pickle.dump(data, file)
