@@ -110,10 +110,18 @@ class Server:
         last_chunk_size = len(data) - fixed_chunks * chunk_size
         start_of_last_chunk = len(data)-last_chunk_size
         last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
-        chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)]
-        if last_chunk_size > 0:
-            chunks.append(last_chunk)
-
+        # chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)]
+        chunks = []
+        count = 0
+        last_position = 0
+        while(not (fixed_chunks == count)):
+            if count == 0:
+                chunks.append(data[0:chunk_size])
+                last_position = chunk_size
+            else:
+                chunks.append(data[last_position: last_position + chunk_size])
+                last_position = last_position + chunk_size
+            count +=1
         return chunks
 
     @staticmethod
@@ -335,7 +343,6 @@ class ServerService(Service):
 
     @rpyc.exposed
     def upload_file(self, data: bytes):
-        # 1000000 bytes is equivalent to 1mb
         chunks = Server.split_data(data, 1000000)
         processed_chunks = ((digest(c), c) for c in chunks)
         for c in processed_chunks:
