@@ -174,9 +174,12 @@ class RoutingTable:
     def add_contact(self, node: Node):
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
-
+        print()
+        print('previous nodes in bucket ', bucket.get_nodes())
         # this will succeed unless the bucket is full
         if bucket.add_node(node):
+            # print('add node with id :')
+            print('Bucket nodes: ', bucket.get_nodes())
             return
 
         # Per section 4.2 of paper, split if the bucket has the node

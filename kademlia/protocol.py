@@ -86,7 +86,7 @@ class FileSystemProtocol:
         with ServerSession(address[0], address[1]) as conn:
             response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
                                           node_to_find.id)
-            print(response)
+            # print(response)
 
         return FileSystemProtocol.process_response(response, node_to_ask)
 
@@ -138,6 +138,7 @@ class FileSystemProtocol:
         print("never seen %s before, adding to router", node)
         # iterate over storage
         for key, value in FileSystemProtocol.storage:
+            print('entry for')
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
             neighbors = FileSystemProtocol.router.find_neighbors(keynode)
@@ -155,6 +156,7 @@ class FileSystemProtocol:
             if not neighbors or (new_node_close and this_closest):
                     FileSystemProtocol.call_store(node, key, value)
         # add node to table
+        print('Adding new node to contacts')
         FileSystemProtocol.router.add_contact(node)
 
     @staticmethod
