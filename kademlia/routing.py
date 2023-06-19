@@ -114,24 +114,24 @@ class TableTraverser:
         """
         Pop an item from the left subtree, then right, then left, etc.
         """
-        log.warning(self.current_nodes)
+        print(self.current_nodes)
         if self.current_nodes and len(self.current_nodes) > 0:
             return self.current_nodes.pop()
 
-        log.warning(self.__dict__)
+        print(self.__dict__)
         if self.left and self.left_buckets:
             self.current_nodes = self.left_buckets.pop().get_nodes()
-            log.warning(self.current_nodes)
+            print(self.current_nodes)
             self.left = False
             return next(self)
 
         if self.right_buckets:
             self.current_nodes = self.right_buckets.pop(0).get_nodes()
             self.left = True
-            log.warning(self.current_nodes)
+            print(self.current_nodes)
 
             return next(self)
-        log.warning("Not found")
+        print("Not found")
         raise StopIteration
 
 
@@ -185,7 +185,7 @@ class RoutingTable:
             self.split_bucket(index)
             self.add_contact(node)
         else:
-            asyncio.ensure_future(FileSystemProtocol.call_ping(bucket.head()))
+            FileSystemProtocol.call_ping(bucket.head())
 
     def get_bucket_for(self, node: Node):
         """

@@ -135,7 +135,7 @@ class FileSystemProtocol:
         if not FileSystemProtocol.router.is_new_node(node):
             return
 
-        log.info("never seen %s before, adding to router", node)
+        print("never seen %s before, adding to router", node)
         # iterate over storage
         for key, value in FileSystemProtocol.storage:
             # Create fictional node to calculate distance
@@ -153,8 +153,7 @@ class FileSystemProtocol:
                     keynode) < first
             # if not neighbors, store data in the node
             if not neighbors or (new_node_close and this_closest):
-                asyncio.ensure_future(
-                    FileSystemProtocol.call_store(node, key, value))
+                    FileSystemProtocol.call_store(node, key, value)
         # add node to table
         FileSystemProtocol.router.add_contact(node)
 
@@ -165,11 +164,11 @@ class FileSystemProtocol:
         we get no response, make sure it's removed from the routing table.
         """
         if not response:
-            log.warning("no response from %s, removing from router", node)
+            print("no response from %s, removing from router", node)
             FileSystemProtocol.router.remove_contact(node)
             return response
 
-        log.info("got successful response from %s", node)
+        print("got successful response from %s", node)
         FileSystemProtocol.welcome_if_new(node)
         return response
 
