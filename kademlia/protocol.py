@@ -72,7 +72,7 @@ class FileSystemProtocol:
         response = conn.rpc_store(
             address, FileSystemProtocol.source_node.id, key, value)
 
-        return FileSystemProtocol.process_response(response, node_to_ask, conn)
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
     def call_find_node(conn, node_to_ask: Node, node_to_find: Node):
@@ -86,7 +86,7 @@ class FileSystemProtocol:
         response = conn.rpc_find_node(address, node_to_ask.id,
                                       node_to_find.id)
         FileSystemProtocol.last_response = response.copy()
-        return FileSystemProtocol.process_response(response, node_to_ask, conn)
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
     def call_find_value(conn, node_to_ask: Node, node_to_find: Node):
@@ -98,7 +98,7 @@ class FileSystemProtocol:
         response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
                                        node_to_find.id)
         print(response)
-        return FileSystemProtocol.process_response(response, node_to_ask, conn)
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
     def call_ping(conn, node_to_ask: Node):
@@ -110,10 +110,10 @@ class FileSystemProtocol:
         response = conn.rpc_ping(
             address, FileSystemProtocol.source_node.id)
 
-        return FileSystemProtocol.process_response(response, node_to_ask,conn)
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def welcome_if_new(node: Node, conn):
+    def welcome_if_new(conn, node: Node):
         """
         Given a new node, send it all the keys/values it should be storing,
         then add it to the routing table.
@@ -156,7 +156,7 @@ class FileSystemProtocol:
         FileSystemProtocol.router.add_contact(node)
 
     @staticmethod
-    def process_response(response, node: Node,conn):
+    def process_response(conn, response, node: Node):
         """
         If we get a response, add the node to the routing table.  If
         we get no response, make sure it's removed from the routing table.
@@ -166,7 +166,7 @@ class FileSystemProtocol:
             FileSystemProtocol.router.remove_contact(node)
             return response
 
-        FileSystemProtocol.welcome_if_new(node,conn)
+        FileSystemProtocol.welcome_if_new(conn, node)
         print("got successful response from %s", node)
         print(response)
         return response
