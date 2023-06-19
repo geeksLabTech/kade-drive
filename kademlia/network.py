@@ -45,6 +45,7 @@ class Server:
         Server.storage = storage or PersistentStorage()
         Server.node = Node(node_id or digest(
             random.getrandbits(255)), ip=ip, port=str(port))
+        print("NODE ID", Server.node.id)
         Server.routing = RoutingTable(Server.ksize, Server.node)
         FileSystemProtocol.init(Server.routing, Server.storage)
         print(port, ip)
@@ -91,11 +92,13 @@ class Server:
         print('results of spider find: ', res)
         
         return res
+
     @staticmethod
     def bootstrap_node(addr: tuple[str, str]):
         response = None
         with ServerSession(addr[0], addr[1]) as conn:
-            response = conn.rpc_ping(addr, Server.node.id)
+            response = conn.rpc_ping(
+                (Server.node.ip, Server.node.port), Server.node.id)
         # print(bytes(response))
         return Node(response, addr[0], addr[1]) if response else None
 
@@ -123,7 +126,7 @@ class Server:
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
             print("There are no known neighbors to set key %s",
-                        dkey.hex())
+                  dkey.hex())
             print('storing in current server')
             Server.storage[dkey] = value
             return True
@@ -185,7 +188,7 @@ class ServerService(Service):
         FileSystemProtocol.welcome_if_new(source)
 
         print("got a store request from %s, storing '%s'='%s'",
-                  sender, key.hex(), value)
+              sender, key.hex(), value)
         # store values and report success
         FileSystemProtocol.storage[key] = value
         return True
@@ -227,8 +230,7 @@ class ServerService(Service):
 
     @rpyc.exposed
     def rpc_find_node(self, sender, nodeid: bytes, key: bytes):
-        print("finding neighbors of %i in local table",
-                 int(nodeid.hex(), 16))
+        print(f"finding neighbors of {int(nodeid.hex(), 16)} in local table")
 
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
