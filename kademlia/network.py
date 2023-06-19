@@ -89,6 +89,7 @@ class Server:
                                  Server.ksize, Server.alpha)
         # print(spider)
         res = spider.find()
+        print('results of spider find: ', res)
         print(res)
 
         return res
@@ -97,7 +98,8 @@ class Server:
     def bootstrap_node(addr: tuple[str, str]):
         response = None
         with ServerSession(addr[0], addr[1]) as conn:
-            response = conn.rpc_ping((Server.node.id, Server.node.port), Server.node.id)
+            response = conn.rpc_ping(
+                (Server.node.id, Server.node.port), Server.node.id)
         # print(bytes(response))
         return Node(response, addr[0], addr[1]) if response else None
 
@@ -220,11 +222,11 @@ class ServerService(Service):
         Returns:
             bytes: node id if alive, None if not 
         """
-        print("rpc ping called")
+        print(f"rpc ping called from {nodeid}, {sender[0]}, {sender[1]}")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         FileSystemProtocol.welcome_if_new(source)
-
+        print("return ping")
         return FileSystemProtocol.source_node.id
 
     @rpyc.exposed
@@ -239,6 +241,7 @@ class ServerService(Service):
         # ask for the neighbors of the node
         neighbors = FileSystemProtocol.router.find_neighbors(
             node, exclude=source)
+        print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
 
     # def stop(self):
