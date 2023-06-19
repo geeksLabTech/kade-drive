@@ -8,17 +8,14 @@ import time
 import sys
 
 
-def start_(bootstrap_nodes: Optional[str] = None):
-    host_ip = socket.gethostbyname(socket.gethostname())
+def start_(host_ip: Optional[str],bootstrap_nodes: Optional[str] = None):
+    # host_ip = socket.gethostbyname(socket.gethostname())
 
-    if len(sys.argv) < 2:
+    if host_ip is None:
         print('Initiating client with local ip and default port')
         host_ip = socket.gethostbyname(socket.gethostname())
         # client_session = ClientSession(ip=host_ip)
-
-    if len(sys.argv) == 2:
-        host_ip = sys.argv[1]
-        # client_session = ClientSession(ip=ip)
+    
 
     Server.init(ip=host_ip.split(" ")[0])
     # Server.init(ip="192.168.26.2")
@@ -35,11 +32,11 @@ app = Typer()
 
 
 @app.command()
-def start(bootstrap_nodes=Argument(None)):
+def start(host_ip = Argument('0.0.0.0'),bootstrap_nodes=Argument(None)):
     if bootstrap_nodes:
-        start_(bootstrap_nodes)
+        start_(host_ip,bootstrap_nodes)
     else:
-        start_()
+        start_(host_ip)
 
 
 if __name__ == '__main__':
