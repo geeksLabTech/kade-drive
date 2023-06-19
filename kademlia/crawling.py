@@ -13,6 +13,7 @@ class SpiderCrawl:
     """
     Crawl the network and look for given 160-bit keys.
     """
+
     def __init__(self, node: Node, peers, ksize: int, alpha):
         """
         Create a new C{SpiderCrawl}er.
@@ -30,7 +31,7 @@ class SpiderCrawl:
         self.node = node
         self.nearest = NodeHeap(self.node, self.ksize)
         self.last_ids_crawled = []
-        log.info("creating spider with peers: %s", peers)
+        print("creating spider with peers: %s", peers)
         self.nearest.push(peers)
 
     def _find(self, rpcmethod):
@@ -49,7 +50,7 @@ class SpiderCrawl:
              yet queried
           4. repeat, unless nearest list has all been queried, then ur done
         """
-        log.info("crawling network with nearest: %s", str(tuple(self.nearest)))
+        print("crawling network with nearest: %s", str(tuple(self.nearest)))
         # define the alpha based on the latest crawled nodes
         count = self.alpha
         if self.nearest.get_ids() == self.last_ids_crawled:
@@ -62,7 +63,9 @@ class SpiderCrawl:
         # perform the rpc protocol method call
         # return the info from those nodes
         for peer in self.nearest.get_uncontacted()[:count]:
+            print("Peer" , peer)
             dicts[peer.id] = rpcmethod(peer, self.node)
+            print(dicts[peer.id])
             self.nearest.mark_contacted(peer)
         # found = await gather_dict(dicts)
         return self._nodes_found(dicts)
@@ -129,10 +132,10 @@ class ValueSpiderCrawl(SpiderCrawl):
         value_counts = Counter(values)
         # if more than one value is found for a key raise a warning
         if len(value_counts) != 1:
-            log.warning("Got multiple values for key %i: %s",
-                        self.node.long_id, str(values))
+            print(f"Got multiple values for key %i: %s",
+                  self.node.long_id, str(values))
         # get the most common item in the network
-        # this is, if there were more than one value 
+        # this is, if there were more than one value
         # for the key, choose the most replicated one
         value = value_counts.most_common(1)[0][0]
 
@@ -168,9 +171,9 @@ class NodeSpiderCrawl(SpiderCrawl):
                 self.nearest.push(response.get_node_list())
         # remove nodes
         self.nearest.remove(toremove)
-        
+
         # if all nearest nodes are visited, return them
-        # else, keep visiting 
+        # else, keep visiting
         if self.nearest.have_contacted_all():
             return list(self.nearest)
         return self.find()

@@ -16,14 +16,12 @@ log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 #         """Instantiation class for the Protocol
 
 #         Args:
-#             source_node (Node): root node 
+#             source_node (Node): root node
 #             storage (IStorage): values in node
 #             ksize (int): k-bucket size (nodes to keep as 'close')
 #         """
 #         RPCUDPProtocol.__init__(self)
 #         self.filesystem_protocol = filesystem_protocol
-
-    
 
 
 # class KademliaTCPProtocol(RPCTCPProtocol):
@@ -31,7 +29,7 @@ log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 #         """Instantiation class for the Protocol
 
 #         Args:
-#             source_node (Node): root node 
+#             source_node (Node): root node
 #             storage (IStorage): values in node
 #             ksize (int): k-bucket size (nodes to keep as 'close')
 #         """
@@ -62,7 +60,6 @@ class FileSystemProtocol:
             rid = random.randint(*bucket.range).to_bytes(20, byteorder='big')
             ids.append(rid)
         return ids
-    
 
     @staticmethod
     def call_store(node_to_ask: Node, key: bytes, value):
@@ -72,21 +69,25 @@ class FileSystemProtocol:
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
         with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_store(address, FileSystemProtocol.source_node.id, key, value)
-        
+            response = conn.rpc_store(
+                address, FileSystemProtocol.source_node.id, key, value)
+
         return FileSystemProtocol.process_response(response, node_to_ask)
-        
+
     @staticmethod
     def call_find_node(node_to_ask: Node, node_to_find: Node):
         """
         async function to call the find node rpc method
         """
+        print("inside call Node")
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
+        print(address)
         with ServerSession(address[0], address[1]) as conn:
             response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
-                                      node_to_find.id)
-        
+                                          node_to_find.id)
+            print(response)
+
         return FileSystemProtocol.process_response(response, node_to_ask)
 
     @staticmethod
@@ -98,10 +99,10 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         with ServerSession(address[0], address[1]) as conn:
             response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
-                                       node_to_find.id)
-        
+                                           node_to_find.id)
+
         return FileSystemProtocol.process_response(response, node_to_ask)
-    
+
     @staticmethod
     def call_ping(node_to_ask: Node):
         """
@@ -110,8 +111,9 @@ class FileSystemProtocol:
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
         with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_ping(address, FileSystemProtocol.source_node.id)
-        
+            response = conn.rpc_ping(
+                address, FileSystemProtocol.source_node.id)
+
         return FileSystemProtocol.process_response(response, node_to_ask)
 
     @staticmethod
@@ -147,10 +149,12 @@ class FileSystemProtocol:
                 last = neighbors[-1].distance_to(keynode)
                 new_node_close = node.distance_to(keynode) < last
                 first = neighbors[0].distance_to(keynode)
-                this_closest = FileSystemProtocol.source_node.distance_to(keynode) < first
+                this_closest = FileSystemProtocol.source_node.distance_to(
+                    keynode) < first
             # if not neighbors, store data in the node
             if not neighbors or (new_node_close and this_closest):
-                asyncio.ensure_future(FileSystemProtocol.call_store(node, key, value))
+                asyncio.ensure_future(
+                    FileSystemProtocol.call_store(node, key, value))
         # add node to table
         FileSystemProtocol.router.add_contact(node)
 
@@ -170,7 +174,6 @@ class FileSystemProtocol:
         return response
 
 
-    
 class ServerSession:
     """Server session context manager."""
 

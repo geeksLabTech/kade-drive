@@ -77,15 +77,20 @@ class Server:
             addrs: A `list` of (ip, port) `tuple` pairs.  Note that only IP
                    addresses are acceptable - hostnames will cause an error.
         """
-        print("Attempting to bootstrap node with %i initial contacts",
-                len(addrs))
+        print(
+            f"Attempting to bootstrap node with {len(addrs)} initial contacts")
         cos = list(map(Server.bootstrap_node, addrs))
         # gathered = await asyncio.gather(*cos)
+        # print(cos)
         nodes = [node for node in cos if node is not None]
+        # print(nodes)
         spider = NodeSpiderCrawl(Server.node, nodes,
                                  Server.ksize, Server.alpha)
-        return spider.find()
-
+        # print(spider)
+        res = spider.find()
+        print(res)
+        
+        return res
     @staticmethod
     def bootstrap_node(addr: tuple[str, str]):
         response = None
@@ -126,7 +131,7 @@ class Server:
         spider = NodeSpiderCrawl(node, nearest,
                                  Server.ksize, Server.alpha)
         nodes = spider.find()
-        log.info("setting '%s' on %s", dkey.hex(), list(map(str, nodes)))
+        print("setting '%s' on %s", dkey.hex(), list(map(str, nodes)))
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
@@ -222,7 +227,7 @@ class ServerService(Service):
 
     @rpyc.exposed
     def rpc_find_node(self, sender, nodeid: bytes, key: bytes):
-        log.info("finding neighbors of %i in local table",
+        print("finding neighbors of %i in local table",
                  int(nodeid.hex(), 16))
 
         source = Node(nodeid, sender[0], sender[1])
@@ -279,7 +284,7 @@ class ServerService(Service):
         Returns:
             :class:`None` if not found, the value otherwise.
         """
-        log.info("Looking up key %s", key)
+        print("Looking up key %s", key)
         if apply_hash_to_key:
             key = digest(key)
         # if this node has it, return it
@@ -323,7 +328,7 @@ class ServerService(Service):
             raise TypeError(
                 f"Value must be of type int, float, bool, str, or bytes, received {value}"
             )
-        log.info("setting '%s' = '%s' on network", key, value)
+        print("setting '%s' = '%s' on network", key, value)
         if apply_hash_to_key:
             key = digest(key)
         return Server.set_digest(key, value)
@@ -333,7 +338,7 @@ class ServerService(Service):
     #     Save the state of this node (the alpha/ksize/id/immediate neighbors)
     #     to a cache file with the given fname.
     #     """
-    #     log.info("Saving state to %s", fname)
+    #     print("Saving state to %s", fname)
     #     data = {
     #         'ksize': self.ksize,
     #         'alpha': self.alpha,
@@ -353,7 +358,7 @@ class ServerService(Service):
     #     from a cache file with the given fname and then bootstrap the node
     #     (using the given port/interface to start listening/bootstrapping).
     #     """
-    #     log.info("Loading state from %s", fname)
+    #     print("Loading state from %s", fname)
     #     with open(fname, 'rb') as file:
     #         data = pickle.load(file)
     #     svr = cls(data['ksize'], data['alpha'], data['id'])
