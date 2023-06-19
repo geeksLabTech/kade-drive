@@ -66,7 +66,7 @@ class SpiderCrawl:
             print("Peer", peer)
             print("Calling ", rpcmethod)
             ans = rpcmethod(peer, self.node)
-            print("response",ans)
+            print("response")
             dicts[peer.id] = ans
             # print("DICT SSSSSS " ,dicts)
             self.nearest.mark_contacted(peer)
