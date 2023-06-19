@@ -152,7 +152,8 @@ class ValueSpiderCrawl(SpiderCrawl):
         # finally return the value
         peer = self.nearest_without_value.popleft()
         if peer:
-            FileSystemProtocol.call_store(peer, self.node.id, value)
+            with ServerSession(peer.ip, peer.port) as conn:
+                FileSystemProtocol.call_store(conn, peer, self.node.id, value)
         return value
 
 
