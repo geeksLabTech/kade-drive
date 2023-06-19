@@ -195,20 +195,20 @@ class RPCFindResponse:
         """
         Did the other host actually respond?
         """
-        return self.response[0]
+        return self.response
 
     def has_value(self):
         # verify the data in the node is a dict
-        return isinstance(self.response[1], dict)
+        return isinstance(self.response, dict)
 
     def get_value(self):
         # return the 'value' from the dict
-        return self.response[1]['value']
+        return self.response
 
     def get_node_list(self):
         """
         Get the node list in the response.  If there's no value, this should
         be set.
         """
-        nodelist = self.response[1] or []
+        nodelist = self.response or []
         return [Node(*nodeple) for nodeple in nodelist]
