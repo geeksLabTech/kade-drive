@@ -169,8 +169,7 @@ class FileSystemProtocol:
         FileSystemProtocol.welcome_if_new(node)
         return response
 
-@rpyc.service
-class ServerSessionService(rpyc.Service):
+
     
 class ServerSession:
     """Server session context manager."""
