@@ -97,7 +97,7 @@ class Server:
     def bootstrap_node(addr: tuple[str, str]):
         response = None
         with ServerSession(addr[0], addr[1]) as conn:
-            response = conn.rpc_ping(addr, Server.node.id)
+            response = conn.rpc_ping((Server.node.id, Server.node.port), Server.node.id)
         # print(bytes(response))
         return Node(response, addr[0], addr[1]) if response else None
 
