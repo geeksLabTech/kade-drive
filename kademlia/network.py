@@ -163,24 +163,6 @@ class Server:
 class ServerService(Service):
 
     @rpyc.exposed
-    def rpc_ping(self, sender, nodeid: bytes):
-        """Porbe a Node to see if pc is online
-
-        Args:
-            sender : sender node
-            nodeid (bytes): node to be probed
-
-        Returns:
-            bytes: node id if alive, None if not 
-        """
-        print("rpc ping called")
-        source = Node(nodeid, sender[0], sender[1])
-        # if a new node is sending the request, give all data it should contain
-        FileSystemProtocol.welcome_if_new(source)
-
-        return FileSystemProtocol.source_node.id
-
-    @rpyc.exposed
     def rpc_store(self, sender, nodeid: bytes, key: bytes, value):
         """Instructs a node to store a value
 
@@ -222,7 +204,7 @@ class ServerService(Service):
 
     @rpyc.exposed
     def rpc_ping(self, sender, nodeid: bytes):
-        """Porbe a Node to see if pc is online
+        """Probe a Node to see if pc is online
 
         Args:
             sender : sender node
