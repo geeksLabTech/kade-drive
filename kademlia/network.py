@@ -141,10 +141,18 @@ class Server:
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest:
             Server.storage[dkey] = value
-        results = [FileSystemProtocol.call_store(
-            n, dkey, value) for n in nodes]
+        
+        any_result = False
+        for n in nodes:
+            address = (n.ip, n.port)
+            with ServerSession(address[0], address[1]) as conn:
+                result = FileSystemProtocol.call_store(conn, address, dkey, value)
+                if result:
+                    any_result = True
+            
         # return true only if at least one store call succeeded
-        return any(results)
+        return any_result
+        
 
     # def refresh_table(self):
     #     print("Refreshing routing table")
@@ -186,10 +194,14 @@ class ServerService(Service):
         """
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
-        FileSystemProtocol.welcome_if_new(source)
+        
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+                FileSystemProtocol.welcome_if_new(conn, source)
+        
 
         print("got a store request from %s, storing '%s'='%s'",
-              sender, key.hex(), value)
+            sender, key.hex(), value)
         # store values and report success
         FileSystemProtocol.storage[key] = value
         return True
@@ -198,7 +210,9 @@ class ServerService(Service):
     def rpc_find_value(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
-        FileSystemProtocol.welcome_if_new(source)
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+                FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         value = FileSystemProtocol.storage.get(key, None)
         return value
@@ -225,7 +239,9 @@ class ServerService(Service):
         print(f"rpc ping called from {nodeid}, {sender[0]}, {sender[1]}")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
-        FileSystemProtocol.welcome_if_new(source)
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+                FileSystemProtocol.welcome_if_new(conn, source)
         print("return ping")
         return FileSystemProtocol.source_node.id
 
@@ -237,7 +253,9 @@ class ServerService(Service):
 
         print('node id', nodeid)
         # if a new node is sending the request, give all data it should contain
-        FileSystemProtocol.welcome_if_new(source)
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+                FileSystemProtocol.welcome_if_new(conn, source)
         # create a fictional node to perform the search
         print('fictional key ', key)
         node = Node(key)
