@@ -130,7 +130,6 @@ class PersistentStorage(IStorage):
             print(self.data)
             # self.address = (ip, port)
 
-
     def update_dict(self):
         if not os.path.exists(os.path.join(self.db_path)):
             os.mkdir(self.db_path)
@@ -218,5 +217,9 @@ class PersistentStorage(IStorage):
         self.cull()
         ikeys = self.data.keys()
         # ivalues = map(operator.itemgetter(1), self.data.values())
-        ivalues = self.get_value(File.id)
+
+        ivalues = []
+
+        for ik in ikeys:
+            ivalues.append(self.get_value(ik))
         return zip(ikeys, ivalues)
