@@ -62,24 +62,35 @@ class SpiderCrawl:
         # for each peer in the alpha not visited nodes
         # perform the rpc protocol method call
         # return the info from those nodes
+        found_values = []
         for peer in self.nearest.get_uncontacted()[:count]:
             print("Peer", peer)
             with ServerSession(peer.ip, peer.port) as conn:
                 print("Calling ", rpcmethod)
-                rpcmethod(conn, peer, self.node)
-                # print(FileSystemProtocol.last_response)
-                ans = FileSystemProtocol.last_response
+                response = rpcmethod(conn, peer, self.node)
                 # print("response", ans)
-                dicts[peer.id] = ans
+                # dicts[peer.id] = ans
                 # print("DICT SSSSSS " ,dicts)
                 self.nearest.mark_contacted(peer)
                 print("mark contacted successful")
             # found = await gather_dict(dicts)
-        return self._nodes_found(dicts)
 
-    def _nodes_found(self, responses):
+                values = self._nodes_found(peer.id, response)
+                if type(values) == list:
+                    found_values.extend(values)
+         # if values were found do the corresponding processing to verify integrity
+        if len(found_values) > 0:
+            return self._handle_found_values(found_values)
+        if self.nearest.have_contacted_all():
+            return self.handle_contacts()
+        # if nodes are left to visit, visit them
+        return self.find()
+
+    def _nodes_found(self, peer_id, response):
         raise NotImplementedError
 
+    def _handle_contacts(self):
+        raise NotImplementedError
 
 class ValueSpiderCrawl(SpiderCrawl):
     def __init__(self, node, peers, ksize, alpha):
@@ -94,7 +105,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         return self._find(FileSystemProtocol.call_find_value)
 
-    def _nodes_found(self, responses):
+    def _nodes_found(self, peer_id, response):
         """
         Handle the result of an iteration in _find.
         """
@@ -102,32 +113,29 @@ class ValueSpiderCrawl(SpiderCrawl):
         toremove = []
         found_values = []
         # iterate over responses
-        for peerid, response in responses.items():
-            response = RPCFindResponse(response)
-            # if node didnt reponded, set it to be removed
-            if not response.happened():
-                toremove.append(peerid)
-            # if response is a value, add it to the found values
-            elif response.has_value():
-                found_values.append(response.get_value())
-            # if response is a node or a list of nodes
-            # add the near nodes to the list to be visited
-            else:
-                peer = self.nearest.get_node(peerid)
-                self.nearest_without_value.push(peer)
-                self.nearest.push(response.get_node_list())
+        # for peerid, response in responses.items():
+        response = RPCFindResponse(response)
+        # if node didnt reponded, remove it
+        if not response.happened():
+            self.nearest.remove(peer_id)
+        #if response is a value, add it to the found values
+        elif response.has_value():
+            found_values.append(response.get_value())
+        # if response is a node or a list of nodes
+        # add the near nodes to the list to be visited
+        else:
+            peer = self.nearest.get_node(peer_id)
+            self.nearest_without_value.push(peer)
+            self.nearest.push(response.get_node_list())
+        
         # remove the nodes
-        self.nearest.remove(toremove)
-
-        # if values were found do the corresponding processing to verify integrity
-        if found_values:
-            return self._handle_found_values(found_values)
+        # self.nearest.remove(toremove)
+        return found_values
+    
+    def _handle_contacts(self):
         # if all nodes were visited but no values were found, return None
-        if self.nearest.have_contacted_all():
-            # not found!
-            return None
-        # if nodes are left to visit, visit them
-        return self.find()
+        return None
+       
 
     def _handle_found_values(self, values):
         """
@@ -164,7 +172,7 @@ class NodeSpiderCrawl(SpiderCrawl):
         """
         return self._find(FileSystemProtocol.call_find_node)
 
-    def _nodes_found(self, responses):
+    def _nodes_found(self, peer_id, response):
         """
         Handle the result of an iteration in _find.
         """
@@ -172,24 +180,28 @@ class NodeSpiderCrawl(SpiderCrawl):
 
         toremove = []
         # iterate over responses
-        for peerid, response in responses.items():
-            response = RPCFindResponse(response)
-            # if node didnt responded, remove it
-            if not response.happened():
-                toremove.append(peerid)
-            # else, push the node to ask for value later (add to nearest)
-            else:
-                self.nearest.push(response.get_node_list())
+        # for peerid, response in responses.items():
+        response = RPCFindResponse(response)
+        # if node didnt responded, remove it
+        if not response.happened():
+            self.nearest.remove(peer_id)
+        # else, push the node to ask for value later (add to nearest)
+        else:
+            self.nearest.push(response.get_node_list())
         # remove nodes
-        self.nearest.remove(toremove)
+        # self.nearest.remove(toremove)
 
-        # if all nearest nodes are visited, return them
+        
         # else, keep visiting
-        if self.nearest.have_contacted_all():
-            return list(self.nearest)
-        return self.find()
+        # if self.nearest.have_contacted_all():
+        #     return list(self.nearest)
+        # return self.find()
 
 
+    def _handle_contacts(self):
+        # if all nearest nodes are visited, return them
+        return list(self.nearest)
+    
 class RPCFindResponse:
     def __init__(self, response):
         """
