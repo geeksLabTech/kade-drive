@@ -63,21 +63,19 @@ class FileSystemProtocol:
         return ids
 
     @staticmethod
-    def call_store(node_to_ask: Node, key: bytes, value):
+    def call_store(conn, node_to_ask: Node, key: bytes, value):
         """
         async function to call the find store rpc method
         """
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
-        with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_store(
-                address, FileSystemProtocol.source_node.id, key, value)
+        response = conn.rpc_store(
+            address, FileSystemProtocol.source_node.id, key, value)
 
-            return FileSystemProtocol.process_response(response, node_to_ask)
-        return None
+        return FileSystemProtocol.process_response(response, node_to_ask, conn)
 
     @staticmethod
-    def call_find_node(node_to_ask: Node, node_to_find: Node):
+    def call_find_node(conn, node_to_ask: Node, node_to_find: Node):
         """
         async function to call the find node rpc method
         """
@@ -85,41 +83,37 @@ class FileSystemProtocol:
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
         print(address)
-        with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_find_node(address, node_to_ask.id,
-                                          node_to_find.id)
-            FileSystemProtocol.last_response = response
-            return FileSystemProtocol.process_response(response, node_to_ask)
-        return None
+        response = conn.rpc_find_node(address, node_to_ask.id,
+                                      node_to_find.id)
+        FileSystemProtocol.last_response = response.copy()
+        return FileSystemProtocol.process_response(response, node_to_ask, conn)
 
     @staticmethod
-    def call_find_value(node_to_ask: Node, node_to_find: Node):
+    def call_find_value(conn, node_to_ask: Node, node_to_find: Node):
         """
         async function to call the find value rpc method 
         """
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
-        with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
-                                           node_to_find.id)
-            print(response)
-            return FileSystemProtocol.process_response(response, node_to_ask)
+        response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
+                                       node_to_find.id)
+        print(response)
+        return FileSystemProtocol.process_response(response, node_to_ask, conn)
 
     @staticmethod
-    def call_ping(node_to_ask: Node):
+    def call_ping(conn, node_to_ask: Node):
         """
         async function to call the ping rpc method
         """
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
-        with ServerSession(address[0], address[1]) as conn:
-            response = conn.rpc_ping(
-                address, FileSystemProtocol.source_node.id)
+        response = conn.rpc_ping(
+            address, FileSystemProtocol.source_node.id)
 
-            return FileSystemProtocol.process_response(response, node_to_ask)
+        return FileSystemProtocol.process_response(response, node_to_ask,conn)
 
     @staticmethod
-    def welcome_if_new(node: Node):
+    def welcome_if_new(node: Node, conn):
         """
         Given a new node, send it all the keys/values it should be storing,
         then add it to the routing table.
@@ -156,13 +150,13 @@ class FileSystemProtocol:
                     keynode) < first
             # if not neighbors, store data in the node
             if not neighbors or (new_node_close and this_closest):
-                FileSystemProtocol.call_store(node, key, value)
+                FileSystemProtocol.call_store(conn, node, key, value)
         # add node to table
         print('Adding new node to contacts')
         FileSystemProtocol.router.add_contact(node)
 
     @staticmethod
-    def process_response(response, node: Node):
+    def process_response(response, node: Node,conn):
         """
         If we get a response, add the node to the routing table.  If
         we get no response, make sure it's removed from the routing table.
@@ -172,8 +166,9 @@ class FileSystemProtocol:
             FileSystemProtocol.router.remove_contact(node)
             return response
 
+        FileSystemProtocol.welcome_if_new(node,conn)
         print("got successful response from %s", node)
-        FileSystemProtocol.welcome_if_new(node)
+        print(response)
         return response
 
 
