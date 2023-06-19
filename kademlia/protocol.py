@@ -72,8 +72,8 @@ class FileSystemProtocol:
             response = conn.rpc_store(
                 address, FileSystemProtocol.source_node.id, key, value)
 
-        return FileSystemProtocol.process_response(response, node_to_ask)
-
+            return FileSystemProtocol.process_response(response, node_to_ask)
+        return None
     @staticmethod
     def call_find_node(node_to_ask: Node, node_to_find: Node):
         """
@@ -101,7 +101,7 @@ class FileSystemProtocol:
             response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
                                            node_to_find.id)
 
-        return FileSystemProtocol.process_response(response, node_to_ask)
+            return FileSystemProtocol.process_response(response, node_to_ask)
 
     @staticmethod
     def call_ping(node_to_ask: Node):
@@ -114,7 +114,7 @@ class FileSystemProtocol:
             response = conn.rpc_ping(
                 address, FileSystemProtocol.source_node.id)
 
-        return FileSystemProtocol.process_response(response, node_to_ask)
+            return FileSystemProtocol.process_response(response, node_to_ask)
 
     @staticmethod
     def welcome_if_new(node: Node):

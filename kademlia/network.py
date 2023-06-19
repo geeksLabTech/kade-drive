@@ -101,7 +101,7 @@ class Server:
             response = conn.rpc_ping(
                 (Server.node.ip, Server.node.port), Server.node.id)
         # print(bytes(response))
-        return Node(response, addr[0], addr[1]) if response else None
+            return Node(response, addr[0], addr[1]) if response else None
 
     @staticmethod
     def split_data(data: bytes, chunk_size: int):
