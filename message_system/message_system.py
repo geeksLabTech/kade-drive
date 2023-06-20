@@ -1,12 +1,14 @@
 import socket
 import struct
+import time
+import select
 
 
 class Message_System:
 
     def __init__(self):
         self.pendig_send = []
-        self.pendig_recieve = [
+        self.pendig_receive = [
             {'port': "0.0.0.0", "times": -1}
         ]
 
@@ -67,10 +69,13 @@ class Message_System:
                                socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip))
         receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-        # Receive the mssage
-        buf, senderaddr = receiver.recvfrom(1024)
-        msg = buf.decode()
-
+        ready_to_read, _, _ = select.select([receiver], [], [], 1)
+        if ready_to_read:
+            # Receive the mssage
+            buf, senderaddr = receiver.recvfrom(1024)
+            msg = buf.decode()
+        else:
+            msg = senderaddr = None
         # Release resources
         receiver.close()
 
@@ -91,20 +96,26 @@ class Message_System:
         self_ip = socket.gethostbyname(self_host)
         for i in self.pendig_send:
             if i['ip'] == None:
-                print("sending")
+                # print("sending")
                 self._mc_send(self_ip, '224.1.1.5', 50001,
                               i['message'].encode())
+
+    def send_heartbeat(self):
+        while True:
+            self.send()
+            time.sleep(0.3)
 
     def receive(self):
         to_remove = []
         self_host = socket.gethostname()
         self_ip = socket.gethostbyname(self_host)
-        for idx, i in enumerate(self.pendig_recieve):
+        for idx, i in enumerate(self.pendig_receive):
             if i['times'] > 0:
                 i -= 1
 
             msg, ip = self._mc_recv(self_ip, '224.1.1.5', 50001)
-            print(f">>> Message from {ip}: {msg}\n")
+            if msg:
+                print(f">>> Message from {ip}: {msg}\n")
 
             # process message
 
@@ -112,4 +123,6 @@ class Message_System:
                 to_remove.append(idx)
 
         for i in to_remove:
-            self.pendig_recieve.pop(i)
+            self.pendig_receive.pop(i)
+
+        return msg
