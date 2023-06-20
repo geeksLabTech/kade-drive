@@ -5,6 +5,7 @@ import random
 import logging
 from rpyc import Service
 import threading
+from time import sleep
 import rpyc
 import socket
 from rpyc.utils.server import ThreadedServer
@@ -47,6 +48,8 @@ class Server:
         FileSystemProtocol.init(Server.routing, Server.storage)
         print(port, ip)
         threading.Thread(target=Server.listen, args=(port, ip)).start()
+        refresh_thread = threading.Thread(target=Server._refresh_table)
+        refresh_thread.start()
 
     @staticmethod
     def listen(port, interface='0.0.0.0'):
@@ -58,7 +61,6 @@ class Server:
         print(interface, port)
         Server.node.ip = interface
         Server.node.port = port
-
         t = ThreadedServer(ServerService, port=port, hostname=interface, protocol_config={
             'allow_public_attrs': True,
         })
@@ -162,32 +164,39 @@ class Server:
         # return true only if at least one store call succeeded
         return any_result
 
-    # def refresh_table(self):
-    #     print("Refreshing routing table")
-    #     self._refresh_table()
-    #     loop = asyncio.get_event_loop()
-    #     self.refresh_loop = loop.call_later(3600, self.refresh_table)
+    @staticmethod
+    def refresh_table():
+        pass
+    # refresh_thread = threading.Thread(Server._refresh_table())
+    # refresh_thread.start()
+        # self.refresh_loop = loop.call_later(3600, self.refresh_table)
 
-    # def _refresh_table(self):
-    #     """
-    #     Refresh buckets that haven't had any lookups in the last hour
-    #     (per section 2.3 of the paper).
-    #     """
-    #     results = []
-    #     for node_id in FileSystemProtocol.get_refresh_ids():
-    #         node = Node(node_id)
-    #         nearest = FileSystemProtocol.router.find_neighbors(node, self.alpha)
-    #         spider = NodeSpiderCrawl(FileSystemProtocol, node, nearest,
-    #                                  self.ksize, self.alpha)
-    #         results.append(spider.find())
+    @staticmethod
+    def _refresh_table():
+        """
+        Refresh buckets that haven't had any lookups in the last hour
+        (per section 2.3 of the paper).
+        """
+        while (True):
+            sleep(3600)
+            print("Refreshing Table")
 
-        # do our crawling
-        # await asyncio.gather(*results)
+            results = []
+            for node_id in FileSystemProtocol.get_refresh_ids():
+                node = Node(node_id)
+                nearest = FileSystemProtocol.router.find_neighbors(
+                    node, Server.alpha)
+                spider = NodeSpiderCrawl(node, nearest,
+                                         Server.ksize, Server.alpha)
+                
+                results.append(spider.find())
 
-        # # now republish keys older than one hour
-        # for dkey, value in self.storage.iter_older_than(3600):
-        #     await self.set_digest(dkey, value)
+            # do our crawling
+            # await asyncio.gather(*results)
 
+            # # now republish keys older than one hour
+            # for dkey in self.storage.iter_older_than(3600):
+                #     await self.set_digest(dkey, value)
 # pylint: disable=too-many-instance-attributes
 
 
