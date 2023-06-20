@@ -1,8 +1,6 @@
 from collections import Counter
 import logging
 
-from responses import response_callback
-
 from kademlia.node import Node, NodeHeap
 from kademlia.utils import gather_dict
 from kademlia.protocol import FileSystemProtocol, ServerSession
