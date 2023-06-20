@@ -95,8 +95,8 @@ class Server:
     def bootstrap_node(addr: tuple[str, str]):
         response = None
         with ServerSession(addr[0], addr[1]) as conn:
-            response = conn.rpc_ping(
-                (Server.node.ip, Server.node.port), Server.node.id)
+            response = FileSystemProtocol.call_ping(conn, Server.node)
+                # (Server.node.ip, Server.node.port), Server.node.id)
         # print(bytes(response))
             return Node(response, addr[0], addr[1]) if response else None
 
@@ -265,7 +265,7 @@ class ServerService(Service):
         node = Node(key)
         # ask for the neighbors of the node
         neighbors = FileSystemProtocol.router.find_neighbors(
-            node, exclude=node)
+            node, exclude=source)
         print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
 
