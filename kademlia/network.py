@@ -140,7 +140,7 @@ class Server:
         spider = NodeSpiderCrawl(node, nearest,
                                  Server.ksize, Server.alpha)
         nodes = spider.find()
-        print("setting '%s' on %s", dkey.hex(), list(map(str, nodes)))
+        print("setting '%s' on %s", dkey, list(map(str, nodes)))
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
@@ -205,7 +205,7 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
 
         print("got a store request from %s, storing '%s'='%s'",
-              sender, key.hex(), value)
+              sender, key, value)
         # store values and report success
         FileSystemProtocol.storage[key] = value
         return True
