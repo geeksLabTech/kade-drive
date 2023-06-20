@@ -97,14 +97,15 @@ class Server:
     def bootstrap_node(addr: tuple[str, str]):
         response = None
         with ServerSession(addr[0], addr[1]) as conn:
-            response = conn.rpc_ping(
-                (Server.node.ip, Server.node.port), Server.node.id)
-        # print(bytes(response))
-            node = Node(response, addr[0], addr[1]) if response else None
-            response = FileSystemProtocol.process_response(
-                conn, response, node)
+            if conn:
+                response = conn.rpc_ping(
+                    (Server.node.ip, Server.node.port), Server.node.id)
+            # print(bytes(response))
+                node = Node(response, addr[0], addr[1]) if response else None
+                response = FileSystemProtocol.process_response(
+                    conn, response, node)
 
-            return node
+                return node
 
     @staticmethod
     def split_data(data: bytes, chunk_size: int):
@@ -178,7 +179,7 @@ class Server:
         (per section 2.3 of the paper).
         """
         while (True):
-            sleep(3600)
+            sleep(5)
             print("Refreshing Table")
 
             results = []
@@ -188,7 +189,7 @@ class Server:
                     node, Server.alpha)
                 spider = NodeSpiderCrawl(node, nearest,
                                          Server.ksize, Server.alpha)
-                
+
                 results.append(spider.find())
 
             # do our crawling
