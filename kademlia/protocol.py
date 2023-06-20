@@ -204,5 +204,5 @@ class ServerSession:
             return None
 
     def __exit__(self, exc_type, exc_value, traceback):
-        assert self.server_session is not None
-        self.server_session.close()
+        if self.server_session is not None:
+            self.server_session.close()
