@@ -8,6 +8,7 @@ from abc import abstractmethod, ABC
 # from odmantic import SyncEngine
 from models.file import File
 import pickle
+from pathlib import Path
 
 
 class IStorage(ABC):
@@ -123,22 +124,22 @@ class PersistentStorage(IStorage):
         self.data = OrderedDict()
         self.ttl = ttl
 
-        if os.path.exists(os.path.join(self.db_path)):
-            try:
-                with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
-                    print("loading orderedDict")
-                    self.data = pickle.load(file)
-                print(self.data)
-            except:
-                pass
+        # if os.path.exists(os.path.join(self.db_path)):
+        #     try:
+        #         with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
+        #             print("loading orderedDict")
+        #             self.data = pickle.load(file)
+        #         print(self.data)
+        #     except:
+        #         pass
             # self.address = (ip, port)
 
     def update_dict(self):
         if not os.path.exists(os.path.join(self.db_path)):
             os.mkdir(self.db_path)
 
-        with open(os.path.join(self.db_path, "data_dict.json"), 'wb') as f:
-            pickle.dump(self.data, f)
+        # with open(os.path.join(self.db_path, "data_dict.json"), 'wb') as f:
+        #     pickle.dump(self.data, f)
 
     # def get_data_from_db(self, key: bytes):
     #     data = self.db.find_one(File, File.id == key)
@@ -184,6 +185,9 @@ class PersistentStorage(IStorage):
 
     def get(self, key, default=None):
         self.cull()
+        path = Path(os.path.join(self.db_path, str(key)))
+        if not path.exists():
+            return None
         if key in self.data:
             result = self.get_value(key)
             return result
