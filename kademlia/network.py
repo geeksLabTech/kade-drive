@@ -28,7 +28,7 @@ class Server:
     routing: RoutingTable
 
     @staticmethod
-    def init(ksize=20, alpha=3, ip: str = '0.0.0.0', port: int = 8086, node_id: bytes | None = None, storage: PersistentStorage | None = None):
+    def init(ksize=2, alpha=3, ip: str = '0.0.0.0', port: int = 8086, node_id: bytes | None = None, storage: PersistentStorage | None = None):
         """
         Args:
             ksize (int): Replication factor, determines to how many closest peers a record is replicated
