@@ -29,7 +29,7 @@ def start_(host_ip: Optional[str],bootstrap_nodes: Optional[str] = None):
 
 
 app = Typer()
-
+ 
 
 @app.command()
 def start(host_ip = Option(None),bootstrap_nodes=Option(None)):

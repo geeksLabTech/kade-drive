@@ -140,7 +140,7 @@ class Server:
         spider = NodeSpiderCrawl(node, nearest,
                                  Server.ksize, Server.alpha)
         nodes = spider.find()
-        print("setting '%s' on %s", dkey.hex(), list(map(str, nodes)))
+        print("setting '%s' on %s", dkey, list(map(str, nodes)))
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
