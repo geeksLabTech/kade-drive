@@ -1,9 +1,12 @@
 import os
 import time
 import operator
+from datetime import datetime
+from time import sleep
 from collections import OrderedDict
 from abc import abstractmethod, ABC
 from pathlib import Path
+import threading
 
 
 class IStorage(ABC):
@@ -45,27 +48,36 @@ class IStorage(ABC):
         while False:
             yield None
 
+
 class PersistentStorage(IStorage):
     """
     This class allows to persist files on disk using mongodb.
-    The class acts as an OrderedDict that his keys are the hash of an 
-    specific file chunk and the value is the (ip, port) of the node that 
+    The class acts as an OrderedDict that his keys are the hash of an
+    specific file chunk and the value is the (ip, port) of the node that
     has the chunk in his mongodb instance. In the current implementation
     the values of the dict are not used. The get method directly access to
     mongodb and retrieve the data that correspond to the given dict
     """
 
-    def __init__(self, ttl=604800):
+    def __init__(self, ttl=120):
         """
         By default, max age is a week.
         """
         self.db_path = 'static'
+        self.timestamp_path = 'timestamps'
         self.db = []
         self.data = OrderedDict()
         self.ttl = ttl
+        self.stop_del_thread = False
+        # self.timedelta = ttl
+
+        self.del_thread = threading.Thread(target=self.delete_old)
+        self.del_thread.start()
 
         if not os.path.exists(os.path.join(self.db_path)):
             os.mkdir(self.db_path)
+
+        self.ensure_timestamp_path()
         # if os.path.exists(os.path.join(self.db_path)):
         #     try:
         #         with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
@@ -74,7 +86,15 @@ class PersistentStorage(IStorage):
         #         print(self.data)
         #     except:
         #         pass
-            # self.address = (ip, port)
+        # self.address = (ip, port)
+
+    def stop_thread(self):
+        self.stop_del_thread = True
+        self.del_thread.join()
+
+    def ensure_timestamp_path(self):
+        # if not os.path.exists(os.path.join(self.timestamp_path)):
+        os.makedirs(self.timestamp_path, exist_ok=True)
 
     def update_dict(self):
         if not os.path.exists(os.path.join(self.db_path)):
@@ -82,26 +102,49 @@ class PersistentStorage(IStorage):
 
         # with open(os.path.join(self.db_path, "data_dict.json"), 'wb') as f:
         #     pickle.dump(self.data, f)
+    def update_timestamp(self, filename: str):
+        self.ensure_timestamp_path()
+        with open(os.path.join(self.timestamp_path, str(filename)), "w") as f:
+            f.write(datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
 
-    # def get_data_from_db(self, key: bytes):
-    #     data = self.db.find_one(File, File.id == key)
-    #     assert data is not None, 'Tried to get data that is not in db'
-    #     return data
+    def delete_old(self):
+
+        self.ensure_timestamp_path()
+        while True:
+            if self.stop_del_thread:
+                return
+            for path, dir, files in os.walk(self.timestamp_path):
+                for file in files:
+                    if Path(os.path.join(self.timestamp_path, str(file))).exists():
+                        with open(os.path.join(self.timestamp_path, str(file))) as f:
+                            sleep(0.1)
+                            data = datetime.strptime(
+                                f.read(), "%d/%m/%Y, %H:%M:%S")
+
+                        if (datetime.now() - data).seconds > self.ttl:
+                            print(
+                                f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes")
+                            if Path(os.path.join(self.db_path, str(file))).exists():
+                                os.remove(os.path.join(self.db_path, file))
+                            os.remove(os.path.join(self.timestamp_path, file))
+        sleep(10)
 
     def get_value(self, key):
-        with open(os.path.join(self.db_path, str(key)), "rb") as f:
+        with open(os.path.join(self.db_path, key), "rb") as f:
             result = f.read().decode()
+        if result is not None:
+            self.update_timestamp(key)
             # result = self.db.find_one(File, File.id == key)
         assert result is not None, 'Tried to get data that is not in db'
         return result
 
     def set_value(self, key, value):
+        self.update_timestamp(str(key))
         self.data[key] = (time.monotonic())
-        self.update_dict()
         with open(os.path.join(self.db_path, str(key)), "wb") as f:
             try:
                 f.write(value)
-            except:
+            except TypeError:
                 f.write(value.encode("unicode_escape"))
 
     def __setitem__(self, key, value):
@@ -127,13 +170,13 @@ class PersistentStorage(IStorage):
 
     def get(self, key, default=None):
         self.cull()
+        self.update_timestamp(key)
         path = Path(os.path.join(self.db_path, str(key)))
         if not path.exists():
             return None
-        if key in self.data:
-            result = self.get_value(key)
-            return result
-        return default
+
+        result = self.get_value(key)
+        return result
 
     def __getitem__(self, key):
         self.cull()
