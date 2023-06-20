@@ -68,7 +68,9 @@ class FileSystemProtocol:
         """
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
-        response = conn.rpc_store(
+        response = None
+        if conn:
+            response = conn.rpc_store(
             address, FileSystemProtocol.source_node.id, key, value)
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -83,7 +85,9 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         print(address)
         print(node_to_find.ip)
-        response = conn.rpc_find_node((FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id,
+        response = None
+        if conn:
+            response = conn.rpc_find_node((FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id,
                                       node_to_ask.id)
         FileSystemProtocol.last_response = response.copy()
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -95,7 +99,9 @@ class FileSystemProtocol:
         """
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
-        response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
+        response = None
+        if conn:
+            response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
                                        node_to_find.id)
         print(response)
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -107,8 +113,10 @@ class FileSystemProtocol:
         """
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
-        response = conn.rpc_ping(
-            address, FileSystemProtocol.source_node.id)
+        response = None
+        if conn:
+            response = conn.rpc_ping(
+                address, FileSystemProtocol.source_node.id)
 
         print("Got Response {response}")
 
@@ -189,8 +197,11 @@ class ServerSession:
         self.server_session: rpyc.Connection | None = None
 
     def __enter__(self):
-        self.server_session = rpyc.connect(self.server_ip, port=self.port)
-        return self.server_session.root
+        try:
+            self.server_session = rpyc.connect(self.server_ip, port=self.port)
+            return self.server_session.root
+        except ConnectionRefusedError:
+            return None
 
     def __exit__(self, exc_type, exc_value, traceback):
         assert self.server_session is not None
