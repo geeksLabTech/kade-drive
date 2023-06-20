@@ -124,6 +124,8 @@ class PersistentStorage(IStorage):
         self.data = OrderedDict()
         self.ttl = ttl
 
+        if not os.path.exists(os.path.join(self.db_path)):
+            os.mkdir(self.db_path)
         # if os.path.exists(os.path.join(self.db_path)):
         #     try:
         #         with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
@@ -216,13 +218,13 @@ class PersistentStorage(IStorage):
     #         return [matches]
 
     def _triple_iter(self):
-        ikeys = self.data.keys()
+        ikeys = os.listdir(os.path.join(self.db_path))
         ibirthday = map(operator.itemgetter(0), self.data.values())
         return zip(ikeys, ibirthday)
 
     def __iter__(self):
         self.cull()
-        ikeys = self.data.keys()
+        ikeys = os.listdir(os.path.join(self.db_path))
         # ivalues = map(operator.itemgetter(1), self.data.values())
 
         ivalues = []
