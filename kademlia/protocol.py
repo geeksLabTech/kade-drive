@@ -76,6 +76,15 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
+    def call_contains(conn, node_to_ask, key: bytes):
+        response = None 
+        if conn:
+            address = (node_to_ask.ip, node_to_ask.port)
+            response = conn.rpc_contains(address, FileSystemProtocol.source_node.id, key)
+        
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
+
+    @staticmethod
     def call_find_node(conn, node_to_ask: Node, node_to_find: Node):
         """
         async function to call the find node rpc method

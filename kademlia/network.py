@@ -158,8 +158,13 @@ class Server:
         for n in nodes:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
-                result = FileSystemProtocol.call_store(conn, n, dkey, value)
-                if result:
+                contains = FileSystemProtocol.call_contains(conn, n, dkey)
+                if not contains:
+                    result = FileSystemProtocol.call_store(conn, n, dkey, value)
+                    if result:
+                        any_result = True
+                
+                if contains:
                     any_result = True
 
         # return true only if at least one store call succeeded
@@ -193,11 +198,9 @@ class Server:
                 results.append(spider.find())
 
             # do our crawling
-            # await asyncio.gather(*results)
-
             # # now republish keys older than one hour
-            # for dkey in self.storage.iter_older_than(3600):
-                #     await self.set_digest(dkey, value)
+            for key, value in Server.storage.iter_older_than(3600):
+                Server.set_digest(bytes(key, 'utf-8'), value)
 # pylint: disable=too-many-instance-attributes
 
 
@@ -292,6 +295,18 @@ class ServerService(Service):
             neighbors = [Server.node]
         print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
+
+    @rpyc.exposed
+    def rpc_contains(self, sender, nodeid: bytes, key: bytes):
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        # get value from storage
+        return FileSystemProtocol.storage.contains(key)
+    
+
 
     # def stop(self):
     #     if self.thread:
