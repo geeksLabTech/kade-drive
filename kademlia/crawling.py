@@ -1,6 +1,8 @@
 from collections import Counter
 import logging
 
+from responses import response_callback
+
 from kademlia.node import Node, NodeHeap
 from kademlia.utils import gather_dict
 from kademlia.protocol import FileSystemProtocol, ServerSession
@@ -109,24 +111,28 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         Handle the result of an iteration in _find.
         """
-        print("entry node Found Vaue Spider")
+        print("entry node Found Value Spider")
         toremove = []
         found_values = []
         # iterate over responses
         # for peerid, response in responses.items():
-        response = RPCFindResponse(response)
+        # response = RPCFindResponse(response)
         # if node didnt reponded, remove it
-        if not response.happened():
+        if not response:
             self.nearest.remove(peer_id)
         #if response is a value, add it to the found values
-        elif response.has_value():
-            found_values.append(response.get_value())
+        elif isinstance(response, str):
+            found_values.append(response)
         # if response is a node or a list of nodes
         # add the near nodes to the list to be visited
         else:
             peer = self.nearest.get_node(peer_id)
             self.nearest_without_value.push(peer)
-            self.nearest.push(response.get_node_list())
+            assert isinstance(response, bytes) or isinstance(response, list)
+            if isinstance(response, list):
+                self.nearest.push([Node(*data) for data in response])
+            else:
+                self.nearest.push(Node(response))
         
         # remove the nodes
         # self.nearest.remove(toremove)
@@ -181,13 +187,17 @@ class NodeSpiderCrawl(SpiderCrawl):
         toremove = []
         # iterate over responses
         # for peerid, response in responses.items():
-        response = RPCFindResponse(response)
+        # response = RPCFindResponse(response)
         # if node didnt responded, remove it
-        if not response.happened():
+        if not response:
             self.nearest.remove(peer_id)
         # else, push the node to ask for value later (add to nearest)
         else:
-            self.nearest.push(response.get_node_list())
+            if isinstance(response, list):
+                self.nearest.push([Node(*data) for data in response])
+            else:
+                self.nearest.push(Node(response))
+            # self.nearest.push(response.get_node_list())
         # remove nodes
         # self.nearest.remove(toremove)
 
