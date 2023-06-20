@@ -3,14 +3,6 @@ General catchall for functions that don't make sense as methods.
 """
 import hashlib
 import operator
-import asyncio
-
-
-async def gather_dict(dic: dict):
-    cors = list(dic.values())
-    results = await asyncio.gather(*cors)
-    return dict(zip(dic.keys(), results))
-
 
 def digest(string):
     if not isinstance(string, bytes):

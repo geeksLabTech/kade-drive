@@ -2,7 +2,7 @@ from collections import Counter
 import logging
 
 from kademlia.node import Node, NodeHeap
-from kademlia.utils import gather_dict
+# from kademlia.utils import gather_dict
 from kademlia.protocol import FileSystemProtocol, ServerSession
 
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name

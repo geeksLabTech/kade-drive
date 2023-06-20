@@ -1,8 +1,8 @@
-import asyncio
+# import asyncio``
 import random
 import hashlib
 # pylint: disable=no-name-in-module
-from struct import pack
+# from struct import pack
 
 import pytest
 

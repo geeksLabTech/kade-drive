@@ -1,9 +1,7 @@
 import heapq
 import time
 import operator
-import asyncio
 
-from sympy import print_rcode
 from kademlia.protocol import FileSystemProtocol
 from itertools import chain
 from collections import OrderedDict
@@ -176,7 +174,7 @@ class RoutingTable:
         index = self.get_bucket_for(node)
         return self.buckets[index].is_new_node(node)
 
-    def add_contact(self, node: Node):
+    def add_contact(self, conn, node: Node):
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
         print()
@@ -191,9 +189,9 @@ class RoutingTable:
         # in its range or if the depth is not congruent to 0 mod 5
         if bucket.has_in_range(self.node) or bucket.depth() % 5 != 0:
             self.split_bucket(index)
-            self.add_contact(node)
+            self.add_contact(conn, node)
         else:
-            FileSystemProtocol.call_ping(bucket.head())
+            FileSystemProtocol.call_ping(conn, bucket.head())
 
     def get_bucket_for(self, node: Node):
         """

@@ -1,12 +1,11 @@
 import random
-import asyncio
 import logging
+import rpyc
 
 from kademlia.node import Node
 # from kademlia.routing import RoutingTable
-from kademlia.storage import IStorage, PersistentStorage
+from kademlia.storage import PersistentStorage
 from kademlia.utils import digest
-import rpyc
 
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -133,8 +132,8 @@ class FileSystemProtocol:
 
         # add node to table
         print('Adding new node to contacts')
-        FileSystemProtocol.router.add_contact(node)
-        
+        FileSystemProtocol.router.add_contact(conn, node)
+
         print("never seen %s before, adding to router", node)
         # iterate over storage
         for key, value in FileSystemProtocol.storage:
@@ -156,7 +155,6 @@ class FileSystemProtocol:
             if not neighbors or (new_node_close and this_closest):
                 print('calling call_store in welcome_if_new')
                 FileSystemProtocol.call_store(conn, node, key, value)
-        
 
     @staticmethod
     def process_response(conn, response, node: Node):

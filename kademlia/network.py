@@ -2,24 +2,21 @@
 Package for interacting on the network at a high level.
 """
 import random
-import pickle
-import asyncio
 import logging
-from re import S
+from rpyc import Service
+import threading
+import rpyc
+import socket
+from rpyc.utils.server import ThreadedServer
 
 from kademlia.protocol import FileSystemProtocol, ServerSession
 from kademlia.routing import RoutingTable
 from kademlia.utils import digest
-from kademlia.storage import ForgetfulStorage, IStorage, PersistentStorage
+from kademlia.storage import PersistentStorage
 from kademlia.node import Node
 from kademlia.crawling import ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
 # from models.file import File
-import socket
-from rpyc import Service
-from rpyc.utils.server import ThreadedServer
-import rpyc
-import threading
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
@@ -107,21 +104,21 @@ class Server:
     def split_data(data: bytes, chunk_size: int):
         """Split data into chunks of less than chunk_size, it must be less than 16mb"""
         fixed_chunks = len(data) // chunk_size
-        last_chunk_size = len(data) - fixed_chunks * chunk_size
-        start_of_last_chunk = len(data)-last_chunk_size
-        last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
+        # last_chunk_size = len(data) - fixed_chunks * chunk_size
+        # start_of_last_chunk = len(data)-last_chunk_size
+        # last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
         # chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)]
         chunks = []
         count = 0
         last_position = 0
-        while(not (fixed_chunks == count)):
+        while (not (fixed_chunks == count)):
             if count == 0:
                 chunks.append(data[0:chunk_size])
                 last_position = chunk_size
             else:
                 chunks.append(data[last_position: last_position + chunk_size])
                 last_position = last_position + chunk_size
-            count +=1
+            count += 1
         return chunks
 
     @staticmethod
@@ -333,8 +330,9 @@ class ServerService(Service):
 
     @rpyc.exposed
     def get_file_chunks(self, hashed_chunks):
-        results = [self.get(chunk, False) for chunk in hashed_chunks]
-        data_chunks = [f for f in results if f is File]
+        data_chunks = [self.get(chunk, False) for chunk in hashed_chunks]
+        # data_chunks = [f for f in results]
+        # removed is File
 
         if len(hashed_chunks) != len(data_chunks):
             print('Failed to retrieve all data for chunks')
@@ -355,7 +353,7 @@ class ServerService(Service):
         Set the given string key to the given value in the network.
         """
         if not check_dht_value_type(value):
-            print('eel valor es: ', value)
+            print('el valor es: ', value)
             raise TypeError(
                 f"Value must be of type int, float, bool, str, or bytes, received {value}"
             )
