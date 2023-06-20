@@ -42,3 +42,16 @@ def test_unexpected_delete():
     assert storage.get('1aaa') is None
 
     storage.stop_thread()
+
+
+def test_contain_value():
+    storage = PersistentStorage(ttl = 2)
+    storage['a'] = 'b'
+    sleep(1)
+    assert storage.contains('a') == True
+    sleep(1)
+    assert storage.contains('a') == True
+    sleep(1)
+    assert storage.contains('a') == True
+    sleep(3)
+    assert storage.contains('a') == False
