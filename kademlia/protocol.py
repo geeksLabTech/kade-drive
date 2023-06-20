@@ -109,6 +109,8 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         response = conn.rpc_ping(
             address, FileSystemProtocol.source_node.id)
+        
+        print("Got Response {response}")
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
