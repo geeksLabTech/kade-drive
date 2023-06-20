@@ -181,6 +181,13 @@ class Server:
     #                                  self.ksize, self.alpha)
     #         results.append(spider.find())
 
+        # do our crawling
+        # await asyncio.gather(*results)
+
+        # # now republish keys older than one hour
+        # for dkey, value in self.storage.iter_older_than(3600):
+        #     await self.set_digest(dkey, value)
+
 # pylint: disable=too-many-instance-attributes
 
 
