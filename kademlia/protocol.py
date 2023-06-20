@@ -141,18 +141,20 @@ class FileSystemProtocol:
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
             neighbors = FileSystemProtocol.router.find_neighbors(keynode)
+            
             new_node_close = False
             this_closest = False
             # if the node is closer tan the furtherst neighbor
             # the values should be then stored in that node
-            if neighbors:
+            if len(neighbors) > 2:
                 last = neighbors[-1].distance_to(keynode)
                 new_node_close = node.distance_to(keynode) < last
                 first = neighbors[0].distance_to(keynode)
                 this_closest = FileSystemProtocol.source_node.distance_to(
                     keynode) < first
             # if not neighbors, store data in the node
-            if not neighbors or (new_node_close and this_closest):
+            print(f'neighbors in for {neighbors}')
+            if not neighbors or (new_node_close and this_closest) or len(neighbors) <= 1:
                 print('calling call_store in welcome_if_new')
                 with ServerSession(node.ip, node.port) as conn:
                     FileSystemProtocol.call_store(conn, node, key, value)

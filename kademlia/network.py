@@ -205,7 +205,7 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
 
         print("got a store request from %s, storing '%s'='%s'",
-              sender, key.hex(), value)
+              sender, key, value)
         # store values and report success
         FileSystemProtocol.storage[key] = value
         return True
