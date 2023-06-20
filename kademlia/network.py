@@ -14,7 +14,7 @@ from kademlia.storage import ForgetfulStorage, IStorage, PersistentStorage
 from kademlia.node import Node
 from kademlia.crawling import ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
-from models.file import File
+# from models.file import File
 import socket
 from rpyc import Service
 from rpyc.utils.server import ThreadedServer
