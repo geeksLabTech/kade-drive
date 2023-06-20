@@ -218,6 +218,8 @@ class RoutingTable:
         k = k or self.ksize
         nodes: list[tuple[int, Node]] = []
         for neighbor in TableTraverser(self, node):
+            if exclude:
+                print(f'Comparing {neighbor.ip} {neighbor.port} and {exclude.ip} {exclude.port}')
             not_excluded = exclude is None or not neighbor.same_home_as(
                 exclude)
             print('not excluded ', not_excluded)

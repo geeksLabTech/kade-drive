@@ -262,10 +262,13 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # create a fictional node to perform the search
         print('fictional key ', key)
+        print('SEnder [0] Sender [1]', source.ip, source.port)
         node = Node(key)
         # ask for the neighbors of the node
         neighbors = FileSystemProtocol.router.find_neighbors(
             node, exclude=source)
+        if len(neighbors) == 0:
+            neighbors = [Server.node]
         print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
 
