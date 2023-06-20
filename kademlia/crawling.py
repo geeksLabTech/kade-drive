@@ -82,7 +82,7 @@ class SpiderCrawl:
         if len(found_values) > 0:
             return self._handle_found_values(found_values)
         if self.nearest.have_contacted_all():
-            return self.handle_contacts()
+            return self._handle_contacts()
         # if nodes are left to visit, visit them
         return self.find()
 
