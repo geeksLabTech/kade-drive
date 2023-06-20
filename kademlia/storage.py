@@ -108,7 +108,6 @@ class PersistentStorage(IStorage):
             f.write(datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
 
     def delete_old(self):
-
         self.ensure_timestamp_path()
         while True:
             if self.stop_del_thread:
@@ -198,16 +197,22 @@ class PersistentStorage(IStorage):
         self.cull()
         return repr(self.data)
 
-    # def iter_older_than(self, seconds_old):
-        #     # log.warning("iterating")
-    #     min_birthday = time.monotonic() - seconds_old
-    #     zipped = self._triple_iter()
-    #     matches = takewhile(lambda r: min_birthday >= r[1], zipped)
-    #     print(matches)
-    #     try:
-    #         return list(matches)
-    #     except TypeError:
-    #         return [matches]
+    def iter_older_than(self, seconds_old):
+            # log.warning("iterating")
+        for path, dir, files in os.walk(self.timestamp_path):
+                for file in files:
+                    if Path(os.path.join(self.timestamp_path, str(file))).exists():
+                        with open(os.path.join(self.timestamp_path, str(file))) as f:
+                            sleep(0.1)
+                            data = datetime.strptime(
+                                f.read(), "%d/%m/%Y, %H:%M:%S")
+
+                        if (datetime.now() - data).seconds >= seconds_old:
+                            key = str(file)
+                            value = self.get(str(file))
+                            assert value is not None
+                            yield key, value
+        
 
     def _triple_iter(self):
         ikeys = os.listdir(os.path.join(self.db_path))
