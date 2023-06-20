@@ -2,7 +2,7 @@ import heapq
 import time
 import operator
 
-from kademlia.protocol import FileSystemProtocol
+from kademlia.protocol import FileSystemProtocol, ServerSession
 from itertools import chain
 from collections import OrderedDict
 from kademlia.utils import shared_prefix, bytes_to_bit_string
@@ -174,7 +174,7 @@ class RoutingTable:
         index = self.get_bucket_for(node)
         return self.buckets[index].is_new_node(node)
 
-    def add_contact(self, conn, node: Node):
+    def add_contact(self, node: Node):
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
         print()
@@ -189,9 +189,12 @@ class RoutingTable:
         # in its range or if the depth is not congruent to 0 mod 5
         if bucket.has_in_range(self.node) or bucket.depth() % 5 != 0:
             self.split_bucket(index)
-            self.add_contact(conn, node)
+            self.add_contact(node)
         else:
-            FileSystemProtocol.call_ping(conn, bucket.head())
+            node_to_ask = bucket.head()
+            addr = (node_to_ask.ip, node_to_ask.port)
+            with ServerSession(addr[0], addr[1]) as conn:
+                FileSystemProtocol.call_ping(conn, node_to_ask)
 
     def get_bucket_for(self, node: Node):
         """

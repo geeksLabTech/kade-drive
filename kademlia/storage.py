@@ -164,9 +164,11 @@ class PersistentStorage(IStorage):
 
     def __iter__(self):
         self.cull()
+        print(' ')
+        print('calling iter')
         ikeys = os.listdir(os.path.join(self.db_path))
         # ivalues = map(operator.itemgetter(1), self.data.values())
-
+        print('ikeys: ', ikeys)
         ivalues = []
 
         for ik in ikeys:
