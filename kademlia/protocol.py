@@ -89,7 +89,7 @@ class FileSystemProtocol:
         if conn:
             response = conn.rpc_find_node((FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id,
                                       node_to_ask.id)
-        FileSystemProtocol.last_response = response.copy()
+        
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
