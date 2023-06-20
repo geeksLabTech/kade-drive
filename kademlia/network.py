@@ -199,6 +199,7 @@ class ServerService(Service):
         Returns:
             bool: True if operation successful
         """
+        print('Entry in rpc_store')
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
 

@@ -131,6 +131,10 @@ class FileSystemProtocol:
         if not FileSystemProtocol.router.is_new_node(node):
             return
 
+        # add node to table
+        print('Adding new node to contacts')
+        FileSystemProtocol.router.add_contact(node)
+        
         print("never seen %s before, adding to router", node)
         # iterate over storage
         for key, value in FileSystemProtocol.storage:
@@ -150,10 +154,9 @@ class FileSystemProtocol:
                     keynode) < first
             # if not neighbors, store data in the node
             if not neighbors or (new_node_close and this_closest):
+                print('calling call_store in welcome_if_new')
                 FileSystemProtocol.call_store(conn, node, key, value)
-        # add node to table
-        print('Adding new node to contacts')
-        FileSystemProtocol.router.add_contact(node)
+        
 
     @staticmethod
     def process_response(conn, response, node: Node):
