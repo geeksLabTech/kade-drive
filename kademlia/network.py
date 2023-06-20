@@ -95,10 +95,14 @@ class Server:
     def bootstrap_node(addr: tuple[str, str]):
         response = None
         with ServerSession(addr[0], addr[1]) as conn:
-            response = FileSystemProtocol.call_ping(conn, Server.node)
-                # (Server.node.ip, Server.node.port), Server.node.id)
+            response = conn.rpc_ping(
+                (Server.node.ip, Server.node.port), Server.node.id)
         # print(bytes(response))
-            return Node(response, addr[0], addr[1]) if response else None
+            node = Node(response, addr[0], addr[1]) if response else None
+            response = FileSystemProtocol.process_response(
+                conn, response, node)
+
+            return node
 
     @staticmethod
     def split_data(data: bytes, chunk_size: int):
@@ -265,7 +269,7 @@ class ServerService(Service):
         node = Node(key)
         # ask for the neighbors of the node
         neighbors = FileSystemProtocol.router.find_neighbors(
-            node, exclude=source)
+            node, exclude=node)
         print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
 

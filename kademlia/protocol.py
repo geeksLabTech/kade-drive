@@ -84,7 +84,7 @@ class FileSystemProtocol:
         print(address)
         print(node_to_find.ip)
         response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
-                                      node_to_find.id)
+                                      node_to_ask.id)
         FileSystemProtocol.last_response = response.copy()
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
