@@ -178,6 +178,15 @@ class PersistentStorage(IStorage):
         result = self.get_value(key)
         return result
 
+    def contains(self, key):
+        self.cull()
+        self.update_timestamp(key)
+        path = Path(os.path.join(self.db_path, str(key)))
+        if not path.exists():
+            return False
+        return True
+    
+    
     def __getitem__(self, key):
         self.cull()
         result = self.get_value(key)
