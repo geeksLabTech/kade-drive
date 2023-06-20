@@ -82,7 +82,8 @@ class FileSystemProtocol:
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
         print(address)
-        response = conn.rpc_find_node(address, node_to_ask.id,
+        print(node_to_find.ip)
+        response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
                                       node_to_find.id)
         FileSystemProtocol.last_response = response.copy()
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -108,6 +109,8 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         response = conn.rpc_ping(
             address, FileSystemProtocol.source_node.id)
+        
+        print("Got Response {response}")
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
@@ -141,7 +144,7 @@ class FileSystemProtocol:
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
             neighbors = FileSystemProtocol.router.find_neighbors(keynode)
-            
+
             new_node_close = False
             this_closest = False
             # if the node is closer tan the furtherst neighbor

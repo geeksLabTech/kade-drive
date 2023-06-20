@@ -130,7 +130,7 @@ class PersistentStorage(IStorage):
         sleep(10)
 
     def get_value(self, key):
-        with open(os.path.join(self.db_path, key), "rb") as f:
+        with open(os.path.join(self.db_path, str(key)), "rb") as f:
             result = f.read().decode()
         if result is not None:
             self.update_timestamp(key)
