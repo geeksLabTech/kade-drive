@@ -1,4 +1,4 @@
-from typer import Typer, Argument
+from typer import Typer, Argument, Option
 from typing import Optional
 import socket
 from kademlia.storage import PersistentStorage
@@ -32,7 +32,7 @@ app = Typer()
 
 
 @app.command()
-def start(host_ip = Argument('0.0.0.0'),bootstrap_nodes=Argument(None)):
+def start(host_ip = Option(None),bootstrap_nodes=Option(None)):
     if bootstrap_nodes:
         start_(host_ip,bootstrap_nodes)
     else:
