@@ -26,9 +26,10 @@ class ClientSession:
             except (PingError, EOFError) as e:
                 self.connection = None
                 self._reconnect(ip, e, time_to_reconnect)
-            except (ConnectionRefusedError, ConnectionResetError, ConnectionError) as e:
+            except (ConnectionRefusedError, ConnectionResetError, ConnectionError, ) as e:
                 self._reconnect(ip, e, time_to_reconnect)
-    
+
+        print("Unable to connect to any server known server")
         return False
 
     def _reconnect(self, ip: str, e: Exception, time_to_reconnect: int):
@@ -55,7 +56,18 @@ class ClientSession:
         nodes_to_add = [node for node in self.connection.root.find_neighbors() if node not in self.bootstrap_nodes]
         self.bootstrap_nodes.extend(nodes_to_add)
         print(' neidieom', self.bootstrap_nodes)
-          
+    
+    def broadcast(self) -> bool:
+        print('Initiating broadcast')
+        ms = Message_System()
+        ip = ms.receive()
+        if ip:
+            self.bootstrap_nodes.append((ip, int(port)))
+            return True
+        
+        print('Broadcast was not able to find any server.')
+        return False
+        
 
 client_session: ClientSession|None = None
 
@@ -83,14 +95,8 @@ if __name__ == "__main__":
 
         response = client_session.ensure_connection()
         if not response:
-            print("Unable to connect to any server known server")
-            print('Initiating broadcast')
-            ms = Message_System()
-            ip = ms.receive()
-            if ip:
-                client_session.bootstrap_nodes.append((ip, int(port)))
-            else:
-                print('Broadcast was not able to find any server.')
+            if client_session.broadcast():
+                continue
             break
         
         client_session._find_neighbors()
