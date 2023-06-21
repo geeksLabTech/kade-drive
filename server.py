@@ -18,11 +18,11 @@ def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
         print("No bootstrap Nodes given, trying to auto-detect")
 
         msg = ms.receive()
-        # print(msg)
+        print(msg)
         if msg:
             hosts.append(msg)
             print("Found ", msg)
-            bootstrap_nodes = msg+" 8086"
+            bootstrap_nodes = msg
         else:
             print("No servers answered :(")
         # time.sleep(1)
@@ -32,11 +32,12 @@ def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
         host_ip = socket.gethostbyname(socket.gethostname())
         # client_session = ClientSession(ip=host_ip)
 
-    ms.add_to_send(f"{host_ip}")
+    Server.init(ip=host_ip.split(" ")[0])
+
+    print(f"broadcasting {Server.node.ip} {Server.node.port}")
+    ms.add_to_send(f"{Server.node.ip} {Server.node.port}")
     heartbeat_thread = threading.Thread(target=ms.send_heartbeat)
     heartbeat_thread.start()
-
-    Server.init(ip=host_ip.split(" ")[0])
     # Server.init(ip="192.168.26.2")
     time.sleep(0.3)
     if bootstrap_nodes:
