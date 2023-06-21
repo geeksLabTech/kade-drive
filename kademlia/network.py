@@ -401,6 +401,11 @@ class ServerService(Service):
             key = digest(key)
         return Server.set_digest(key, value)
 
+
+    @rpyc.exposed
+    def find_neighbors(self):
+        nearest = FileSystemProtocol.router.find_neighbors(Server.node, exclude=Server.node)
+        return [(i.ip,i.port) for i in nearest]
     # def save_state(self, fname: str):
     #     """
     #     Save the state of this node (the alpha/ksize/id/immediate neighbors)
@@ -450,7 +455,7 @@ class ServerService(Service):
     #     self.save_state_loop = loop.call_later(frequency,
     #                                            self.save_state_regularly,
     #                                            fname,
-    #                                            frequency)
+    #                                           frequency)
 
 
 def check_dht_value_type(value):
