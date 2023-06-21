@@ -4,7 +4,6 @@ import rpyc
 import sys
 from time import sleep
 from rpyc.core.protocol import PingError
-from sympy import false
 from message_system.message_system import Message_System
 
 class ClientSession: 
