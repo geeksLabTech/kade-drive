@@ -25,17 +25,18 @@ class ClientSession:
                 print("Unable to connect to any server known server")
                 if not self.broadcast():
                     was_successful = False
-                    continue
+                    break
 
             ip, port = self.bootstrap_nodes[0]
             try:
                 if self.connection:
                     self.connection.ping()
                     was_successful = True
-                    continue
+                    break
                 self.connection = rpyc.connect(ip, port, keepalive=True)
                 print(f"Connected to {ip}:{port}")
                 was_successful = True
+                break
             except (PingError, EOFError) as e:
                 self.connection = None
                 self._reconnect(ip, e, time_to_reconnect)
@@ -113,7 +114,6 @@ if __name__ == "__main__":
         if not response:
             break
         
-        client_session._update_bootstrap_nodes()
         args = command[1:] if len(command) >= 1 else []
         func = getattr(ClientSession, command[0], None)
         if func is None or not callable(func):
