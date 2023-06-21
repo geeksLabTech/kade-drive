@@ -7,11 +7,35 @@ import threading
 import time
 import sys
 from message_system.message_system import Message_System
+import netifaces as ni
+
+
+def get_ips():
+    # Get all network interfaces
+    interfaces = ni.interfaces()
+
+    # Sort the interfaces by preference: LAN, WLAN, and localhost
+    interfaces.sort(key=lambda x: ("eth" in x, "wlan" in x, "lo" in x))
+
+    ips = []
+
+    for interface in interfaces:
+        try:
+            # Get the IP address for the current interface
+            ip = ni.ifaddresses(interface)[ni.AF_INET][0]['addr']
+            if ip:
+                return ip
+        except:
+            pass
+
+    return ips
 
 
 def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
     # host_ip = socket.gethostbyname(socket.gethostname())
-
+    if host_ip is None:
+        host_ip = get_ips()
+    print(host_ip)
     ms = Message_System(host_ip)
     hosts = []
     if bootstrap_nodes is None:
