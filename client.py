@@ -4,38 +4,50 @@ import rpyc
 import sys
 from time import sleep
 from rpyc.core.protocol import PingError
+from sympy import false
 from message_system.message_system import Message_System
 
 class ClientSession: 
+    """
+    Class to handle connection to the distributed file system
+    It is necessary to run ensure_connection or broadcast method before
+    accessing to the other functionality
+    """
     def __init__(self, bootstrap_nodes: list[tuple[str, int]], attempts_to_reconnect=2) -> None:
         self.connection: rpyc.Connection|None = None
         self.bootstrap_nodes: list[tuple[str, int]] = bootstrap_nodes
         self.total_attempts_to_reconnect = attempts_to_reconnect
         self.current_attempts_to_reconnect = attempts_to_reconnect
     
-    def ensure_connection(self, time_to_reconnect=5, use_broadcast_if_needed: bool = False) -> bool:
-        while len(self.bootstrap_nodes) > 0 or use_broadcast_if_needed:
+    def ensure_connection(self, time_to_reconnect=5, use_broadcast_if_needed: bool = False, update_boostrap_nodes: bool = True) -> bool:
+        was_successful = False
+        while not was_successful or len(self.bootstrap_nodes) > 0 or use_broadcast_if_needed:
             if len(self.bootstrap_nodes) == 0 and use_broadcast_if_needed:
                 print("Unable to connect to any server known server")
                 if not self.broadcast():
-                    return False
+                    was_successful = False
+                    continue
 
             ip, port = self.bootstrap_nodes[0]
             try:
                 if self.connection:
                     self.connection.ping()
-                    return True
+                    was_successful = True
+                    continue
                 self.connection = rpyc.connect(ip, port, keepalive=True)
                 print(f"Connected to {ip}:{port}")
-                return True
+                was_successful = True
             except (PingError, EOFError) as e:
                 self.connection = None
                 self._reconnect(ip, e, time_to_reconnect)
             except (ConnectionRefusedError, ConnectionResetError, ConnectionError, ) as e:
                 self._reconnect(ip, e, time_to_reconnect)
 
-        print("Unable to connect to any server known server")
-        return False
+        if was_successful and update_boostrap_nodes:
+            self._update_bootstrap_nodes()
+        if not was_successful:
+            print("Unable to connect to any server known server")
+        return was_successful
 
     def _reconnect(self, ip: str, e: Exception, time_to_reconnect: int):
         print(f"Connection to {ip} failed by {e}.")
@@ -57,7 +69,7 @@ class ClientSession:
         self.connection.root.set_key(key, value)
         print(f'value putted')
 
-    def _find_neighbors(self):
+    def _update_bootstrap_nodes(self):
         nodes_to_add = [node for node in self.connection.root.find_neighbors() if node not in self.bootstrap_nodes]
         self.bootstrap_nodes.extend(nodes_to_add)
         print(' neidieom', self.bootstrap_nodes)
@@ -98,13 +110,11 @@ if __name__ == "__main__":
         if command[0] == 'exit':
             break
 
-        response = client_session.ensure_connection()
+        response = client_session.ensure_connection(use_broadcast_if_needed=True)
         if not response:
-            if client_session.broadcast():
-                continue
             break
         
-        client_session._find_neighbors()
+        client_session._update_bootstrap_nodes()
         args = command[1:] if len(command) >= 1 else []
         func = getattr(ClientSession, command[0], None)
         if func is None or not callable(func):
