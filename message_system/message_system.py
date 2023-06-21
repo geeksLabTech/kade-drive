@@ -2,6 +2,8 @@ import socket
 import struct
 import time
 import select
+import threading
+from socket import SHUT_RDWR
 
 
 class Message_System:
@@ -38,7 +40,19 @@ class Message_System:
         # release the socket resources
         sender.close()
 
+    def stop_listening(self, sock, duration=5):
+        threading.Timer(duration, self.close_sock, [sock]).start()
+
+    def close_sock(self, sock: socket):
+        print("closing socket", sock)
+        try:
+            sock.shutdown(SHUT_RDWR)
+            sock.close()
+        except OSError:
+            pass
+
     def _mc_recv(self, fromnicip, mcgrpip, mcport):
+        # print("inside rec")
         bufsize = 1024
 
         # This creates a UDP socket
@@ -49,6 +63,7 @@ class Message_System:
         # end point, i.e., the pair of
         #   (multicast group ip address, mulcast port number)
         # that must match that of the sender
+        print((mcgrpip, mcport))
         bindaddr = (mcgrpip, mcport)
         receiver.bind(bindaddr)
 
@@ -68,17 +83,22 @@ class Message_System:
             mreq = struct.pack("=4s4s",
                                socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip))
         receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        # receiver.timeout(5)
+        # ready_to_read, _, _ = select.select([receiver], [], [], 10)
 
-        ready_to_read, _, _ = select.select([receiver], [], [], 1)
-        if ready_to_read:
-            # Receive the mssage
-            buf, senderaddr = receiver.recvfrom(1024)
-            msg = buf.decode()
-        else:
-            msg = senderaddr = None
+        # print("Listening now...")
+        # self.stop_listening(receiver)
+        # receiver.shutdown(1)
+        buf, senderaddr = receiver.recvfrom(1024)
+        # receiver.close()
+        # print("GOT IT...")
+
+        msg = buf.decode()
+
+        # msg = senderaddr = None
         # Release resources
         receiver.close()
-
+        print(msg, senderaddr)
         return msg, senderaddr
 
     def add_to_send(self, msg, times=1, dest=None):
@@ -94,6 +114,8 @@ class Message_System:
     def send(self):
         self_host = socket.gethostname()
         self_ip = socket.gethostbyname(self_host)
+        # self_ip = "192.168.26.1"
+
         for i in self.pendig_send:
             if i['ip'] == None:
                 # print("sending")
@@ -109,10 +131,11 @@ class Message_System:
         to_remove = []
         self_host = socket.gethostname()
         self_ip = socket.gethostbyname(self_host)
+        # self_ip = "192.168.26.1"
         for idx, i in enumerate(self.pendig_receive):
             if i['times'] > 0:
                 i -= 1
-
+            print(f"listening in {self_ip}")
             msg, ip = self._mc_recv(self_ip, '224.1.1.5', 50001)
             if msg:
                 print(f">>> Message from {ip}: {msg}\n")

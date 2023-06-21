@@ -18,10 +18,11 @@ def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
         print("No bootstrap Nodes given, trying to auto-detect")
 
         msg = ms.receive()
+        print(msg)
         if msg:
             hosts.append(msg)
             print("Found ", msg)
-            bootstrap_nodes = msg
+            bootstrap_nodes = msg+" 8086"
         else:
             print("No servers answered :(")
         # time.sleep(1)
@@ -47,10 +48,10 @@ def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
 
 
 app = Typer()
- 
+
 
 @app.command()
-def start(host_ip = Option(None),bootstrap_nodes=Option(None)):
+def start(host_ip=Option(None), bootstrap_nodes=Option(None)):
     if bootstrap_nodes:
         start_(host_ip, bootstrap_nodes)
     else:
