@@ -126,7 +126,7 @@ class PersistentStorage(IStorage):
                             if Path(os.path.join(self.db_path, str(file))).exists():
                                 os.remove(os.path.join(self.db_path, file))
                             os.remove(os.path.join(self.timestamp_path, file))
-        sleep(10)
+            sleep(10)
 
     def get_value(self, key):
         with open(os.path.join(self.db_path, str(key)), "rb") as f:
@@ -184,8 +184,7 @@ class PersistentStorage(IStorage):
         if not path.exists():
             return False
         return True
-    
-    
+
     def __getitem__(self, key):
         self.cull()
         result = self.get_value(key)
@@ -198,21 +197,20 @@ class PersistentStorage(IStorage):
         return repr(self.data)
 
     def iter_older_than(self, seconds_old):
-            # log.warning("iterating")
+        # log.warning("iterating")
         for path, dir, files in os.walk(self.timestamp_path):
-                for file in files:
-                    if Path(os.path.join(self.timestamp_path, str(file))).exists():
-                        with open(os.path.join(self.timestamp_path, str(file))) as f:
-                            sleep(0.1)
-                            data = datetime.strptime(
-                                f.read(), "%d/%m/%Y, %H:%M:%S")
+            for file in files:
+                if Path(os.path.join(self.timestamp_path, str(file))).exists():
+                    with open(os.path.join(self.timestamp_path, str(file))) as f:
+                        sleep(0.1)
+                        data = datetime.strptime(
+                            f.read(), "%d/%m/%Y, %H:%M:%S")
 
-                        if (datetime.now() - data).seconds >= seconds_old:
-                            key = str(file)
-                            value = self.get(str(file))
-                            assert value is not None
-                            yield key, value
-        
+                    if (datetime.now() - data).seconds >= seconds_old:
+                        key = str(file)
+                        value = self.get(str(file))
+                        assert value is not None
+                        yield key, value
 
     def _triple_iter(self):
         ikeys = os.listdir(os.path.join(self.db_path))
