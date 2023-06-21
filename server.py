@@ -12,7 +12,7 @@ from message_system.message_system import Message_System
 def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
     # host_ip = socket.gethostbyname(socket.gethostname())
 
-    ms = Message_System()
+    ms = Message_System(host_ip)
     hosts = []
     if bootstrap_nodes is None:
         print("No bootstrap Nodes given, trying to auto-detect")
@@ -39,12 +39,10 @@ def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
     heartbeat_thread = threading.Thread(target=ms.send_heartbeat)
     heartbeat_thread.start()
     # Server.init(ip="192.168.26.2")
-    time.sleep(0.3)
     if bootstrap_nodes:
         target_host, target_port = bootstrap_nodes.split(' ')
         Server.bootstrap([(target_host, target_port)])
 
-    time.sleep(0.3)
     print(f'Server started at {host_ip}')
 
 

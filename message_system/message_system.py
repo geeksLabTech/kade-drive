@@ -8,7 +8,8 @@ from socket import SHUT_RDWR
 
 class Message_System:
 
-    def __init__(self):
+    def __init__(self, host_ip=None):
+        self.host_ip = host_ip
         self.pendig_send = []
         self.pendig_receive = [
             {'port': "0.0.0.0", "times": -1}
@@ -121,14 +122,15 @@ class Message_System:
         self.pendig_send.append(package)
 
     def send(self):
-        self_host = socket.gethostname()
-        self_ip = socket.gethostbyname(self_host)
-        # self_ip = "192.168.26.1"
+        if self.host_ip == None:
+            self_host = socket.gethostname()
+            self.host_ip = socket.gethostbyname(self_host)
+        # self.host_ip = "192.168.26.1"
 
         for i in self.pendig_send:
             if i['ip'] == None:
                 # print("sending")
-                self._mc_send(self_ip, '224.1.1.5', 50001,
+                self._mc_send(self.host_ip, '224.1.1.5', 50001,
                               i['message'].encode())
 
     def send_heartbeat(self):
@@ -138,14 +140,15 @@ class Message_System:
 
     def receive(self):
         to_remove = []
-        self_host = socket.gethostname()
-        self_ip = socket.gethostbyname(self_host)
-        # self_ip = "192.168.26.1"
+        if self.host_ip == None:
+            self_host = socket.gethostname()
+            self.host_ip = socket.gethostbyname(self_host)
+        # self.host_ip = "192.168.26.1"
         for idx, i in enumerate(self.pendig_receive):
             if i['times'] > 0:
                 i -= 1
-            print(f"listening in {self_ip}")
-            msg, ip = self._mc_recv(self_ip, '224.1.1.5', 50001)
+            print(f"listening in {self.host_ip}")
+            msg, ip = self._mc_recv(self.host_ip, '224.1.1.5', 50001)
             if msg:
                 print(f">>> Message from {ip}: {msg}\n")
 
