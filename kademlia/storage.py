@@ -126,7 +126,7 @@ class PersistentStorage(IStorage):
                             if Path(os.path.join(self.db_path, str(file))).exists():
                                 os.remove(os.path.join(self.db_path, file))
                             os.remove(os.path.join(self.timestamp_path, file))
-            sleep(10)
+            sleep(3600)
 
     def get_value(self, key):
         with open(os.path.join(self.db_path, str(key)), "rb") as f:
