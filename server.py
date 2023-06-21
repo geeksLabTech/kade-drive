@@ -18,7 +18,7 @@ def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
         print("No bootstrap Nodes given, trying to auto-detect")
 
         msg = ms.receive()
-        print(msg)
+        # print(msg)
         if msg:
             hosts.append(msg)
             print("Found ", msg)

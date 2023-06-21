@@ -40,16 +40,25 @@ class Message_System:
         # release the socket resources
         sender.close()
 
-    def stop_listening(self, sock, duration=5):
+    @staticmethod
+    def is_socket_open(sock: socket):
+        try:
+            sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+            return True  # Socket is open
+        except socket.error:
+            return False  # Socket is closed
+
+    def stop_listening(self, sock, duration=1):
         threading.Timer(duration, self.close_sock, [sock]).start()
 
     def close_sock(self, sock: socket):
-        print("closing socket", sock)
-        try:
-            sock.shutdown(SHUT_RDWR)
-            sock.close()
-        except OSError:
-            pass
+        if Message_System.is_socket_open(sock):
+            print("closing socket", sock)
+            try:
+                sock.shutdown(SHUT_RDWR)
+                sock.close()
+            except OSError:
+                pass
 
     def _mc_recv(self, fromnicip, mcgrpip, mcport):
         # print("inside rec")
@@ -63,7 +72,7 @@ class Message_System:
         # end point, i.e., the pair of
         #   (multicast group ip address, mulcast port number)
         # that must match that of the sender
-        print((mcgrpip, mcport))
+        # print((mcgrpip, mcport))
         bindaddr = (mcgrpip, mcport)
         receiver.bind(bindaddr)
 
@@ -87,7 +96,7 @@ class Message_System:
         # ready_to_read, _, _ = select.select([receiver], [], [], 10)
 
         # print("Listening now...")
-        # self.stop_listening(receiver)
+        self.stop_listening(receiver)
         # receiver.shutdown(1)
         buf, senderaddr = receiver.recvfrom(1024)
         # receiver.close()
@@ -98,7 +107,7 @@ class Message_System:
         # msg = senderaddr = None
         # Release resources
         receiver.close()
-        print(msg, senderaddr)
+        # print(msg, senderaddr)
         return msg, senderaddr
 
     def add_to_send(self, msg, times=1, dest=None):
