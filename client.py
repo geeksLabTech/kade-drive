@@ -13,8 +13,13 @@ class ClientSession:
         self.total_attempts_to_reconnect = attempts_to_reconnect
         self.current_attempts_to_reconnect = attempts_to_reconnect
     
-    def ensure_connection(self, time_to_reconnect=5) -> bool:
-        while len(self.bootstrap_nodes) > 0:
+    def ensure_connection(self, time_to_reconnect=5, use_broadcast_if_needed: bool = False) -> bool:
+        while len(self.bootstrap_nodes) > 0 or use_broadcast_if_needed:
+            if len(self.bootstrap_nodes) == 0 and use_broadcast_if_needed:
+                print("Unable to connect to any server known server")
+                if not self.broadcast():
+                    return False
+
             ip, port = self.bootstrap_nodes[0]
             try:
                 if self.connection:
