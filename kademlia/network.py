@@ -382,13 +382,13 @@ class ServerService(Service):
         if not nearest:
             print("There are no known neighbors to get file chunk location %s", chunk_key)
             return None
-        
+
         spider = LocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
-        
+
         return spider.find()
 
     @rpyc.exposed
-    def upload_file(self, key: bytes, data: bytes):
+    def upload_file(self, key: str, data: bytes):
         chunks = Server.split_data(data, 1000000)
         metadata_list = pickle.dumps([digest(c) for c in chunks])
 
@@ -397,7 +397,7 @@ class ServerService(Service):
         for c in processed_chunks:
             self.set_key(c[0], c[1], False)
 
-        Server.set_digest(key, metadata_list)
+        Server.set_digest(digest(key), metadata_list)
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):

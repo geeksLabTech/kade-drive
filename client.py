@@ -78,7 +78,8 @@ class ClientSession:
 
     def put(self, key, value):
         print(f'key: {key}, value: {value}')
-        self.connection.root.set_key(key, value)
+
+        self.connection.root.upload_file(key=key, data=value)
         print(f'value putted')
 
     def _update_bootstrap_nodes(self):
