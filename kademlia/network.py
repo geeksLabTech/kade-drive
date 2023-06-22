@@ -255,6 +255,18 @@ class ServerService(Service):
         # return {'value': value}
 
     @rpyc.exposed
+    def rpc_find_chunk_location(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        # get value from storage
+        if Server.storage.contains(key):
+            return (Server.node.ip, Server.node.port)
+        return ()
+
+    @rpyc.exposed
     def rpc_stun(self, sender):  # pylint: disable=no-self-use
         return sender
 
