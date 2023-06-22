@@ -1,15 +1,22 @@
 import socket
-import struct
+import os, os, os, os, os, os, os, os, os, os, os, os, os, struct
 import time
 import select
 import threading
 from socket import SHUT_RDWR
-
+import ipaddress
+from kademlia.utils import get_ips
 
 class Message_System:
 
-    def __init__(self, host_ip=None):
+    def __init__(self, host_ip=None, broadcast_addr=None):
         self.host_ip = host_ip
+        self.broadcast_addr = broadcast_addr
+        if host_ip is None or broadcast_addr is None:
+            ip_br = get_ips()
+            self.host_ip = ip_br['addr']
+            self.broadcast_addr = ip_br['broadcast']
+
         self.pendig_send = []
         self.pendig_receive = [
             {'port': "0.0.0.0", "times": -1}
@@ -26,6 +33,7 @@ class Message_System:
         # This defines how many hops a multicast datagram can travel.
         # The IP_MULTICAST_TTL's default value is 1 unless we set it otherwise.
         sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
+        sender.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
         # This defines to which network interface (NIC) is responsible for
         # transmitting the multicast datagram; otherwise, the socket
@@ -37,6 +45,7 @@ class Message_System:
 
         # Transmit the datagram in the buffer
         sender.sendto(msgbuf, mcgrp)
+        print("sending", msgbuf, mcgrp)
 
         # release the socket resources
         sender.close()
@@ -68,6 +77,7 @@ class Message_System:
         # This creates a UDP socket
         receiver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM,
                                  proto=socket.IPPROTO_UDP, fileno=None)
+        receiver.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
         # This configure the socket to receive datagrams sent to this multicast
         # end point, i.e., the pair of
@@ -75,6 +85,7 @@ class Message_System:
         # that must match that of the sender
         # print((mcgrpip, mcport))
         bindaddr = (mcgrpip, mcport)
+        print("listening ", mcgrpip, mcport)
         receiver.bind(bindaddr)
 
         # This joins the socket to the intended multicast group. The implications
@@ -92,7 +103,7 @@ class Message_System:
         else:
             mreq = struct.pack("=4s4s",
                                socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip))
-        receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
+        # receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         # receiver.timeout(5)
         # ready_to_read, _, _ = select.select([receiver], [], [], 10)
 
@@ -130,7 +141,7 @@ class Message_System:
         for i in self.pendig_send:
             if i['ip'] == None:
                 # print("sending")
-                self._mc_send(self.host_ip, '224.1.1.5', 50001,
+                self._mc_send(self.host_ip,self.broadcast_addr, 50001,
                               i['message'].encode())
 
     def send_heartbeat(self):
@@ -148,7 +159,7 @@ class Message_System:
             if i['times'] > 0:
                 i -= 1
             print(f"listening in {self.host_ip}")
-            msg, ip = self._mc_recv(self.host_ip, '224.1.1.5', 50001)
+            msg, ip = self._mc_recv(self.host_ip, self.broadcast_addr, 50001)
             if msg:
                 print(f">>> Message from {ip}: {msg}\n")
 
