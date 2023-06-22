@@ -53,5 +53,7 @@ def test_contain_value():
     assert storage.contains('a') == True
     sleep(1)
     assert storage.contains('a') == True
-    sleep(3)
+    sleep(5)
     assert storage.contains('a') == False
+
+    storage.stop_thread()

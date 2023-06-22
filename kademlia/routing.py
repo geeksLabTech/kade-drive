@@ -206,7 +206,7 @@ class RoutingTable:
         for index, bucket in enumerate(self.buckets):
             if node.long_id >= bucket.range[1]:
                 continue
-
+            
             node_index = index
             break
         # we should never be here, but make linter happy
