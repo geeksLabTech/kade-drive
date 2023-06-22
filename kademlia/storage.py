@@ -120,12 +120,13 @@ class PersistentStorage(IStorage):
                             os.remove(os.path.join(self.timestamp_path, file))
             sleep(self.ttl)
 
-    def get_value(self, key):
+    def get_value(self, key, update_timestamp=True):
         self.ensure_dir_paths()
         with open(os.path.join(self.values_path, str(key)), "rb") as f:
             result = f.read().decode()
         if result is not None:
-            self.update_timestamp(key)
+            if update_timestamp:
+                self.update_timestamp(key)
             # result = self.db.find_one(File, File.id == key)
         assert result is not None, 'Tried to get data that is not in db'
         return result
@@ -168,13 +169,13 @@ class PersistentStorage(IStorage):
         #     key, _ = self.data.popitem(last=False)
         #     self.db.remove(File, File.id == key)
 
-    def get(self, key, default=None):
+    def get(self, key, default=None, update_timestamp=True):
         self.ensure_dir_paths()
         path = Path(os.path.join(self.values_path, str(key)))
         if not path.exists():
             return None
 
-        result = self.get_value(key)
+        result = self.get_value(key, update_timestamp=update_timestamp)
         return result
     
     def get_key_in_bytes(self, key: str):
@@ -188,7 +189,7 @@ class PersistentStorage(IStorage):
 
     def contains(self, key):
         self.cull()
-        self.update_timestamp(key)
+        # self.update_timestamp(key)
         path = Path(os.path.join(self.values_path, str(key)))
         if not path.exists():
             return False
@@ -218,7 +219,7 @@ class PersistentStorage(IStorage):
 
                     if (datetime.now() - data).seconds >= seconds_old:
                         key = self.get_key_in_bytes(str(file))
-                        value = self.get(str(file))
+                        value = self.get(str(file), update_timestamp=False)
                         assert value is not None
                         yield key, value
 
@@ -240,5 +241,5 @@ class PersistentStorage(IStorage):
         ivalues = []
 
         for ik in ikeys:
-            ivalues.append(self.get_value(ik))
+            ivalues.append(self.get_value(ik, update_timestamp=False))
         return zip(ikeys, ivalues)
