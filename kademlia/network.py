@@ -129,7 +129,7 @@ class Server:
         return chunks
 
     @staticmethod
-    def set_digest(dkey: bytes, value):
+    def set_digest(dkey: bytes, value, update_timestamp=True):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
@@ -144,7 +144,7 @@ class Server:
             if not Server.storage.contains(dkey):
                 print('storing in current server')
                 Server.storage[dkey] = value
-                
+
             return True
 
         spider = NodeSpiderCrawl(node, nearest,
@@ -155,7 +155,8 @@ class Server:
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest:
-            Server.storage[dkey] = value
+            if not update_timestamp or not Server.storage.contains(dkey):
+                Server.storage[dkey] = value
 
         any_result = False
         for n in nodes:
@@ -204,7 +205,7 @@ class Server:
             print('republishing keys older than 5')
             for key, value in Server.storage.iter_older_than(5):
                 print(f'key {key}, value {value} ')
-                Server.set_digest(key, value)
+                Server.set_digest(key, value, False)
 # pylint: disable=too-many-instance-attributes
 
 
