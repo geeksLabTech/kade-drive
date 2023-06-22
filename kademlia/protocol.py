@@ -147,7 +147,7 @@ class FileSystemProtocol:
                     keynode) < first
             # if not neighbors, store data in the node
             print(f'neighbors in for {neighbors}')
-            if not neighbors or (new_node_close and this_closest) or len(neighbors) <= 1:
+            if not neighbors or (new_node_close and this_closest):
                 print('calling call_store in welcome_if_new')
                 with ServerSession(node.ip, node.port) as conn:
                     FileSystemProtocol.call_store(conn, node, key, value)
