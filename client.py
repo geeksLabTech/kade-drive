@@ -65,8 +65,16 @@ class ClientSession:
             self.attempts_to_reconnect = self.total_attempts_to_reconnect
 
     def get(self, key):
-        result = self.connection.root.get(key)
-        return result
+        metadata_list = self.connection.root.get(key)
+        data_received = []
+        for chunk_key in metadata_list:
+            location = self.connection.root.get_file_chunk_location(chunk_key)[
+                0]
+
+            with rpyc.connect(location[0], location[1]) as conn:
+                data_received.append(conn.root.get_file_chunk_value(chunk_key))
+
+        return "b".join(data_received)
 
     def put(self, key, value):
         print(f'key: {key}, value: {value}')
@@ -82,8 +90,8 @@ class ClientSession:
     def broadcast(self) -> bool:
         print('Initiating broadcast')
         ms = Message_System()
-        ip,port = ms.receive().split(" ")
-    
+        ip, port = ms.receive().split(" ")
+
         if ip:
             self.bootstrap_nodes.append((ip, int(port)))
             return True
@@ -100,7 +108,7 @@ if __name__ == "__main__":
     port = 8086
     if len(sys.argv) < 2:
         print('Initiating client with local ip and default port')
-    
+
     if len(sys.argv) == 2:
         ip = sys.argv[1]
 
@@ -109,7 +117,7 @@ if __name__ == "__main__":
 
     initial_bootstrap_nodes = [(ip, int(port))] if ip else []
     client_session = ClientSession(initial_bootstrap_nodes)
-    
+
     print('Client shell started')
     while True:
         command = input('Expecting command: ').split(' ')

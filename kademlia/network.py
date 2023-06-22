@@ -8,6 +8,7 @@ import threading
 from time import sleep
 import rpyc
 import socket
+import pickle
 from rpyc.utils.server import ThreadedServer
 
 from kademlia.protocol import FileSystemProtocol, ServerSession
@@ -331,6 +332,10 @@ class ServerService(Service):
         return FileSystemProtocol.storage.contains(key)
 
     @rpyc.exposed
+    def get_file_chunk_value(self, key):
+        return Server.storage.gey(key, metadata=False)
+
+    @rpyc.exposed
     def bootstrappable_neighbors(self):
         """
         Get a :class:`list` of (ip, port) :class:`tuple` pairs suitable for
@@ -365,7 +370,9 @@ class ServerService(Service):
             return None
         spider = ValueSpiderCrawl(node, nearest,
                                   Server.ksize, Server.alpha)
-        return spider.find()
+        metadata_list = pickle.loads(spider.find())
+
+        return metadata_list
 
     @rpyc.exposed
     def get_file_chunks(self, hashed_chunks):
