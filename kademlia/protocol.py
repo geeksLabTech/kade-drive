@@ -91,6 +91,20 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
+    def call_find_chunk_location(conn, node_to_ask: Node, node_to_find: Node, is_metadata=False):
+        """
+        async function to call the find value rpc method 
+        """
+        response = None
+        address = (node_to_ask.ip, node_to_ask.port)
+        response = None
+        if conn:
+            response = conn.rpc_find_chunk_location(address, FileSystemProtocol.source_node.id,
+                                           node_to_find.id, is_metadata)
+        print(response)
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
+
+    @staticmethod
     def call_ping(conn, node_to_ask: Node):
         """
         async function to call the ping rpc method

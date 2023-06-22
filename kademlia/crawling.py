@@ -169,6 +169,13 @@ class ValueSpiderCrawl(SpiderCrawl):
         return value
 
 
+class LocationSpiderCrawl(SpiderCrawl):
+    def find(self):
+        return self._find(FileSystemProtocol.call_find_chunk_location, None)
+
+    def _handle_found_values(self, values):
+        return [values]
+
 class NodeSpiderCrawl(SpiderCrawl):
     def find(self):
         """

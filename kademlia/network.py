@@ -15,7 +15,7 @@ from kademlia.routing import RoutingTable
 from kademlia.utils import digest
 from kademlia.storage import PersistentStorage
 from kademlia.node import Node
-from kademlia.crawling import ValueSpiderCrawl
+from kademlia.crawling import LocationSpiderCrawl, ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
 # from models.file import File
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -368,19 +368,20 @@ class ServerService(Service):
         return spider.find()
 
     @rpyc.exposed
-    def get_file_chunks(self, hashed_chunks):
-        data_chunks = [self.get(chunk, False) for chunk in hashed_chunks]
-        # data_chunks = [f for f in results]
-        # removed is File
-
-        if len(hashed_chunks) != len(data_chunks):
-            print('Failed to retrieve all data for chunks')
-
-        data = b''.join(data_chunks)
-        return data
+    def get_file_chunk_location(self, chunk_key):
+        print('looking file chunk location')
+        node = Node(chunk_key)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
+        if not nearest:
+            print("There are no known neighbors to get file chunk location %s", chunk_key)
+            return None
+        
+        spider = LocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
+        
+        return spider.find()
 
     @rpyc.exposed
-    def upload_file(self, key: str, data: bytes):
+    def upload_file(self, key: bytes, data: bytes):
         chunks = Server.split_data(data, 1000000)
         metadata_list = pickle.dumps([digest(c) for c in chunks])
 
@@ -389,7 +390,7 @@ class ServerService(Service):
         for c in processed_chunks:
             self.set_key(c[0], c[1], False)
 
-        Storage.set_digest_metadata(key, metadata_list)
+        Server.set_digest(key, metadata_list)
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
