@@ -4,7 +4,7 @@ import time
 import select
 import threading
 from socket import SHUT_RDWR
-import ipaddress
+import sys
 from kademlia.utils import get_ips
 
 class Message_System:
@@ -65,7 +65,8 @@ class Message_System:
         if Message_System.is_socket_open(sock):
             print("closing socket", sock)
             try:
-                # sock.shutdown(SHUT_RDWR)
+                if sys.platform.startswith('linux'):
+                    sock.shutdown(SHUT_RDWR)
                 print("closing socket")
                 sock.close()
             except OSError:
@@ -118,14 +119,15 @@ class Message_System:
         
         # receiver.close()
         # print("GOT IT...")
-        if buf:
-            msg = buf.decode()
-            print("msg:", msg)
+        # if buf:
+        msg = buf.decode()
+        print("msg:", msg)
             # msg = senderaddr = None
             # Release resources
-            receiver.close()
+        receiver.close()
             # print(msg, senderaddr)
         return msg, senderaddr
+        
 
     def add_to_send(self, msg, times=1, dest=None):
         package = {'message': msg,
