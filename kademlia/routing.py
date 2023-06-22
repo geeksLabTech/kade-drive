@@ -137,6 +137,8 @@ class TableTraverser:
         print("Not found")
         raise StopIteration
 
+class VoidNodeException(Exception):
+    pass
 
 class RoutingTable:
     def __init__(self, ksize: int, node: Node):
@@ -202,14 +204,16 @@ class RoutingTable:
         """
         node_index: int | None = None
         for index, bucket in enumerate(self.buckets):
+            print('node.long_id', node.long_id)
+            print('bucket.range[1]', bucket.range[1])
             if node.long_id >= bucket.range[1]:
                 continue
-
+            
             node_index = index
             break
         # we should never be here, but make linter happy
         if node_index is None:
-            raise Exception(
+            raise VoidNodeException(
                 f'The node {node} does not have any valid bucket to fall into')
 
         return node_index

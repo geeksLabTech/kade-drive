@@ -9,33 +9,6 @@ from kademlia.utils import digest
 
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
-
-# class KademliaUDPProtocol(RPCUDPProtocol):
-#     def __init__(self, filesystem_protocol):
-#         """Instantiation class for the Protocol
-
-#         Args:
-#             source_node (Node): root node
-#             storage (IStorage): values in node
-#             ksize (int): k-bucket size (nodes to keep as 'close')
-#         """
-#         RPCUDPProtocol.__init__(self)
-#         self.filesystem_protocol = filesystem_protocol
-
-
-# class KademliaTCPProtocol(RPCTCPProtocol):
-#     def __init__(self, filesystem_protocol):
-#         """Instantiation class for the Protocol
-
-#         Args:
-#             source_node (Node): root node
-#             storage (IStorage): values in node
-#             ksize (int): k-bucket size (nodes to keep as 'close')
-#         """
-#         RPCTCPProtocol.__init__(self)
-#         self.filesystem_protocol = filesystem_protocol
-
-
 class FileSystemProtocol:
     source_node: Node
     ksize: int
@@ -73,6 +46,15 @@ class FileSystemProtocol:
             response = conn.rpc_store(
             address, FileSystemProtocol.source_node.id, key, value)
 
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
+
+    @staticmethod
+    def call_contains(conn, node_to_ask, key: bytes):
+        response = None 
+        if conn:
+            address = (node_to_ask.ip, node_to_ask.port)
+            response = conn.rpc_contains(address, FileSystemProtocol.source_node.id, key)
+        
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
@@ -165,7 +147,7 @@ class FileSystemProtocol:
                     keynode) < first
             # if not neighbors, store data in the node
             print(f'neighbors in for {neighbors}')
-            if not neighbors or (new_node_close and this_closest) or len(neighbors) <= 1:
+            if not neighbors or (new_node_close and this_closest):
                 print('calling call_store in welcome_if_new')
                 with ServerSession(node.ip, node.port) as conn:
                     FileSystemProtocol.call_store(conn, node, key, value)

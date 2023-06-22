@@ -129,19 +129,22 @@ class Server:
         return chunks
 
     @staticmethod
-    def set_digest(dkey: bytes, value):
+    def set_digest(dkey: bytes, value, update_timestamp=True):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
         """
         node = Node(dkey)
-
+        assert node is not None
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
             print("There are no known neighbors to set key %s",
                   dkey.hex())
-            print('storing in current server')
-            Server.storage[dkey] = value
+            
+            if not Server.storage.contains(dkey):
+                print('storing in current server')
+                Server.storage[dkey] = value
+
             return True
 
         spider = NodeSpiderCrawl(node, nearest,
@@ -152,14 +155,20 @@ class Server:
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest:
-            Server.storage[dkey] = value
+            if not update_timestamp or not Server.storage.contains(dkey):
+                Server.storage[dkey] = value
 
         any_result = False
         for n in nodes:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
-                result = FileSystemProtocol.call_store(conn, n, dkey, value)
-                if result:
+                contains = FileSystemProtocol.call_contains(conn, n, dkey)
+                if not contains:
+                    result = FileSystemProtocol.call_store(conn, n, dkey, value)
+                    if result:
+                        any_result = True
+                
+                if contains:
                     any_result = True
 
         # return true only if at least one store call succeeded
@@ -193,11 +202,10 @@ class Server:
                 results.append(spider.find())
 
             # do our crawling
-            # await asyncio.gather(*results)
-
-            # # now republish keys older than one hour
-            # for dkey in self.storage.iter_older_than(3600):
-                #     await self.set_digest(dkey, value)
+            print('republishing keys older than 5')
+            for key, value in Server.storage.iter_older_than(5):
+                print(f'key {key}, value {value} ')
+                Server.set_digest(key, value, False)
 # pylint: disable=too-many-instance-attributes
 
 
@@ -293,28 +301,16 @@ class ServerService(Service):
         print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
 
-    # def stop(self):
-    #     if self.thread:
-    #         self.thread.join()
-
-    #     if self.refresh_loop:
-    #         self.refresh_loop.cancel()
-
-    #     if self.save_state_loop:
-    #         self.save_state_loop.cancel()
-
-    # def _create_protocol(self):
-    #     return self.protocol_class(self.node, self.storage, self.ksize)
-
-    #
-
-    # do our crawling
-    # await asyncio.gather(*results)
-
-    # now republish keys older than one hour
-    # for dkey, value in self.storage.iter_older_than(3600):
-    #     self.set_digest(dkey, value)
-
+    @rpyc.exposed
+    def rpc_contains(self, sender, nodeid: bytes, key: bytes):
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        # get value from storage
+        return FileSystemProtocol.storage.contains(key)
+    
     @rpyc.exposed
     def bootstrappable_neighbors(self):
         """
@@ -386,57 +382,12 @@ class ServerService(Service):
             key = digest(key)
         return Server.set_digest(key, value)
 
-    # def save_state(self, fname: str):
-    #     """
-    #     Save the state of this node (the alpha/ksize/id/immediate neighbors)
-    #     to a cache file with the given fname.
-    #     """
-    #     print("Saving state to %s", fname)
-    #     data = {
-    #         'ksize': self.ksize,
-    #         'alpha': self.alpha,
-    #         'id': self.node.id,
-    #         'neighbors': self.bootstrappable_neighbors()
-    #     }
-    #     if not data['neighbors']:
-    #         print("No known neighbors, so not writing to cache.")
-    #         return
-    #     with open(fname, 'wb') as file:
-    #         pickle.dump(data, file)
 
-    # @classmethod
-    # def load_state(cls, fname: str, port: str, interface='0.0.0.0'):
-    #     """
-    #     Load the state of this node (the alpha/ksize/id/immediate neighbors)
-    #     from a cache file with the given fname and then bootstrap the node
-    #     (using the given port/interface to start listening/bootstrapping).
-    #     """
-    #     print("Loading state from %s", fname)
-    #     with open(fname, 'rb') as file:
-    #         data = pickle.load(file)
-    #     svr = cls(data['ksize'], data['alpha'], data['id'])
-    #     await svr.listen(port, interface)
-    #     if data['neighbors']:
-    #         await svr.bootstrap(data['neighbors'])
-    #     return svr
-
-    # def save_state_regularly(self, fname: str, frequency=600):
-    #     """
-    #     Save the state of node with a given regularity to the given
-    #     filename.
-
-    #     Args:
-    #         fname: File name to save retularly to
-    #         frequency: Frequency in seconds that the state should be saved.
-    #                     By default, 10 minutes.
-    #     """
-    #     self.save_state(fname)
-    #     loop = asyncio.get_event_loop()
-    #     self.save_state_loop = loop.call_later(frequency,
-    #                                            self.save_state_regularly,
-    #                                            fname,
-    #                                            frequency)
-
+    @rpyc.exposed
+    def find_neighbors(self):
+        nearest = FileSystemProtocol.router.find_neighbors(Server.node, exclude=Server.node)
+        return [(i.ip,i.port) for i in nearest]
+   
 
 def check_dht_value_type(value):
     """
