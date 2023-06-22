@@ -82,7 +82,8 @@ class ClientSession:
     def broadcast(self) -> bool:
         print('Initiating broadcast')
         ms = Message_System()
-        ip = ms.receive()
+        ip,port = ms.receive().split(" ")
+    
         if ip:
             self.bootstrap_nodes.append((ip, int(port)))
             return True
@@ -99,8 +100,7 @@ if __name__ == "__main__":
     port = 8086
     if len(sys.argv) < 2:
         print('Initiating client with local ip and default port')
-        ip = socket.gethostbyname(socket.gethostname())
-
+    
     if len(sys.argv) == 2:
         ip = sys.argv[1]
 
@@ -109,6 +109,7 @@ if __name__ == "__main__":
 
     initial_bootstrap_nodes = [(ip, int(port))] if ip else []
     client_session = ClientSession(initial_bootstrap_nodes)
+    
     print('Client shell started')
     while True:
         command = input('Expecting command: ').split(' ')
