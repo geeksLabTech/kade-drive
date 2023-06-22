@@ -389,6 +389,8 @@ class ServerService(Service):
 
     @rpyc.exposed
     def upload_file(self, key: str, data: bytes):
+        print('key q entra', key)
+        print('daata', data)
         chunks = Server.split_data(data, 1000000)
         metadata_list = pickle.dumps([digest(c) for c in chunks])
 
