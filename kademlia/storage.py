@@ -147,13 +147,13 @@ class PersistentStorage(IStorage):
                 f.write(value.encode("unicode_escape"))
 
     def __setitem__(self, key, value):
-        if key in self.data:
-            del self.data[key]
-            os.remove(os.path.join(self.db_path, str(key)))
-            # self.db.remove(File, File.id == key)``
+        # if key in self.data:
+        #     del self.data[key]
+        #     os.remove(os.path.join(self.db_path, str(key)))
+        #     # self.db.remove(File, File.id == key)``
 
-        self.data[key] = (time.monotonic())
-        self.update_dict()
+        # self.data[key] = (time.monotonic())
+        # self.update_dict()
         # file_to_save = File(id=key, data=value)
         self.set_value(key, value)
         # self.db.save(file_to_save)

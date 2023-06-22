@@ -45,7 +45,7 @@ class Message_System:
 
         # Transmit the datagram in the buffer
         sender.sendto(msgbuf, mcgrp)
-        print("sending", msgbuf, mcgrp)
+        # print("sending", msgbuf, mcgrp)
 
         # release the socket resources
         sender.close()
