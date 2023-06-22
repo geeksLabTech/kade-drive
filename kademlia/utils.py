@@ -3,6 +3,7 @@ General catchall for functions that don't make sense as methods.
 """
 import hashlib
 import operator
+import netifaces as ni
 
 def digest(string):
     if not isinstance(string, bytes):
@@ -31,3 +32,25 @@ def shared_prefix(args):
 def bytes_to_bit_string(bites):
     bits = [bin(bite)[2:].rjust(8, '0') for bite in bites]
     return "".join(bits)
+
+def get_ips():
+    # Get all network interfaces
+    interfaces = ni.interfaces()
+    print(interfaces)
+
+    # Sort the interfaces by preference: LAN, WLAN, and localhost
+    interfaces = sorted(interfaces, key=lambda x: ("wlan" in x, "eth" in x, "lo"  in x ),reverse=True)
+
+    ips = []
+    print(interfaces)
+    for interface in interfaces:
+        try:
+            # Get the IP address for the current interface
+            print(ni.ifaddresses(interface)[ni.AF_INET][0])
+            ip = ni.ifaddresses(interface)[ni.AF_INET][0]
+            if ip:
+                return ip
+        except:
+            pass
+
+    return ip
