@@ -42,21 +42,22 @@ class Message_System:
         sender.close()
 
     @staticmethod
-    def is_socket_open(sock: socket):
+    def is_socket_open(sock: socket.socket):
         try:
             sock.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
             return True  # Socket is open
         except socket.error:
             return False  # Socket is closed
 
-    def stop_listening(self, sock, duration=1):
+    def stop_listening(self, sock, duration=3):
         threading.Timer(duration, self.close_sock, [sock]).start()
 
-    def close_sock(self, sock: socket):
+    def close_sock(self, sock: socket.socket):
         if Message_System.is_socket_open(sock):
             print("closing socket", sock)
             try:
-                sock.shutdown(SHUT_RDWR)
+                # sock.shutdown(SHUT_RDWR)
+                print("closing socket")
                 sock.close()
             except OSError:
                 pass
@@ -99,16 +100,20 @@ class Message_System:
         # print("Listening now...")
         self.stop_listening(receiver)
         # receiver.shutdown(1)
-        buf, senderaddr = receiver.recvfrom(1024)
+        try:
+            buf, senderaddr = receiver.recvfrom(1024)
+        except OSError:
+            return None,None
+        
         # receiver.close()
         # print("GOT IT...")
-
-        msg = buf.decode()
-
-        # msg = senderaddr = None
-        # Release resources
-        receiver.close()
-        # print(msg, senderaddr)
+        if buf:
+            msg = buf.decode()
+            print("msg:", msg)
+            # msg = senderaddr = None
+            # Release resources
+            receiver.close()
+            # print(msg, senderaddr)
         return msg, senderaddr
 
     def add_to_send(self, msg, times=1, dest=None):
