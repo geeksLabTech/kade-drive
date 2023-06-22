@@ -39,7 +39,7 @@ def get_ips():
     print(interfaces)
 
     # Sort the interfaces by preference: LAN, WLAN, and localhost
-    interfaces = sorted(interfaces, key=lambda x: ("wlan" in x, "eth" in x, "lo"  in x ),reverse=True)
+    interfaces = sorted(interfaces, key=lambda x: ("wl" in x, "eth" in x, "en" in x, "lo"  in x ),reverse=True)
 
     ips = []
     print(interfaces)
