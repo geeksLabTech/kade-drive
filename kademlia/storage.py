@@ -64,9 +64,11 @@ class PersistentStorage(IStorage):
         By default, max age is a week.
         """
         self.db_path = 'static'
+        self.values_path = 'static/values'
+        self.keys_path = 'static/keys'
         self.timestamp_path = 'timestamps'
         self.db = []
-        self.data = OrderedDict()
+        # self.data = OrderedDict()
         self.ttl = ttl
         self.stop_del_thread = False
         # self.timedelta = ttl
@@ -74,41 +76,29 @@ class PersistentStorage(IStorage):
         self.del_thread = threading.Thread(target=self.delete_old)
         self.del_thread.start()
 
-        if not os.path.exists(os.path.join(self.db_path)):
-            os.mkdir(self.db_path)
+        self.ensure_dir_paths()
 
-        self.ensure_timestamp_path()
-        # if os.path.exists(os.path.join(self.db_path)):
-        #     try:
-        #         with open(os.path.join(self.db_path, "data_dict.json"), 'rb') as file:
-        #             print("loading orderedDict")
-        #             self.data = pickle.load(file)
-        #         print(self.data)
-        #     except:
-        #         pass
-        # self.address = (ip, port)
 
     def stop_thread(self):
         self.stop_del_thread = True
         self.del_thread.join()
 
-    def ensure_timestamp_path(self):
-        # if not os.path.exists(os.path.join(self.timestamp_path)):
+    def ensure_dir_paths(self):
+        os.makedirs(self.db_path, exist_ok=True)
+
+        os.makedirs(self.values_path, exist_ok=True)
+
+        os.makedirs(self.keys_path, exist_ok=True)
+
         os.makedirs(self.timestamp_path, exist_ok=True)
-
-    def update_dict(self):
-        if not os.path.exists(os.path.join(self.db_path)):
-            os.mkdir(self.db_path)
-
-        # with open(os.path.join(self.db_path, "data_dict.json"), 'wb') as f:
-        #     pickle.dump(self.data, f)
+        
     def update_timestamp(self, filename: str):
-        self.ensure_timestamp_path()
+        self.ensure_dir_paths()
         with open(os.path.join(self.timestamp_path, str(filename)), "w") as f:
             f.write(datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
 
     def delete_old(self):
-        self.ensure_timestamp_path()
+        self.ensure_dir_paths()
         while True:
             print("checking")
             if self.stop_del_thread:
@@ -123,13 +113,16 @@ class PersistentStorage(IStorage):
                         if (datetime.now() - data).seconds > self.ttl:
                             print(
                                 f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes")
-                            if Path(os.path.join(self.db_path, str(file))).exists():
-                                os.remove(os.path.join(self.db_path, file))
+                            if Path(os.path.join(self.values_path, str(file))).exists():
+                                os.remove(os.path.join(self.values_path, file))
+                            if Path(os.path.join(self.keys_path, str(file))).exists():
+                                os.remove(os.path.join(self.keys_path, file))
                             os.remove(os.path.join(self.timestamp_path, file))
             sleep(self.ttl)
 
     def get_value(self, key):
-        with open(os.path.join(self.db_path, str(key)), "rb") as f:
+        self.ensure_dir_paths()
+        with open(os.path.join(self.values_path, str(key)), "rb") as f:
             result = f.read().decode()
         if result is not None:
             self.update_timestamp(key)
@@ -138,22 +131,30 @@ class PersistentStorage(IStorage):
         return result
 
     def set_value(self, key, value):
+        self.ensure_dir_paths()
         self.update_timestamp(str(key))
-        self.data[key] = (time.monotonic())
-        with open(os.path.join(self.db_path, str(key)), "wb") as f:
+        # self.data[key] = (time.monotonic())
+        with open(os.path.join(self.values_path, str(key)), "wb") as f:
             try:
                 f.write(value)
             except TypeError:
                 f.write(value.encode("unicode_escape"))
+        
+        with open(os.path.join(self.keys_path, str(key)), "wb") as f:
+            try:
+                f.write(key)
+            except TypeError:
+                f.write(key.encode("unicode_escape"))
 
     def __setitem__(self, key, value):
-        if key in self.data:
-            del self.data[key]
-            os.remove(os.path.join(self.db_path, str(key)))
+        self.ensure_dir_paths()
+        # if key in self.data:
+        #     del self.data[key]
+        #     os.remove(os.path.join(self.values_path, str(key)))
+        #     os.remove(os.path.join(self.keys_path, str(key)))
             # self.db.remove(File, File.id == key)``
 
-        self.data[key] = (time.monotonic())
-        self.update_dict()
+        # self.data[key] = (time.monotonic())
         # file_to_save = File(id=key, data=value)
         self.set_value(key, value)
         # self.db.save(file_to_save)
@@ -168,19 +169,27 @@ class PersistentStorage(IStorage):
         #     self.db.remove(File, File.id == key)
 
     def get(self, key, default=None):
-        self.cull()
-        self.update_timestamp(key)
-        path = Path(os.path.join(self.db_path, str(key)))
+        self.ensure_dir_paths()
+        path = Path(os.path.join(self.values_path, str(key)))
         if not path.exists():
             return None
 
         result = self.get_value(key)
         return result
+    
+    def get_key_in_bytes(self, key: str):
+        path = Path(os.path.join(self.keys_path, str(key)))
+        if not path.exists():
+            return None
+        
+        with open(os.path.join(self.keys_path, str(key)), "rb") as f:
+            result = f.read()
+            return result
 
     def contains(self, key):
         self.cull()
         self.update_timestamp(key)
-        path = Path(os.path.join(self.db_path, str(key)))
+        path = Path(os.path.join(self.values_path, str(key)))
         if not path.exists():
             return False
         return True
@@ -194,10 +203,11 @@ class PersistentStorage(IStorage):
 
     def __repr__(self):
         self.cull()
-        return repr(self.data)
+        # return repr(self.data)
 
     def iter_older_than(self, seconds_old):
         # log.warning("iterating")
+        self.ensure_dir_paths()
         for path, dir, files in os.walk(self.timestamp_path):
             for file in files:
                 if Path(os.path.join(self.timestamp_path, str(file))).exists():
@@ -207,21 +217,24 @@ class PersistentStorage(IStorage):
                             f.read(), "%d/%m/%Y, %H:%M:%S")
 
                     if (datetime.now() - data).seconds >= seconds_old:
-                        key = str(file)
+                        key = self.get_key_in_bytes(str(file))
                         value = self.get(str(file))
                         assert value is not None
                         yield key, value
 
-    def _triple_iter(self):
-        ikeys = os.listdir(os.path.join(self.db_path))
-        ibirthday = map(operator.itemgetter(0), self.data.values())
-        return zip(ikeys, ibirthday)
+    # def _triple_iter(self):
+    #     ikeys = os.listdir(os.path.join(self.db_path))
+    #     ibirthday = map(operator.itemgetter(0), self.data.values())
+    #     return zip(ikeys, ibirthday)
 
     def __iter__(self):
-        self.cull()
+        self.ensure_dir_paths()
         print(' ')
         print('calling iter')
-        ikeys = os.listdir(os.path.join(self.db_path))
+        ikeys_files = os.listdir(os.path.join(self.keys_path))
+        ikeys = []
+        for key_name in ikeys_files:
+            ikeys.append(self.get_key_in_bytes(key_name))
         # ivalues = map(operator.itemgetter(1), self.data.values())
         print('ikeys: ', ikeys)
         ivalues = []

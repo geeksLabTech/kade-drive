@@ -135,13 +135,16 @@ class Server:
         network.
         """
         node = Node(dkey)
-
+        assert node is not None
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
             print("There are no known neighbors to set key %s",
                   dkey.hex())
-            print('storing in current server')
-            Server.storage[dkey] = value
+            
+            if not Server.storage.contains(dkey):
+                print('storing in current server')
+                Server.storage[dkey] = value
+                
             return True
 
         spider = NodeSpiderCrawl(node, nearest,
@@ -198,9 +201,10 @@ class Server:
                 results.append(spider.find())
 
             # do our crawling
-            # # now republish keys older than one hour
-            for key, value in Server.storage.iter_older_than(3600):
-                Server.set_digest(bytes(key, 'utf-8'), value)
+            print('republishing keys older than 5')
+            for key, value in Server.storage.iter_older_than(5):
+                print(f'key {key}, value {value} ')
+                Server.set_digest(key, value)
 # pylint: disable=too-many-instance-attributes
 
 

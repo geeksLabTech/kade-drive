@@ -204,6 +204,8 @@ class RoutingTable:
         """
         node_index: int | None = None
         for index, bucket in enumerate(self.buckets):
+            print('node.long_id', node.long_id)
+            print('bucket.range[1]', bucket.range[1])
             if node.long_id >= bucket.range[1]:
                 continue
             
