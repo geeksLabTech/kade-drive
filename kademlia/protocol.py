@@ -9,33 +9,6 @@ from kademlia.utils import digest
 
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
-
-# class KademliaUDPProtocol(RPCUDPProtocol):
-#     def __init__(self, filesystem_protocol):
-#         """Instantiation class for the Protocol
-
-#         Args:
-#             source_node (Node): root node
-#             storage (IStorage): values in node
-#             ksize (int): k-bucket size (nodes to keep as 'close')
-#         """
-#         RPCUDPProtocol.__init__(self)
-#         self.filesystem_protocol = filesystem_protocol
-
-
-# class KademliaTCPProtocol(RPCTCPProtocol):
-#     def __init__(self, filesystem_protocol):
-#         """Instantiation class for the Protocol
-
-#         Args:
-#             source_node (Node): root node
-#             storage (IStorage): values in node
-#             ksize (int): k-bucket size (nodes to keep as 'close')
-#         """
-#         RPCTCPProtocol.__init__(self)
-#         self.filesystem_protocol = filesystem_protocol
-
-
 class FileSystemProtocol:
     source_node: Node
     ksize: int
