@@ -9,6 +9,7 @@ from kademlia.utils import digest
 
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
+
 class FileSystemProtocol:
     source_node: Node
     ksize: int
@@ -35,7 +36,7 @@ class FileSystemProtocol:
         return ids
 
     @staticmethod
-    def call_store(conn, node_to_ask: Node, key: bytes, value):
+    def call_store(conn, node_to_ask: Node, key: bytes, value, is_metadata=True):
         """
         async function to call the find store rpc method
         """
@@ -44,17 +45,18 @@ class FileSystemProtocol:
         response = None
         if conn:
             response = conn.rpc_store(
-            address, FileSystemProtocol.source_node.id, key, value)
+                address, FileSystemProtocol.source_node.id, key, value, is_metadata)
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
     def call_contains(conn, node_to_ask, key: bytes):
-        response = None 
+        response = None
         if conn:
             address = (node_to_ask.ip, node_to_ask.port)
-            response = conn.rpc_contains(address, FileSystemProtocol.source_node.id, key)
-        
+            response = conn.rpc_contains(
+                address, FileSystemProtocol.source_node.id, key)
+
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
@@ -70,12 +72,12 @@ class FileSystemProtocol:
         response = None
         if conn:
             response = conn.rpc_find_node((FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id,
-                                      node_to_ask.id)
-        
+                                          node_to_ask.id)
+
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def call_find_value(conn, node_to_ask: Node, node_to_find: Node):
+    def call_find_value(conn, node_to_ask: Node, node_to_find: Node, is_metadata=True):
         """
         async function to call the find value rpc method 
         """
@@ -84,7 +86,7 @@ class FileSystemProtocol:
         response = None
         if conn:
             response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
-                                       node_to_find.id)
+                                           node_to_find.id, is_metadata)
         print(response)
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
@@ -129,7 +131,7 @@ class FileSystemProtocol:
 
         print("never seen %s before, adding to router", node)
         # iterate over storage
-        for key, value in FileSystemProtocol.storage:
+        for key, value, is_metadata in FileSystemProtocol.storage:
             print('entry for')
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
@@ -150,7 +152,8 @@ class FileSystemProtocol:
             if not neighbors or (new_node_close and this_closest):
                 print('calling call_store in welcome_if_new')
                 with ServerSession(node.ip, node.port) as conn:
-                    FileSystemProtocol.call_store(conn, node, key, value)
+                    FileSystemProtocol.call_store(
+                        conn, node, key, value, is_metadata)
 
     @staticmethod
     def process_response(conn, response, node: Node):
@@ -163,7 +166,7 @@ class FileSystemProtocol:
             print("no response from %s, removing from router", node)
             FileSystemProtocol.router.remove_contact(node)
             return response
-        
+
         FileSystemProtocol.welcome_if_new(conn, node)
         print("got successful response from %s", node)
         print(response)

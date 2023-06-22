@@ -129,7 +129,7 @@ class Server:
         return chunks
 
     @staticmethod
-    def set_digest(dkey: bytes, value, update_timestamp=True):
+    def set_digest(dkey: bytes, value, update_timestamp=True, metadata=True):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
@@ -140,10 +140,13 @@ class Server:
         if not nearest:
             print("There are no known neighbors to set key %s",
                   dkey.hex())
-            
+
             if not Server.storage.contains(dkey):
                 print('storing in current server')
-                Server.storage[dkey] = value
+                if metadata:
+                    Server.storage.set_metadata(dkey, value)
+                else:
+                    Server.storage[dkey] = value
 
             return True
 
@@ -156,7 +159,10 @@ class Server:
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest:
             if not update_timestamp or not Server.storage.contains(dkey):
-                Server.storage[dkey] = value
+                if metadata:
+                    Server.storage.set_metadata(dkey, value)
+                else:
+                    Server.storage[dkey] = value
 
         any_result = False
         for n in nodes:
@@ -164,10 +170,11 @@ class Server:
             with ServerSession(address[0], address[1]) as conn:
                 contains = FileSystemProtocol.call_contains(conn, n, dkey)
                 if not contains:
-                    result = FileSystemProtocol.call_store(conn, n, dkey, value)
+                    result = FileSystemProtocol.call_store(
+                        conn, n, dkey, value, metadata)
                     if result:
                         any_result = True
-                
+
                 if contains:
                     any_result = True
 
@@ -203,9 +210,9 @@ class Server:
 
             # do our crawling
             print('republishing keys older than 5')
-            for key, value in Server.storage.iter_older_than(5):
-                print(f'key {key}, value {value} ')
-                Server.set_digest(key, value, False)
+            for key, value, is_metadata in Server.storage.iter_older_than(5):
+                print(f'key {key}, value {value}, is_metadata {is_metadata}')
+                Server.set_digest(key, value, False, is_metadata)
 # pylint: disable=too-many-instance-attributes
 
 
@@ -213,7 +220,7 @@ class Server:
 class ServerService(Service):
 
     @rpyc.exposed
-    def rpc_store(self, sender, nodeid: bytes, key: bytes, value):
+    def rpc_store(self, sender, nodeid: bytes, key: bytes, value, metadata=True):
         """Instructs a node to store a value
 
         Args:
@@ -236,23 +243,23 @@ class ServerService(Service):
         print("got a store request from %s, storing '%s'='%s'",
               sender, key, value)
         # store values and report success
-        FileSystemProtocol.storage[key] = value
+        if metadata:
+            FileSystemProtocol.set_metadata(dkey, value)
+        else:
+            FileSystemProtocol.storage[key] = value
         return True
 
     @rpyc.exposed
-    def rpc_find_value(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
+    def rpc_find_value(self, sender: tuple[str, str], nodeid: bytes, key: bytes, metadata=True):
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
-        value = FileSystemProtocol.storage.get(key, None)
+
+        value = FileSystemProtocol.storage.get(key, None, metadata)
         return value
-        # if not value found, ask the info for the value to the nodes
-        # if value is None:
-        #     return self.rpc_find_node(sender, nodeid, key)
-        # return {'value': value}
 
     @rpyc.exposed
     def rpc_find_chunk_location(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
@@ -322,7 +329,7 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         return FileSystemProtocol.storage.contains(key)
-    
+
     @rpyc.exposed
     def bootstrappable_neighbors(self):
         """
@@ -349,8 +356,8 @@ class ServerService(Service):
         if apply_hash_to_key:
             key = digest(key)
         # if this node has it, return it
-        if Server.storage.get(key) is not None:
-            return Server.storage.get(key)
+        if Server.storage.get(key, True) is not None:
+            return Server.storage.get(key, True)
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
@@ -373,11 +380,16 @@ class ServerService(Service):
         return data
 
     @rpyc.exposed
-    def upload_file(self, data: bytes):
+    def upload_file(self, key: str, data: bytes):
         chunks = Server.split_data(data, 1000000)
+        metadata_list = pickle.dumps([digest(c) for c in chunks])
+
         processed_chunks = ((digest(c), c) for c in chunks)
+
         for c in processed_chunks:
             self.set_key(c[0], c[1], False)
+
+        Storage.set_digest_metadata(key, metadata_list)
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
@@ -394,12 +406,12 @@ class ServerService(Service):
             key = digest(key)
         return Server.set_digest(key, value)
 
-
     @rpyc.exposed
     def find_neighbors(self):
-        nearest = FileSystemProtocol.router.find_neighbors(Server.node, exclude=Server.node)
-        return [(i.ip,i.port) for i in nearest]
-   
+        nearest = FileSystemProtocol.router.find_neighbors(
+            Server.node, exclude=Server.node)
+        return [(i.ip, i.port) for i in nearest]
+
 
 def check_dht_value_type(value):
     """
