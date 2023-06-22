@@ -65,6 +65,7 @@ class PersistentStorage(IStorage):
         """
         self.db_path = 'static'
         self.values_path = 'static/values'
+        self.metadata_path = 'static/metadata'
         self.keys_path = 'static/keys'
         self.timestamp_path = 'timestamps'
         self.db = []
@@ -78,7 +79,6 @@ class PersistentStorage(IStorage):
 
         self.ensure_dir_paths()
 
-
     def stop_thread(self):
         self.stop_del_thread = True
         self.del_thread.join()
@@ -88,10 +88,12 @@ class PersistentStorage(IStorage):
 
         os.makedirs(self.values_path, exist_ok=True)
 
+        os.makedirs(self.metadata_path, exist_ok=True)
+
         os.makedirs(self.keys_path, exist_ok=True)
 
         os.makedirs(self.timestamp_path, exist_ok=True)
-        
+
     def update_timestamp(self, filename: str):
         self.ensure_dir_paths()
         with open(os.path.join(self.timestamp_path, str(filename)), "w") as f:
@@ -114,16 +116,25 @@ class PersistentStorage(IStorage):
                             print(
                                 f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes")
                             if Path(os.path.join(self.values_path, str(file))).exists():
-                                os.remove(os.path.join(self.values_path, file))
+                                os.remove(os.path.join(
+                                    self.metadata_path, file))
+                            if Path(os.path.join(self.values_path, str(file))).exists():
+                                os.remove(os.path.join(
+                                    self.metadata_path, file))
                             if Path(os.path.join(self.keys_path, str(file))).exists():
                                 os.remove(os.path.join(self.keys_path, file))
                             os.remove(os.path.join(self.timestamp_path, file))
             sleep(self.ttl)
 
-    def get_value(self, key, update_timestamp=True):
+    def get_value(self, key, update_timestamp=True, metadata=True):
         self.ensure_dir_paths()
-        with open(os.path.join(self.values_path, str(key)), "rb") as f:
+        if metadata:
+            path = os.path.join(self.metadata_path, str(key))
+        else:
+            path = os.path.join(self.values_path, str(key))
+        with open(path, "rb") as f:
             result = f.read().decode()
+
         if result is not None:
             if update_timestamp:
                 self.update_timestamp(key)
@@ -131,21 +142,29 @@ class PersistentStorage(IStorage):
         assert result is not None, 'Tried to get data that is not in db'
         return result
 
-    def set_value(self, key, value):
+    def set_value(self, key, value, metadata=True):
         self.ensure_dir_paths()
         self.update_timestamp(str(key))
-        # self.data[key] = (time.monotonic())
-        with open(os.path.join(self.values_path, str(key)), "wb") as f:
+        if metadata:
+            path = os.path.join(self.metadata_path, str(key))
+        else:
+            path = os.path.join(self.values_path, str(key))
+        with open(path, "wb") as f:
             try:
                 f.write(value)
             except TypeError:
                 f.write(value.encode("unicode_escape"))
-        
+
         with open(os.path.join(self.keys_path, str(key)), "wb") as f:
             try:
                 f.write(key)
             except TypeError:
                 f.write(key.encode("unicode_escape"))
+
+    def set_metadata(self, key, value):
+        self.ensure_dir_paths()
+        self.set_value(key, value, True)
+        self.cull()
 
     def __setitem__(self, key, value):
         self.ensure_dir_paths()
@@ -153,11 +172,11 @@ class PersistentStorage(IStorage):
         #     del self.data[key]
         #     os.remove(os.path.join(self.values_path, str(key)))
         #     os.remove(os.path.join(self.keys_path, str(key)))
-            # self.db.remove(File, File.id == key)``
+        # self.db.remove(File, File.id == key)``
 
         # self.data[key] = (time.monotonic())
         # file_to_save = File(id=key, data=value)
-        self.set_value(key, value)
+        self.set_value(key, value, False)
         # self.db.save(file_to_save)
         self.cull()
 
@@ -169,23 +188,27 @@ class PersistentStorage(IStorage):
         #     key, _ = self.data.popitem(last=False)
         #     self.db.remove(File, File.id == key)
 
-    def get(self, key, default=None, update_timestamp=True):
+    def get(self, key, default=None, update_timestamp=True, metadata=True):
         self.ensure_dir_paths()
-        path = Path(os.path.join(self.values_path, str(key)))
+        if metadata:
+            path = Path(os.path.join(self.metadata_path, str(key)))
+        else:
+            path = Path(os.path.join(self.values_path, str(key)))
         if not path.exists():
             return None
 
-        result = self.get_value(key, update_timestamp=update_timestamp)
+        result = self.get_value(
+            key, update_timestamp=update_timestamp, metadata=metadata)
         return result
-    
+
     def get_key_in_bytes(self, key: str):
         path = Path(os.path.join(self.keys_path, str(key)))
         if not path.exists():
             return None
-        
+
         with open(os.path.join(self.keys_path, str(key)), "rb") as f:
             result = f.read()
-            return result
+            return result, os.path.exists(os.path.join(self.metadata_path, str(result)))
 
     def contains(self, key):
         self.cull()
@@ -218,10 +241,11 @@ class PersistentStorage(IStorage):
                             f.read(), "%d/%m/%Y, %H:%M:%S")
 
                     if (datetime.now() - data).seconds >= seconds_old:
-                        key = self.get_key_in_bytes(str(file))
-                        value = self.get(str(file), update_timestamp=False)
+                        key, is_metadata = self.get_key_in_bytes(str(file))
+                        value = self.get(
+                            str(file), update_timestamp=False, metadata=is_metadata)
                         assert value is not None
-                        yield key, value
+                        yield key, value, metadata
 
     # def _triple_iter(self):
     #     ikeys = os.listdir(os.path.join(self.db_path))
@@ -234,12 +258,15 @@ class PersistentStorage(IStorage):
         print('calling iter')
         ikeys_files = os.listdir(os.path.join(self.keys_path))
         ikeys = []
+        imetadata = []
         for key_name in ikeys_files:
-            ikeys.append(self.get_key_in_bytes(key_name))
+            k, m = self.get_key_in_bytes(key_name)
+            ikeys.append(k)
+            imetadata.append(m)
         # ivalues = map(operator.itemgetter(1), self.data.values())
         print('ikeys: ', ikeys)
         ivalues = []
 
         for ik in ikeys:
             ivalues.append(self.get_value(ik, update_timestamp=False))
-        return zip(ikeys, ivalues)
+        return zip(ikeys, ivalues, imetadata)
