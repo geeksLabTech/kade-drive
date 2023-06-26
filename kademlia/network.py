@@ -114,7 +114,15 @@ class Server:
         """Split data into chunks of less than chunk_size, it must be less than 16mb"""
         if not isinstance(data, bytes):
             data = pickle.dumps(data)
-        fixed_chunks = len(data) // chunk_size
+        if not len(data) % chunk_size == 0:
+            fixed_chunks = (len(data) // chunk_size) + 1
+        else:
+            fixed_chunks = len(data) // chunk_size
+
+        # last_chunk_size = len(data) - fixed_chunks * chunk_size
+        # start_of_last_chunk = len(data)-last_chunk_size
+        # last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
+        # chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)]
         chunks = []
         count = 0
         last_position = 0
@@ -272,8 +280,6 @@ class ServerService(Service):
         if Server.storage.contains(key):
             return (Server.node.ip, Server.node.port)
         return ()
-
-   
 
     @rpyc.exposed
     def rpc_ping(self, sender, nodeid: bytes):
