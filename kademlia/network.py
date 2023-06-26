@@ -274,9 +274,7 @@ class ServerService(Service):
             return (Server.node.ip, Server.node.port)
         return ()
 
-    @rpyc.exposed
-    def rpc_stun(self, sender):  # pylint: disable=no-self-use
-        return sender
+   
 
     @rpyc.exposed
     def rpc_ping(self, sender, nodeid: bytes):
