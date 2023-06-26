@@ -96,6 +96,7 @@ class PersistentStorage(IStorage):
 
     def update_timestamp(self, filename: str):
         self.ensure_dir_paths()
+        # print('timestamp for',filename)
         with open(os.path.join(self.timestamp_path, str(filename)), "w") as f:
             f.write(datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
 
@@ -133,7 +134,7 @@ class PersistentStorage(IStorage):
         else:
             path = os.path.join(self.values_path, str(key))
         with open(path, "rb") as f:
-            result = f.read().decode()
+            result = f.read()
 
         if result is not None:
             if update_timestamp:
@@ -151,8 +152,10 @@ class PersistentStorage(IStorage):
             path = os.path.join(self.values_path, str(key))
         with open(path, "wb") as f:
             try:
+                print('escribiendo')
                 f.write(value)
             except TypeError:
+                print('unicode_escape')
                 f.write(value.encode("unicode_escape"))
 
         with open(os.path.join(self.keys_path, str(key)), "wb") as f:
@@ -245,7 +248,7 @@ class PersistentStorage(IStorage):
                         value = self.get(
                             str(file), update_timestamp=False, metadata=is_metadata)
                         assert value is not None
-                        yield key, value, metadata
+                        yield key, value, is_metadata
 
     # def _triple_iter(self):
     #     ikeys = os.listdir(os.path.join(self.db_path))

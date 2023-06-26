@@ -16,7 +16,13 @@ client_session = ClientSession(initial_bootstrap_nodes)
 
 client_session.ensure_connection(use_broadcast_if_needed=True)
 
+client_session.put("dataset_diabetes", X_pickle)
 
-client_session.put("dataset_diabetes",X)
 
+print("DONE, Getting")
+print()
+print()
+value_getted = client_session.get("dataset_diabetes")
 
+print(' value getted ', value_getted)
+assert X.equals(value_getted)

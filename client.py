@@ -1,4 +1,5 @@
 
+import pickle
 import socket
 import rpyc
 import sys
@@ -6,6 +7,7 @@ from time import sleep
 from rpyc.core.protocol import PingError
 from message_system.message_system import Message_System
 
+# rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 class ClientSession:
     """
@@ -35,7 +37,7 @@ class ClientSession:
                     self.connection.ping()
                     was_successful = True
                     break
-                self.connection = rpyc.connect(ip, port, keepalive=True)
+                self.connection = rpyc.connect(ip, port, keepalive=True, config = {'allow_pickle': True})
                 print(f"Connected to {ip}:{port}")
                 was_successful = True
                 break
@@ -68,20 +70,29 @@ class ClientSession:
         metadata_list = self.connection.root.get(key)
         data_received = []
         for chunk_key in metadata_list:
-            location = self.connection.root.get_file_chunk_location(chunk_key)[
-                0]
+            print('chunk key', chunk_key)
+            location = self.connection.root.get_file_chunk_location(chunk_key)
+                
+            print('sali de location', location, self.bootstrap_nodes[0])
+            if location == self.bootstrap_nodes[0]:
+                print('entro misma conexion')
+                data_received.append(self.connection.root.get_file_chunk_value(chunk_key))
+            else:
+                print('noooo')
+                with rpyc.connect(location[0], location[1]) as conn:
+                    data_received.append(conn.root.get_file_chunk_value(chunk_key))
 
-            with rpyc.connect(location[0], location[1]) as conn:
-                data_received.append(conn.root.get_file_chunk_value(chunk_key))
-
-        return "b".join(data_received)
+        # data_recv = bytearray()
+        print('len data received', len(data_received))
+        data_received = b''.join(data_received)
+        return pickle.loads(data_received)
 
     def put(self, key, value):
         print(f'key: {key}, value: {value}')
-
+        # print(self.connection.root.upload_file.)
         self.connection.root.upload_file(key=key, data=value)
         print(f'value putted')
-
+    
     def _update_bootstrap_nodes(self):
         nodes_to_add = [node for node in self.connection.root.find_neighbors(
         ) if node not in self.bootstrap_nodes]
