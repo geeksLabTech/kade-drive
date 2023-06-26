@@ -64,6 +64,7 @@ class Server:
         Server.node.port = port
         t = ThreadedServer(ServerService, port=port, hostname=interface, protocol_config={
             'allow_public_attrs': True,
+            'allow_pickle': True
         })
         t.start()
         # finally, schedule refreshing table
@@ -111,11 +112,9 @@ class Server:
     @staticmethod
     def split_data(data: bytes, chunk_size: int):
         """Split data into chunks of less than chunk_size, it must be less than 16mb"""
+        if not isinstance(data, bytes):
+            data = pickle.dumps(data)
         fixed_chunks = len(data) // chunk_size
-        # last_chunk_size = len(data) - fixed_chunks * chunk_size
-        # start_of_last_chunk = len(data)-last_chunk_size
-        # last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
-        # chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)]
         chunks = []
         count = 0
         last_position = 0
@@ -212,7 +211,7 @@ class Server:
             # do our crawling
             print('republishing keys older than 5')
             for key, value, is_metadata in Server.storage.iter_older_than(5):
-                print(f'key {key}, value {value}, is_metadata {is_metadata}')
+                # print(f'key {key}, value {value}, is_metadata {is_metadata}')
                 Server.set_digest(key, value, False, is_metadata)
 # pylint: disable=too-many-instance-attributes
 
@@ -360,7 +359,7 @@ class ServerService(Service):
             key = digest(key)
         # if this node has it, return it
         if Server.storage.get(key, True) is not None:
-            return Server.storage.get(key, True)
+            return pickle.loads(Server.storage.get(key, True))
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
@@ -369,12 +368,16 @@ class ServerService(Service):
         spider = ValueSpiderCrawl(node, nearest,
                                   Server.ksize, Server.alpha)
         metadata_list = pickle.loads(spider.find())
-
+        print('  mmmm   ')
+        print('metadata list', metadata_list)
         return metadata_list
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
         print('looking file chunk location')
+        if Server.storage.contains(chunk_key) is not None:
+            print('Found in this server ', Server.node.ip, 'port', Server.node.port)
+            return (Server.node.ip, Server.node.port)
         node = Node(chunk_key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
@@ -389,14 +392,20 @@ class ServerService(Service):
     def upload_file(self, key: str, data: bytes):
         print('key q entra', key)
         print('daata', data)
-        chunks = Server.split_data(data, 1000000)
-        metadata_list = pickle.dumps([digest(c) for c in chunks])
-
+        
+        chunks = Server.split_data(data, 10000)
+        print('chunks ', len(chunks), chunks)
+        digested_chunks = [digest(c) for c in chunks]
+        print('digested chunks ', digested_chunks)
+        metadata_list = pickle.dumps(digested_chunks)
+        temp = pickle.loads(metadata_list)
+        print('Mira;p', len(temp))
         processed_chunks = ((digest(c), c) for c in chunks)
 
         for c in processed_chunks:
-            self.set_key(c[0], c[1], False)
+            Server.set_digest(c[0], c[1], metadata=False)
 
+        print("Writting key metadata")
         Server.set_digest(digest(key), metadata_list)
 
     @rpyc.exposed
@@ -409,7 +418,7 @@ class ServerService(Service):
             raise TypeError(
                 f"Value must be of type int, float, bool, str, or bytes, received {value}"
             )
-        print("setting '%s' = '%s' on network", key, value)
+        # print("setting '%s' = '%s' on network", key, value)
         if apply_hash_to_key:
             key = digest(key)
         return Server.set_digest(key, value)
