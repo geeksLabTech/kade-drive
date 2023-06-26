@@ -333,7 +333,7 @@ class ServerService(Service):
 
     @rpyc.exposed
     def get_file_chunk_value(self, key):
-        return Server.storage.gey(key, metadata=False)
+        return Server.storage.get(key, metadata=False)
 
     @rpyc.exposed
     def bootstrappable_neighbors(self):
