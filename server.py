@@ -11,6 +11,7 @@ from kademlia.utils import get_ips
 
 def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
     # host_ip = socket.gethostbyname(socket.gethostname())
+    broadcast = None
     print(host_ip)
     if host_ip is None:
         ip_br = get_ips()
