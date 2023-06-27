@@ -206,7 +206,7 @@ class Server:
         keys_dict = {}
         for n in nodes:
             with ServerSession(n.ip, n.port) as conn:
-                if len(keys_to_find):
+                if len(keys_to_find) > 0:
                     for k, is_metadata in keys_to_find:
                         contains = FileSystemProtocol.call_contains(conn, n, k)
                         if contains:
