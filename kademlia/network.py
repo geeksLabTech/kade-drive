@@ -137,7 +137,7 @@ class Server:
         return chunks
 
     @staticmethod
-    def set_digest(dkey: bytes, value, update_timestamp=True, metadata=True):
+    def set_digest(dkey: bytes, value, metadata=True):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
@@ -154,7 +154,7 @@ class Server:
                 if metadata:
                     Server.storage.set_metadata(dkey, value)
                 else:
-                    Server.storage[dkey] = value
+                    Server.storage.set_value(dkey, value, False)
 
             return True
 
@@ -165,12 +165,12 @@ class Server:
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
-        if Server.node.distance_to(node) < biggest:
-            if not update_timestamp or not Server.storage.contains(dkey):
+        if Se(node) < biggest:
+            if Server.storage.contains(dkey):
                 if metadata:
                     Server.storage.set_metadata(dkey, value)
                 else:
-                    Server.storage[dkey] = value
+                    Server.storage.set_value(dkey, value, False)
 
         any_result = False
         for n in nodes:
@@ -220,7 +220,7 @@ class Server:
             print('republishing keys older than 5')
             for key, value, is_metadata in Server.storage.iter_older_than(5):
                 # print(f'key {key}, value {value}, is_metadata {is_metadata}')
-                Server.set_digest(key, value, False, is_metadata)
+                Server.set_digest(key, value, is_metadata)
 # pylint: disable=too-many-instance-attributes
 
 
@@ -252,9 +252,9 @@ class ServerService(Service):
               sender, key, value)
         # store values and report success
         if metadata:
-            FileSystemProtocol.set_metadata(dkey, value)
+            FileSystemProtocol.set_metadata(key, value)
         else:
-            FileSystemProtocol.storage[key] = value
+            FileSystemProtocol.storage.set_value(key, value, metadata=False)
         return True
 
     @rpyc.exposed

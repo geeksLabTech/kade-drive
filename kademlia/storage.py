@@ -219,6 +219,8 @@ class PersistentStorage(IStorage):
         path = Path(os.path.join(self.values_path, str(key)))
         if not path.exists():
             return False
+        
+        self.update_timestamp(str(key))
         return True
 
     def __getitem__(self, key):
