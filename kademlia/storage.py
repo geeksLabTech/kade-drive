@@ -167,7 +167,7 @@ class PersistentStorage:
 
         with open(os.path.join(self.keys_path, key), "rb") as f:
             result = f.read()
-            return result, os.path.exists(os.path.join(self.metadata_path, str(result)))
+            return result, os.path.exists(os.path.join(self.metadata_path, key))
 
     def contains(self, key: bytes):
         str_key = str(base64.urlsafe_b64encode(key)) 
