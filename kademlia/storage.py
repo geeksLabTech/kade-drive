@@ -1,4 +1,5 @@
 import os
+import pickle
 import time
 import operator
 from datetime import datetime
@@ -106,7 +107,7 @@ class PersistentStorage(IStorage):
             data = pickle.load(f)
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             data["republish"] = False
-            pickle.dump(data)
+            pickle.dump(data, f)
 
     def delete_old(self):
         self.ensure_dir_paths()
@@ -261,6 +262,16 @@ class PersistentStorage(IStorage):
     #     ikeys = os.listdir(os.path.join(self.db_path))
     #     ibirthday = map(operator.itemgetter(0), self.data.values())
     #     return zip(ikeys, ibirthday)
+
+    def keys(self):
+        ikeys_files = os.listdir(os.path.join(self.keys_path))
+        ikeys = []
+        imetadata = []
+        for key_name in ikeys_files:
+            k, m = self.get_key_in_bytes(key_name)
+            ikeys.append(k)
+            imetadata.append(m)
+        return ikeys, imetadata
 
     def __iter__(self):
         self.ensure_dir_paths()

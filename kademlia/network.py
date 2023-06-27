@@ -152,7 +152,7 @@ class Server:
             if not Server.storage.contains(dkey):
                 print('storing in current server')
                 if metadata:
-                    Server.storage.set_metadata(dkey, value)
+                    Server.storage.set_metadata(dkey, value, False)
                 else:
                     Server.storage.set_value(dkey, value, False)
 
@@ -165,10 +165,10 @@ class Server:
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
-        if Se(node) < biggest:
+        if Server.node.distance_to(node) < biggest:
             if Server.storage.contains(dkey):
                 if metadata:
-                    Server.storage.set_metadata(dkey, value)
+                    Server.storage.set_metadata(dkey, value, False)
                 else:
                     Server.storage.set_value(dkey, value, False)
 
@@ -189,12 +189,32 @@ class Server:
         # return true only if at least one store call succeeded
         return any_result
 
-    @staticmethod
-    def refresh_table():
-        pass
+    
     # refresh_thread = threading.Thread(Server._refresh_table())
     # refresh_thread.start()
         # self.refresh_loop = loop.call_later(3600, self.refresh_table)
+    
+    @staticmethod
+    def find_replicas():
+        nearest = FileSystemProtocol.router.find_neighbors(
+                    Server.node, Server.alpha, exclude=Server.node)
+        spider = NodeSpiderCrawl(Server.node, nearest,
+                                Server.ksize, Server.alpha)
+        
+        nodes = spider.find()
+
+        keys_to_find = Server.storage.keys()
+        keys_dict = {}
+        for n in nodes:
+            with ServerSession(n.ip, n.port) as conn:
+                for k, is_metadata in keys_to_find:
+                    contains = FileSystemProtocol.call_contains(conn, n, k)
+                    if contains:
+                        if not (k, is_metadata) in keys_dict:
+                            keys_dict[(k,is_metadata)]=0
+                        keys_dict[(k,is_metadata)]+=1
+        
+        return [k for k,v in keys_dict if v < Server.ksize]
 
     @staticmethod
     def _refresh_table():
@@ -222,9 +242,12 @@ class Server:
                 # print(f'key {key}, value {value}, is_metadata {is_metadata}')
                 Server.set_digest(key, value, is_metadata)
                 Server.storage.update_republish(str(key))
-            
-            for key,value,metadata in Server.storage:
-                replicas_found = 
+        
+            for key, is_metadata in Server.find_replicas():
+                Server.set_digest(key, Server.storage.get(key, metadata=is_metadata, update_timestamp=False), is_metadata)
+
+    
+
 # pylint: disable=too-many-instance-attributes
 
 
