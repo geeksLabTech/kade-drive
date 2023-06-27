@@ -64,7 +64,9 @@ class SpiderCrawl:
         # return the info from those nodes
         found_values = []
         for peer in self.nearest.get_uncontacted()[:count]:
-            print("Peer", peer)
+            print("Peer", type(peer), peer)
+            if peer.ip == '192.168.133.1':
+                continue
             with ServerSession(peer.ip, peer.port) as conn:
                 print("Calling ", rpcmethod)
                 if is_metadata is None:
