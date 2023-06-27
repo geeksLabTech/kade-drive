@@ -291,6 +291,6 @@ class PersistentStorage(IStorage):
         print('ikeys: ', ikeys)
         ivalues = []
 
-        for ik in ikeys:
-            ivalues.append(self.get_value(ik, update_timestamp=False))
+        for i, ik in enumerate(ikeys):
+            ivalues.append(self.get_value(ik, update_timestamp=False, metadata=imetadata[i]))
         return zip(ikeys, ivalues, imetadata)
