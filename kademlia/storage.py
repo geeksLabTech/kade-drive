@@ -126,7 +126,7 @@ class PersistentStorage(IStorage):
                                 f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes")
                             if Path(os.path.join(self.values_path, str(file))).exists():
                                 os.remove(os.path.join(
-                                    self.metadata_path, str(file)))
+                                    self.values_path, str(file)))
                             if Path(os.path.join(self.metadata_path, str(file))).exists():
                                 os.remove(os.path.join(
                                     self.metadata_path, str(file)))
