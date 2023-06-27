@@ -214,7 +214,12 @@ class Server:
                             keys_dict[(k, is_metadata)] = 0
                         keys_dict[(k, is_metadata)] += 1
 
-        return [k for k, v in keys_dict if v < Server.ksize]
+        return_list = []
+        for k in keys_dict:
+            print(k)
+            if keys_dict[k] < Server.ksize:
+                return_list.append(k)
+        return return_list
 
     @staticmethod
     def _refresh_table():
