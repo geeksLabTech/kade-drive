@@ -1,4 +1,5 @@
 
+import pickle
 import socket
 import rpyc
 import sys
@@ -6,6 +7,7 @@ from time import sleep
 from rpyc.core.protocol import PingError
 from message_system.message_system import Message_System
 
+# rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 class ClientSession:
     """
@@ -35,7 +37,7 @@ class ClientSession:
                     self.connection.ping()
                     was_successful = True
                     break
-                self.connection = rpyc.connect(ip, port, keepalive=True)
+                self.connection = rpyc.connect(ip, port, keepalive=True, config = {'allow_pickle': True})
                 print(f"Connected to {ip}:{port}")
                 was_successful = True
                 break
@@ -65,14 +67,32 @@ class ClientSession:
             self.attempts_to_reconnect = self.total_attempts_to_reconnect
 
     def get(self, key):
-        result = self.connection.root.get(key)
-        return result
+        metadata_list = self.connection.root.get(key)
+        data_received = []
+        for chunk_key in metadata_list:
+            print('chunk key', chunk_key)
+            location = self.connection.root.get_file_chunk_location(chunk_key)
+                
+            print('sali de location', location, self.bootstrap_nodes[0])
+            if location == self.bootstrap_nodes[0]:
+                print('entro misma conexion')
+                data_received.append(self.connection.root.get_file_chunk_value(chunk_key))
+            else:
+                print('noooo')
+                with rpyc.connect(location[0], location[1]) as conn:
+                    data_received.append(conn.root.get_file_chunk_value(chunk_key))
+
+        # data_recv = bytearray()
+        print('len data received', len(data_received))
+        data_received = b''.join(data_received)
+        return pickle.loads(data_received)
 
     def put(self, key, value):
         print(f'key: {key}, value: {value}')
-        self.connection.root.set_key(key, value)
+        # print(self.connection.root.upload_file.)
+        self.connection.root.upload_file(key=key, data=value)
         print(f'value putted')
-
+    
     def _update_bootstrap_nodes(self):
         nodes_to_add = [node for node in self.connection.root.find_neighbors(
         ) if node not in self.bootstrap_nodes]
@@ -82,8 +102,8 @@ class ClientSession:
     def broadcast(self) -> bool:
         print('Initiating broadcast')
         ms = Message_System()
-        ip,port = ms.receive().split(" ")
-    
+        ip, port = ms.receive().split(" ")
+
         if ip:
             self.bootstrap_nodes.append((ip, int(port)))
             return True
@@ -100,7 +120,7 @@ if __name__ == "__main__":
     port = 8086
     if len(sys.argv) < 2:
         print('Initiating client with local ip and default port')
-    
+
     if len(sys.argv) == 2:
         ip = sys.argv[1]
 
@@ -109,7 +129,7 @@ if __name__ == "__main__":
 
     initial_bootstrap_nodes = [(ip, int(port))] if ip else []
     client_session = ClientSession(initial_bootstrap_nodes)
-    
+
     print('Client shell started')
     while True:
         command = input('Expecting command: ').split(' ')

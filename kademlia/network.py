@@ -8,6 +8,7 @@ import threading
 from time import sleep
 import rpyc
 import socket
+import pickle
 from rpyc.utils.server import ThreadedServer
 
 from kademlia.protocol import FileSystemProtocol, ServerSession
@@ -15,7 +16,7 @@ from kademlia.routing import RoutingTable
 from kademlia.utils import digest
 from kademlia.storage import PersistentStorage
 from kademlia.node import Node
-from kademlia.crawling import ValueSpiderCrawl
+from kademlia.crawling import LocationSpiderCrawl, ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
 # from models.file import File
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -36,7 +37,7 @@ class Server:
             alpha (int): concurrency parameter, determines how many parallel asynchronous FIND_NODE RPC send
             node_id: The id for this node on the network.
             storage: An instance that implements the interface
-                     :class:`~kademlia.storage.IStorage`
+                     :class:`~kademlia.storage.PersistenceStorage`
         """
         Server.ksize = ksize
         Server.alpha = alpha
@@ -63,6 +64,7 @@ class Server:
         Server.node.port = port
         t = ThreadedServer(ServerService, port=port, hostname=interface, protocol_config={
             'allow_public_attrs': True,
+            'allow_pickle': True
         })
         t.start()
         # finally, schedule refreshing table
@@ -110,7 +112,13 @@ class Server:
     @staticmethod
     def split_data(data: bytes, chunk_size: int):
         """Split data into chunks of less than chunk_size, it must be less than 16mb"""
-        fixed_chunks = len(data) // chunk_size
+        if not isinstance(data, bytes):
+            data = pickle.dumps(data)
+        if not len(data) % chunk_size == 0:
+            fixed_chunks = (len(data) // chunk_size) + 1
+        else:
+            fixed_chunks = len(data) // chunk_size
+
         # last_chunk_size = len(data) - fixed_chunks * chunk_size
         # start_of_last_chunk = len(data)-last_chunk_size
         # last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
@@ -129,7 +137,7 @@ class Server:
         return chunks
 
     @staticmethod
-    def set_digest(dkey: bytes, value, update_timestamp=True):
+    def set_digest(dkey: bytes, value, metadata=True):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
@@ -140,10 +148,13 @@ class Server:
         if not nearest:
             print("There are no known neighbors to set key %s",
                   dkey.hex())
-            
+
             if not Server.storage.contains(dkey):
                 print('storing in current server')
-                Server.storage[dkey] = value
+                if metadata:
+                    Server.storage.set_metadata(dkey, value, False)
+                else:
+                    Server.storage.set_value(dkey, value, False)
 
             return True
 
@@ -155,8 +166,11 @@ class Server:
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest:
-            if not update_timestamp or not Server.storage.contains(dkey):
-                Server.storage[dkey] = value
+            if Server.storage.contains(dkey):
+                if metadata:
+                    Server.storage.set_metadata(dkey, value, False)
+                else:
+                    Server.storage.set_value(dkey, value, False)
 
         any_result = False
         for n in nodes:
@@ -164,22 +178,48 @@ class Server:
             with ServerSession(address[0], address[1]) as conn:
                 contains = FileSystemProtocol.call_contains(conn, n, dkey)
                 if not contains:
-                    result = FileSystemProtocol.call_store(conn, n, dkey, value)
+                    result = FileSystemProtocol.call_store(
+                        conn, n, dkey, value, metadata)
                     if result:
                         any_result = True
-                
+
                 if contains:
                     any_result = True
 
         # return true only if at least one store call succeeded
         return any_result
 
-    @staticmethod
-    def refresh_table():
-        pass
     # refresh_thread = threading.Thread(Server._refresh_table())
     # refresh_thread.start()
         # self.refresh_loop = loop.call_later(3600, self.refresh_table)
+
+    @staticmethod
+    def find_replicas():
+        nearest = FileSystemProtocol.router.find_neighbors(
+            Server.node, Server.alpha, exclude=Server.node)
+        spider = NodeSpiderCrawl(Server.node, nearest,
+                                 Server.ksize, Server.alpha)
+
+        nodes = spider.find()
+
+        keys_to_find = Server.storage.keys()
+        keys_dict = {}
+        for n in nodes:
+            with ServerSession(n.ip, n.port) as conn:
+                # if len(keys_to_find) > 0:
+                for k, is_metadata in keys_to_find:
+                    contains = FileSystemProtocol.call_contains(conn, n, k)
+                    if contains:
+                        if not (k, is_metadata) in keys_dict:
+                            keys_dict[(k, is_metadata)] = 0
+                        keys_dict[(k, is_metadata)] += 1
+
+        return_list = []
+        for k in keys_dict:
+            print(k)
+            if keys_dict[k] < Server.ksize:
+                return_list.append(k)
+        return return_list
 
     @staticmethod
     def _refresh_table():
@@ -203,9 +243,20 @@ class Server:
 
             # do our crawling
             print('republishing keys older than 5')
-            for key, value in Server.storage.iter_older_than(5):
-                print(f'key {key}, value {value} ')
-                Server.set_digest(key, value, False)
+            for key, value, is_metadata in Server.storage.iter_older_than(5):
+                # print(f'key {key}, value {value}, is_metadata {is_metadata}')
+                Server.set_digest(key, value, is_metadata)
+                Server.storage.update_republish(key)
+            keys_to_replicate = Server.find_replicas()
+
+            if len(keys_to_replicate):
+                for key, is_metadata in keys_to_replicate:
+                    Server.set_digest(key, Server.storage.get(
+                        key, metadata=is_metadata, update_timestamp=False), is_metadata)
+
+            else:
+                print('no more keys to replicate')
+
 # pylint: disable=too-many-instance-attributes
 
 
@@ -213,7 +264,7 @@ class Server:
 class ServerService(Service):
 
     @rpyc.exposed
-    def rpc_store(self, sender, nodeid: bytes, key: bytes, value):
+    def rpc_store(self, sender, nodeid: bytes, key: bytes, value, metadata=True):
         """Instructs a node to store a value
 
         Args:
@@ -236,27 +287,36 @@ class ServerService(Service):
         print("got a store request from %s, storing '%s'='%s'",
               sender, key, value)
         # store values and report success
-        FileSystemProtocol.storage[key] = value
+        if metadata:
+            FileSystemProtocol.storage.set_metadata(
+                key, value, republish_data=False)
+        else:
+            FileSystemProtocol.storage.set_value(key, value, metadata=False)
         return True
 
     @rpyc.exposed
-    def rpc_find_value(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
+    def rpc_find_value(self, sender: tuple[str, str], nodeid: bytes, key: bytes, metadata=True):
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
-        value = FileSystemProtocol.storage.get(key, None)
+
+        value = FileSystemProtocol.storage.get(key, None, metadata)
         return value
-        # if not value found, ask the info for the value to the nodes
-        # if value is None:
-        #     return self.rpc_find_node(sender, nodeid, key)
-        # return {'value': value}
 
     @rpyc.exposed
-    def rpc_stun(self, sender):  # pylint: disable=no-self-use
-        return sender
+    def rpc_find_chunk_location(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        # get value from storage
+        if Server.storage.contains(key):
+            return (Server.node.ip, Server.node.port)
+        return ()
 
     @rpyc.exposed
     def rpc_ping(self, sender, nodeid: bytes):
@@ -310,7 +370,11 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         return FileSystemProtocol.storage.contains(key)
-    
+
+    @rpyc.exposed
+    def get_file_chunk_value(self, key):
+        return Server.storage.get(key, metadata=False)
+
     @rpyc.exposed
     def bootstrappable_neighbors(self):
         """
@@ -337,8 +401,8 @@ class ServerService(Service):
         if apply_hash_to_key:
             key = digest(key)
         # if this node has it, return it
-        if Server.storage.get(key) is not None:
-            return Server.storage.get(key)
+        if Server.storage.get(key, True) is not None:
+            return pickle.loads(Server.storage.get(key, True))
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
@@ -346,26 +410,47 @@ class ServerService(Service):
             return None
         spider = ValueSpiderCrawl(node, nearest,
                                   Server.ksize, Server.alpha)
+        metadata_list = pickle.loads(spider.find())
+        print('  mmmm   ')
+        print('metadata list', metadata_list)
+        return metadata_list
+
+    @rpyc.exposed
+    def get_file_chunk_location(self, chunk_key):
+        print('looking file chunk location')
+        if Server.storage.contains(chunk_key) is not None:
+            print('Found in this server ', Server.node.ip,
+                  'port', Server.node.port)
+            return (Server.node.ip, Server.node.port)
+        node = Node(chunk_key)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
+        if not nearest:
+            print("There are no known neighbors to get file chunk location %s", chunk_key)
+            return None
+
+        spider = LocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
+
         return spider.find()
 
     @rpyc.exposed
-    def get_file_chunks(self, hashed_chunks):
-        data_chunks = [self.get(chunk, False) for chunk in hashed_chunks]
-        # data_chunks = [f for f in results]
-        # removed is File
+    def upload_file(self, key: str, data: bytes):
+        print('key q entra', key)
+        print('daata', data)
 
-        if len(hashed_chunks) != len(data_chunks):
-            print('Failed to retrieve all data for chunks')
-
-        data = b''.join(data_chunks)
-        return data
-
-    @rpyc.exposed
-    def upload_file(self, data: bytes):
-        chunks = Server.split_data(data, 1000000)
+        chunks = Server.split_data(data, 1000)
+        print('chunks ', len(chunks), chunks)
+        digested_chunks = [digest(c) for c in chunks]
+        print('digested chunks ', digested_chunks)
+        metadata_list = pickle.dumps(digested_chunks)
+        temp = pickle.loads(metadata_list)
+        print('Mira;p', len(temp))
         processed_chunks = ((digest(c), c) for c in chunks)
+
         for c in processed_chunks:
-            self.set_key(c[0], c[1], False)
+            Server.set_digest(c[0], c[1], metadata=False)
+
+        print("Writting key metadata")
+        Server.set_digest(digest(key), metadata_list)
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
@@ -377,17 +462,17 @@ class ServerService(Service):
             raise TypeError(
                 f"Value must be of type int, float, bool, str, or bytes, received {value}"
             )
-        print("setting '%s' = '%s' on network", key, value)
+        # print("setting '%s' = '%s' on network", key, value)
         if apply_hash_to_key:
             key = digest(key)
         return Server.set_digest(key, value)
 
-
     @rpyc.exposed
     def find_neighbors(self):
-        nearest = FileSystemProtocol.router.find_neighbors(Server.node, exclude=Server.node)
-        return [(i.ip,i.port) for i in nearest]
-   
+        nearest = FileSystemProtocol.router.find_neighbors(
+            Server.node, exclude=Server.node)
+        return [(i.ip, i.port) for i in nearest]
+
 
 def check_dht_value_type(value):
     """
