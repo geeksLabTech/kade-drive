@@ -273,7 +273,7 @@ class PersistentStorage(IStorage):
             k, m = self.get_key_in_bytes(key_name)
             ikeys.append(k)
             imetadata.append(m)
-        return ikeys, imetadata
+        return zip(ikeys, imetadata)
 
     def __iter__(self):
         self.ensure_dir_paths()
