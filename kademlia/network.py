@@ -243,7 +243,7 @@ class Server:
                 Server.set_digest(key, value, is_metadata)
                 Server.storage.update_republish(str(key))
             keys_to_replicate = Server.find_replicas()
-            
+
             if len(keys_to_replicate):
                 for key, is_metadata in keys_to_replicate:
                     Server.set_digest(key, Server.storage.get(
@@ -281,7 +281,8 @@ class ServerService(Service):
               sender, key, value)
         # store values and report success
         if metadata:
-            FileSystemProtocol.storage.set_metadata(key, value)
+            FileSystemProtocol.storage.set_metadata(
+                key, value, republish_data=False)
         else:
             FileSystemProtocol.storage.set_value(key, value, metadata=False)
         return True
