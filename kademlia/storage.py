@@ -133,7 +133,7 @@ class PersistentStorage:
                 print('unicode_escape')
                 f.write(value.encode("unicode_escape"))
 
-        with open(os.path.join(self.keys_path, str(key)), "wb") as f:
+        with open(os.path.join(self.keys_path, str_key), "wb") as f:
             f.write(key)
             # try:
             #     f.write(key)
