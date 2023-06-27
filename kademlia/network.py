@@ -206,12 +206,13 @@ class Server:
         keys_dict = {}
         for n in nodes:
             with ServerSession(n.ip, n.port) as conn:
-                for k, is_metadata in keys_to_find:
-                    contains = FileSystemProtocol.call_contains(conn, n, k)
-                    if contains:
-                        if not (k, is_metadata) in keys_dict:
-                            keys_dict[(k, is_metadata)] = 0
-                        keys_dict[(k, is_metadata)] += 1
+                if len(keys_to_find):
+                    for k, is_metadata in keys_to_find:
+                        contains = FileSystemProtocol.call_contains(conn, n, k)
+                        if contains:
+                            if not (k, is_metadata) in keys_dict:
+                                keys_dict[(k, is_metadata)] = 0
+                            keys_dict[(k, is_metadata)] += 1
 
         return [k for k, v in keys_dict if v < Server.ksize]
 
@@ -242,6 +243,7 @@ class Server:
                 Server.set_digest(key, value, is_metadata)
                 Server.storage.update_republish(str(key))
             keys_to_replicate = Server.find_replicas()
+            
             if len(keys_to_replicate):
                 for key, is_metadata in keys_to_replicate:
                     Server.set_digest(key, Server.storage.get(
