@@ -281,7 +281,7 @@ class ServerService(Service):
               sender, key, value)
         # store values and report success
         if metadata:
-            FileSystemProtocol.set_metadata(key, value)
+            FileSystemProtocol.storage.set_metadata(key, value)
         else:
             FileSystemProtocol.storage.set_value(key, value, metadata=False)
         return True
