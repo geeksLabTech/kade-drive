@@ -8,49 +8,10 @@ from collections import OrderedDict
 from abc import abstractmethod, ABC
 from pathlib import Path
 import threading
+import base64
 
 
-class IStorage(ABC):
-    """
-    Local storage for this node.
-    IStorage implementations of get must return the same type as put in by set
-    """
-
-    @abstractmethod
-    def __setitem__(self, key, value):
-        """
-        Set a key to the given value.
-        """
-
-    @abstractmethod
-    def __getitem__(self, key):
-        """
-        Get the given key.  If item doesn't exist, raises C{KeyError}
-        """
-
-    @abstractmethod
-    def get(self, key, default=None):
-        """
-        Get given key.  If not found, return default.
-        """
-
-    # @abstractmethod
-    # def iter_older_than(self, seconds_old):
-    #     """
-    #     Return the an iterator over (key, value) tuples for items older
-    #     than the given secondsOld.
-    #     """
-
-    @abstractmethod
-    def __iter__(self):
-        """
-        Get the iterator for this storage, should yield tuple of (key, value)
-        """
-        while False:
-            yield None
-
-
-class PersistentStorage(IStorage):
+class PersistentStorage:
     """
     This class allows to persist files on disk using mongodb.
     The class acts as an OrderedDict that his keys are the hash of an
@@ -99,6 +60,7 @@ class PersistentStorage(IStorage):
         self.ensure_dir_paths()
         # print('timestamp for',filename)
         data = {"date": datetime.now(), "republish": republish_data}
+        print('mira ruta ', os.path.join(self.timestamp_path, str(filename)))
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             pickle.dump(data, f)
 
@@ -138,29 +100,31 @@ class PersistentStorage(IStorage):
                                 self.timestamp_path, str(file)))
             sleep(self.ttl)
 
-    def get_value(self, key, update_timestamp=True, metadata=True):
+    def get_value(self, str_key: str, update_timestamp=True, metadata=True):
         self.ensure_dir_paths()
         if metadata:
-            path = os.path.join(self.metadata_path, str(key))
+            path = os.path.join(self.metadata_path, str_key)
         else:
-            path = os.path.join(self.values_path, str(key))
+            path = os.path.join(self.values_path, str_key)
         with open(path, "rb") as f:
             result = f.read()
 
         if result is not None:
             if update_timestamp:
-                self.update_timestamp(key, republish_data=True)
+                self.update_timestamp(str_key, republish_data=True)
             # result = self.db.find_one(File, File.id == key)
-        assert result is not None, 'Tried to get data that is not in db'
+        if not result: 
+            print('Tried to get data that is not in db')
         return result
 
-    def set_value(self, key, value, metadata=True, republish_data=False):
+    def set_value(self, key: bytes, value, metadata=True, republish_data=False):
+        str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
-        self.update_timestamp(str(key), republish_data)
+        self.update_timestamp(str_key, republish_data)
         if metadata:
-            path = os.path.join(self.metadata_path, str(key))
+            path = os.path.join(self.metadata_path, str_key)
         else:
-            path = os.path.join(self.values_path, str(key))
+            path = os.path.join(self.values_path, str_key)
         with open(path, "wb") as f:
             try:
                 print('escribiendo')
@@ -170,28 +134,15 @@ class PersistentStorage(IStorage):
                 f.write(value.encode("unicode_escape"))
 
         with open(os.path.join(self.keys_path, str(key)), "wb") as f:
-            try:
-                f.write(key)
-            except TypeError:
-                f.write(key.encode("unicode_escape"))
+            f.write(key)
+            # try:
+            #     f.write(key)
+            # except TypeError:
+            #     f.write(key.encode("unicode_escape"))
 
     def set_metadata(self, key, value, republish_data: bool):
         self.ensure_dir_paths()
         self.set_value(key, value, True, republish_data)
-        self.cull()
-
-    def __setitem__(self, key, value):
-        self.ensure_dir_paths()
-        # if key in self.data:
-        #     del self.data[key]
-        #     os.remove(os.path.join(self.values_path, str(key)))
-        #     os.remove(os.path.join(self.keys_path, str(key)))
-        # self.db.remove(File, File.id == key)``
-
-        # self.data[key] = (time.monotonic())
-        # file_to_save = File(id=key, data=value)
-        self.set_value(key, value, False)
-        # self.db.save(file_to_save)
         self.cull()
 
     def cull(self):
@@ -202,41 +153,36 @@ class PersistentStorage(IStorage):
         #     key, _ = self.data.popitem(last=False)
         #     self.db.remove(File, File.id == key)
 
-    def get(self, key, default=None, update_timestamp=True, metadata=True):
-        self.ensure_dir_paths()
-        if metadata:
-            path = Path(os.path.join(self.metadata_path, str(key)))
-        else:
-            path = Path(os.path.join(self.values_path, str(key)))
-        if not path.exists():
-            return None
-
+    def get(self, key: bytes, default=None, update_timestamp=True, metadata=True):
+        str_key = str(base64.urlsafe_b64encode(key)) 
         result = self.get_value(
-            key, update_timestamp=update_timestamp, metadata=metadata)
+            str_key, update_timestamp=update_timestamp, metadata=metadata)
         return result
 
     def get_key_in_bytes(self, key: str):
-        path = Path(os.path.join(self.keys_path, str(key)))
+        path = Path(os.path.join(self.keys_path, key))
         if not path.exists():
             return None
 
-        with open(os.path.join(self.keys_path, str(key)), "rb") as f:
+        with open(os.path.join(self.keys_path, key), "rb") as f:
             result = f.read()
             return result, os.path.exists(os.path.join(self.metadata_path, str(result)))
 
-    def contains(self, key):
+    def contains(self, key: bytes):
+        str_key = str(base64.urlsafe_b64encode(key)) 
         self.cull()
         # self.update_timestamp(key)
-        path = Path(os.path.join(self.values_path, str(key)))
+        path = Path(os.path.join(self.values_path, str_key))
         if not path.exists():
             return False
 
-        self.update_timestamp(str(key))
+        self.update_timestamp(str_key)
         return True
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: bytes):
         self.cull()
-        result = self.get_value(key)
+        str_key = str(base64.urlsafe_b64encode(key)) 
+        result = self.get_value(str_key)
         if result is None:
             raise KeyError()
         return result
@@ -256,8 +202,7 @@ class PersistentStorage(IStorage):
                         data = pickle.load(f)
                     if (datetime.now() - data['date']).seconds >= seconds_old or data['republish']:
                         key, is_metadata = self.get_key_in_bytes(str(file))
-                        value = self.get(
-                            str(file), update_timestamp=False, metadata=is_metadata)
+                        value = self.get_value(str(file), update_timestamp=False, metadata=is_metadata)
                         assert value is not None
                         yield key, value, is_metadata
 
@@ -281,16 +226,16 @@ class PersistentStorage(IStorage):
         print(' ')
         print('calling iter')
         ikeys_files = os.listdir(os.path.join(self.keys_path))
-        ikeys = []
-        imetadata = []
+        ikeys: list[bytes] = []
+        imetadata: list[bool] = []
         for key_name in ikeys_files:
             k, m = self.get_key_in_bytes(key_name)
             ikeys.append(k)
             imetadata.append(m)
         # ivalues = map(operator.itemgetter(1), self.data.values())
         print('ikeys: ', ikeys)
-        ivalues = []
+        ivalues: list[bytes] = []
 
         for i, ik in enumerate(ikeys):
-            ivalues.append(self.get_value(ik, update_timestamp=False, metadata=imetadata[i]))
+            ivalues.append(self.get(ik, update_timestamp=False, metadata=imetadata[i]))
         return zip(ikeys, ivalues, imetadata)

@@ -37,7 +37,7 @@ class Server:
             alpha (int): concurrency parameter, determines how many parallel asynchronous FIND_NODE RPC send
             node_id: The id for this node on the network.
             storage: An instance that implements the interface
-                     :class:`~kademlia.storage.IStorage`
+                     :class:`~kademlia.storage.PersistenceStorage`
         """
         Server.ksize = ksize
         Server.alpha = alpha
@@ -254,6 +254,8 @@ class Server:
                     Server.set_digest(key, Server.storage.get(
                         key, metadata=is_metadata, update_timestamp=False), is_metadata)
 
+            else:
+                print('no more keys to replicate')
 
 # pylint: disable=too-many-instance-attributes
 
@@ -435,7 +437,7 @@ class ServerService(Service):
         print('key q entra', key)
         print('daata', data)
 
-        chunks = Server.split_data(data, 10000)
+        chunks = Server.split_data(data, 1000)
         print('chunks ', len(chunks), chunks)
         digested_chunks = [digest(c) for c in chunks]
         print('digested chunks ', digested_chunks)
