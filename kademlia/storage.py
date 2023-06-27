@@ -127,12 +127,13 @@ class PersistentStorage(IStorage):
                             if Path(os.path.join(self.values_path, str(file))).exists():
                                 os.remove(os.path.join(
                                     self.metadata_path, str(file)))
-                            if Path(os.path.join(self.values_path, str(file))).exists():
+                            if Path(os.path.join(self.metadata_path, str(file))).exists():
                                 os.remove(os.path.join(
                                     self.metadata_path, str(file)))
                             if Path(os.path.join(self.keys_path, str(file))).exists():
                                 os.remove(os.path.join(
                                     self.keys_path, str(file)))
+
                             os.remove(os.path.join(
                                 self.timestamp_path, str(file)))
             sleep(self.ttl)
