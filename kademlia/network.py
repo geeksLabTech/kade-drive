@@ -242,7 +242,7 @@ class Server:
                 Server.set_digest(key, value, is_metadata)
                 Server.storage.update_republish(str(key))
             keys_to_replicate = Server.find_replicas()
-            if keys_to_replicate:
+            if len(keys_to_replicate):
                 for key, is_metadata in keys_to_replicate:
                     Server.set_digest(key, Server.storage.get(
                         key, metadata=is_metadata, update_timestamp=False), is_metadata)
