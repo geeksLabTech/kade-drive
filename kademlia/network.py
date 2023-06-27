@@ -221,6 +221,10 @@ class Server:
             for key, value, is_metadata in Server.storage.iter_older_than(5):
                 # print(f'key {key}, value {value}, is_metadata {is_metadata}')
                 Server.set_digest(key, value, False, is_metadata)
+                Server.storage.update_republish(str(key), False)
+            
+            for key,value,metadata in Server.storage:
+                replicas_found = 
 # pylint: disable=too-many-instance-attributes
 
 
@@ -382,7 +386,8 @@ class ServerService(Service):
     def get_file_chunk_location(self, chunk_key):
         print('looking file chunk location')
         if Server.storage.contains(chunk_key) is not None:
-            print('Found in this server ', Server.node.ip, 'port', Server.node.port)
+            print('Found in this server ', Server.node.ip,
+                  'port', Server.node.port)
             return (Server.node.ip, Server.node.port)
         node = Node(chunk_key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
@@ -398,7 +403,7 @@ class ServerService(Service):
     def upload_file(self, key: str, data: bytes):
         print('key q entra', key)
         print('daata', data)
-        
+
         chunks = Server.split_data(data, 10000)
         print('chunks ', len(chunks), chunks)
         digested_chunks = [digest(c) for c in chunks]

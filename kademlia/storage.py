@@ -94,11 +94,19 @@ class PersistentStorage(IStorage):
 
         os.makedirs(self.timestamp_path, exist_ok=True)
 
-    def update_timestamp(self, filename: str):
+    def update_timestamp(self, filename: str, republish_data=False):
         self.ensure_dir_paths()
         # print('timestamp for',filename)
-        with open(os.path.join(self.timestamp_path, str(filename)), "w") as f:
-            f.write(datetime.now().strftime("%d/%m/%Y, %H:%M:%S"))
+        data = {"date": datetime.now(), "republish": republish_data}
+        with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
+            pickle.dump(data, f)
+
+    def update_republish(self, filename: str):
+        with open(os.path.join(self.timestamp_path, str(filename)), "rb") as f:
+            data = pickle.load(f)
+        with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
+            data["republish"] = False
+            pickle.dump(data)
 
     def delete_old(self):
         self.ensure_dir_paths()
@@ -109,11 +117,10 @@ class PersistentStorage(IStorage):
             for path, dir, files in os.walk(self.timestamp_path):
                 for file in files:
                     if Path(os.path.join(self.timestamp_path, str(file))).exists():
-                        with open(os.path.join(self.timestamp_path, str(file))) as f:
-                            data = datetime.strptime(
-                                f.read(), "%d/%m/%Y, %H:%M:%S")
+                        with open(os.path.join(self.timestamp_path, str(file)), "rb") as f:
+                            data = pickle.load(f)
 
-                        if (datetime.now() - data).seconds > self.ttl:
+                        if (datetime.now() - data['date']).seconds > self.ttl:
                             print(
                                 f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes")
                             if Path(os.path.join(self.values_path, str(file))).exists():
@@ -138,14 +145,14 @@ class PersistentStorage(IStorage):
 
         if result is not None:
             if update_timestamp:
-                self.update_timestamp(key)
+                self.update_timestamp(key, republish_data=True)
             # result = self.db.find_one(File, File.id == key)
         assert result is not None, 'Tried to get data that is not in db'
         return result
 
-    def set_value(self, key, value, metadata=True):
+    def set_value(self, key, value, metadata=True, republish_data=False):
         self.ensure_dir_paths()
-        self.update_timestamp(str(key))
+        self.update_timestamp(str(key), republish_data)
         if metadata:
             path = os.path.join(self.metadata_path, str(key))
         else:
@@ -164,9 +171,9 @@ class PersistentStorage(IStorage):
             except TypeError:
                 f.write(key.encode("unicode_escape"))
 
-    def set_metadata(self, key, value):
+    def set_metadata(self, key, value, republish_data: bool):
         self.ensure_dir_paths()
-        self.set_value(key, value, True)
+        self.set_value(key, value, True, republish_data)
         self.cull()
 
     def __setitem__(self, key, value):
@@ -240,16 +247,14 @@ class PersistentStorage(IStorage):
                 if Path(os.path.join(self.timestamp_path, str(file))).exists():
                     with open(os.path.join(self.timestamp_path, str(file))) as f:
                         sleep(0.1)
-                        data = datetime.strptime(
-                            f.read(), "%d/%m/%Y, %H:%M:%S")
-
-                    if (datetime.now() - data).seconds >= seconds_old:
+                        data = pickle.load(f)
+                    if (datetime.now() - data['data']).seconds >= seconds_old or data['republish']:
                         key, is_metadata = self.get_key_in_bytes(str(file))
                         value = self.get(
                             str(file), update_timestamp=False, metadata=is_metadata)
                         assert value is not None
                         yield key, value, is_metadata
-
+    
     # def _triple_iter(self):
     #     ikeys = os.listdir(os.path.join(self.db_path))
     #     ibirthday = map(operator.itemgetter(0), self.data.values())
