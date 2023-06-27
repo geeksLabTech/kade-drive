@@ -246,7 +246,7 @@ class Server:
             for key, value, is_metadata in Server.storage.iter_older_than(5):
                 # print(f'key {key}, value {value}, is_metadata {is_metadata}')
                 Server.set_digest(key, value, is_metadata)
-                Server.storage.update_republish(str(key))
+                Server.storage.update_republish(key)
             keys_to_replicate = Server.find_replicas()
 
             if len(keys_to_replicate):

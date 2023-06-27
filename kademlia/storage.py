@@ -64,10 +64,11 @@ class PersistentStorage:
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             pickle.dump(data, f)
 
-    def update_republish(self, filename: str):
-        with open(os.path.join(self.timestamp_path, str(filename)), "rb") as f:
+    def update_republish(self, key: bytes):
+        str_key = str(base64.urlsafe_b64encode(key))
+        with open(os.path.join(self.timestamp_path, str_key), "rb") as f:
             data = pickle.load(f)
-        with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
+        with open(os.path.join(self.timestamp_path, str_key), "wb") as f:
             data["republish"] = False
             pickle.dump(data, f)
 
