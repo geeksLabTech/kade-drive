@@ -1,6 +1,6 @@
 from collections import Counter
 import logging
-
+import rpyc
 from kademlia.node import Node, NodeHeap
 from kademlia.protocol import FileSystemProtocol, ServerSession
 
@@ -65,17 +65,19 @@ class SpiderCrawl:
             print("Peer", type(peer), peer)
             if peer.ip == '192.168.133.1':
                 continue
-            with ServerSession(peer.ip, peer.port) as conn:
-                print("Calling ", rpcmethod)
-                if is_metadata is None:
-                    response = rpcmethod(conn, peer, self.node)
-                else:
-                    response = rpcmethod(conn, peer, self.node, is_metadata)
-
-                response_dict[peer.id] = response
-                self.nearest.mark_contacted(peer)
-                print("mark contacted successful")
-
+            session = rpyc.connect(host=peer.ip, port=peer.port)
+            conn = session.root
+            print("Calling ", rpcmethod)
+            if is_metadata is None:
+                response = rpcmethod(conn, peer, self.node)
+            else:
+                response = rpcmethod(conn, peer, self.node, is_metadata)
+            response_dict[peer.id] = response
+            self.nearest.mark_contacted(peer)
+            print("mark contacted successful")
+            # if session:
+            #     session.close()
+        print('conno el response ', response_dict)
         return self._nodes_found(response_dict)
 
     def _nodes_found(self, response_dict):
@@ -98,7 +100,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         return self._find(FileSystemProtocol.call_find_value, is_metadata)
 
-    def _nodes_found(self, response_dict):
+    def _nodes_found(self, response_dict: dict):
         """
         Handle the result of an iteration in _find.
         """
@@ -169,14 +171,15 @@ class NodeSpiderCrawl(SpiderCrawl):
         """
         return self._find(FileSystemProtocol.call_find_node, None)
 
-    def _nodes_found(self, response_dict):
+    def _nodes_found(self, response_dict: dict):
         """
         Handle the result of an iteration in _find.
         """
         print("entering nodes found Node Spider")
+        print(f'response dict is {response_dict}')
 
         toremove = []
-        for peer_id, response in response_dict:
+        for peer_id, response in response_dict.items():
             if not response:
                 toremove.append(peer_id)
             else:
