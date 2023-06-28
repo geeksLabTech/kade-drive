@@ -71,7 +71,7 @@ class ClientSession:
         data_received = []
         for chunk_key in metadata_list:
             print('chunk key', chunk_key)
-            location = self.connection.root.get_file_chunk_location(chunk_key)
+            location = self.connection.root.get_file_chunk_location(chunk_key)[0]
                 
             print('sali de location', location, self.bootstrap_nodes[0])
             if location == self.bootstrap_nodes[0]:
