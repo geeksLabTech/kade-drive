@@ -67,8 +67,6 @@ class Server:
             'allow_pickle': True
         })
         t.start()
-        # finally, schedule refreshing table
-        # Server.refresh_table()
 
     @staticmethod
     def bootstrap(addrs: list[tuple[str, str]]):
@@ -119,10 +117,6 @@ class Server:
         else:
             fixed_chunks = len(data) // chunk_size
 
-        # last_chunk_size = len(data) - fixed_chunks * chunk_size
-        # start_of_last_chunk = len(data)-last_chunk_size
-        # last_chunk = data[start_of_last_chunk:start_of_last_chunk+chunk_size]
-        # chunks = [data[i:i+chunk_size] for i in range(fixed_chunks)]
         chunks = []
         count = 0
         last_position = 0
@@ -189,9 +183,6 @@ class Server:
         # return true only if at least one store call succeeded
         return any_result
 
-    # refresh_thread = threading.Thread(Server._refresh_table())
-    # refresh_thread.start()
-        # self.refresh_loop = loop.call_later(3600, self.refresh_table)
 
     @staticmethod
     def find_replicas():
@@ -256,8 +247,6 @@ class Server:
 
             else:
                 print('no more keys to replicate')
-
-# pylint: disable=too-many-instance-attributes
 
 
 @rpyc.service
@@ -411,39 +400,34 @@ class ServerService(Service):
         spider = ValueSpiderCrawl(node, nearest,
                                   Server.ksize, Server.alpha)
         metadata_list = pickle.loads(spider.find())
-        print('  mmmm   ')
-        print('metadata list', metadata_list)
         return metadata_list
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
         print('looking file chunk location')
-        if Server.storage.contains(chunk_key) is not None:
-            print('Found in this server ', Server.node.ip,
-                  'port', Server.node.port)
-            return (Server.node.ip, Server.node.port)
         node = Node(chunk_key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
             print("There are no known neighbors to get file chunk location %s", chunk_key)
+            if Server.storage.contains(chunk_key) is not None:
+                print('Found in this server ', Server.node.ip,
+                    'port', Server.node.port)
+                return [(Server.node.ip, Server.node.port)]
             return None
 
+        print('Initiating LocationSpiderCrawl')
         spider = LocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
-
+        print('Finished LocationSpiderCrawl')
+        results = spider.find()
+        print(f'results of LocationSpider {results}')
         return spider.find()
 
     @rpyc.exposed
     def upload_file(self, key: str, data: bytes):
-        print('key q entra', key)
-        print('daata', data)
-
         chunks = Server.split_data(data, 1000)
         print('chunks ', len(chunks), chunks)
         digested_chunks = [digest(c) for c in chunks]
-        print('digested chunks ', digested_chunks)
         metadata_list = pickle.dumps(digested_chunks)
-        temp = pickle.loads(metadata_list)
-        print('Mira;p', len(temp))
         processed_chunks = ((digest(c), c) for c in chunks)
 
         for c in processed_chunks:
