@@ -97,10 +97,10 @@ class ClientSession:
         nodes_to_add = [node for node in self.connection.root.find_neighbors(
         ) if node not in self.bootstrap_nodes]
         self.bootstrap_nodes.extend(nodes_to_add)
-        print(' neidieom', self.bootstrap_nodes)
+        print('Neioghbors', self.bootstrap_nodes)
 
     def broadcast(self) -> bool:
-        print('Initiating broadcast')
+        print('Listening broadcasts')
         ms = Message_System()
         ip, port = ms.receive().split(" ")
 
@@ -108,7 +108,7 @@ class ClientSession:
             self.bootstrap_nodes.append((ip, int(port)))
             return True
 
-        print('Broadcast was not able to find any server.')
+        print('No broadcasts were received.')
         return False
 
 
@@ -144,7 +144,7 @@ if __name__ == "__main__":
         args = command[1:] if len(command) >= 1 else []
         func = getattr(ClientSession, command[0], None)
         if func is None or not callable(func):
-            print('not finded command with that name')
+            print('not found command with that name')
             continue
         print(f'calling {func} with arguments: {args}')
         print()
@@ -152,4 +152,4 @@ if __name__ == "__main__":
         if result:
             print(f'Result is: {result}')
         else:
-            print(f'command returned None')
+            print(f'Command returned None')

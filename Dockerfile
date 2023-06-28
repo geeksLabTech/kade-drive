@@ -9,6 +9,7 @@ COPY message_system /home/app/message_system/
 COPY requirements.txt /home/app/
 COPY main.py /home/app/
 COPY serever.py /home/app/
+COPY client.py /home/app/
 RUN pip install -r requirements.txt
 
 CMD ["/bin/bash", "server.py"]
