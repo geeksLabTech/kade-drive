@@ -189,7 +189,7 @@ class NodeSpiderCrawl(SpiderCrawl):
         # if all nearest nodes are visited, return them
         return list(self.nearest)
 
-class LocationSpiderCrawl(SpiderCrawl):
+class ChunkLocationSpiderCrawl(SpiderCrawl):
     def find(self):
         return self._find(FileSystemProtocol.call_find_chunk_location, None)
 
@@ -197,7 +197,7 @@ class LocationSpiderCrawl(SpiderCrawl):
         """
         Handle the result of an iteration in _find.
         """
-        print("entry LocationSpiderCrawl")
+        print("entry ChunkLocationSpiderCrawl")
         toremove = []
         found_values = []
         for peer_id, response in response_dict.items():

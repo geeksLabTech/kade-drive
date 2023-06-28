@@ -422,7 +422,7 @@ class ServerService(Service):
         print('Finished LocationSpiderCrawl')
         results = spider.find()
         print(f'results of LocationSpider {results}')
-        return spider.find()
+        return results
 
     @rpyc.exposed
     def upload_file(self, key: str, data: bytes):
