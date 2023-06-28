@@ -16,7 +16,7 @@ from kademlia.routing import RoutingTable
 from kademlia.utils import digest
 from kademlia.storage import PersistentStorage
 from kademlia.node import Node
-from kademlia.crawling import LocationSpiderCrawl, ValueSpiderCrawl
+from kademlia.crawling import ChunkLocationSpiderCrawl, ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
 # from models.file import File
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -417,11 +417,10 @@ class ServerService(Service):
                 return [(Server.node.ip, Server.node.port)]
             return None
 
-        print('Initiating LocationSpiderCrawl')
-        spider = LocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
-        print('Finished LocationSpiderCrawl')
+        print('Initiating ChunkLocationSpiderCrawl')
+        spider = ChunkLocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         results = spider.find()
-        print(f'results of LocationSpider {results}')
+        print(f'results of ChunkLocationSpider {results}')
         return results
 
     @rpyc.exposed
