@@ -291,9 +291,11 @@ class ServerService(Service):
         with ServerSession(address[0], address[1]) as conn:
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
-
+        if not FileSystemProtocol.storage.contains(key):
+            return self.rpc_find_node(sender, nodeid, key)
+        
         value = FileSystemProtocol.storage.get(key, None, metadata)
-        return value
+        return {'value': value}
 
     @rpyc.exposed
     def rpc_find_chunk_location(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
@@ -304,8 +306,8 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         if Server.storage.contains(key):
-            return (Server.node.ip, Server.node.port)
-        return ()
+            return {'value': (Server.node.ip, Server.node.port)}
+        return self.rpc_find_node(sender, nodeid, key)
 
     @rpyc.exposed
     def rpc_ping(self, sender, nodeid: bytes):

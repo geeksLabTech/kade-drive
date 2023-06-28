@@ -108,14 +108,15 @@ class ValueSpiderCrawl(SpiderCrawl):
         toremove = []
         found_values = []
         for peer_id, response in response_dict.items():
-            if not response:
+            response = RPCFindResponse(response)
+            if not response.happened():
                 toremove.append(peer_id)
             elif response.has_value():
-                found_values.append(response)
+                found_values.append(response.get_value())
             else:
                 peer = self.nearest.get_node(peer_id)
                 self.nearest_without_value.push(peer)
-                self.nearest.push([Node(*data) for data in response])
+                self.nearest.push(response.get_node_list())
         self.nearest.remove(toremove)
 
         if found_values:
@@ -157,13 +158,6 @@ class ValueSpiderCrawl(SpiderCrawl):
         return value
 
 
-class LocationSpiderCrawl(SpiderCrawl):
-    def find(self):
-        return self._find(FileSystemProtocol.call_find_chunk_location, None)
-
-    def _handle_found_values(self, values):
-        return [values]
-
 class NodeSpiderCrawl(SpiderCrawl):
     def find(self):
         """
@@ -180,10 +174,11 @@ class NodeSpiderCrawl(SpiderCrawl):
 
         toremove = []
         for peer_id, response in response_dict.items():
-            if not response:
+            response = RPCFindResponse(response)
+            if not response.happened():
                 toremove.append(peer_id)
             else:
-                self.nearest.push([Node(*data) for data in response])
+                self.nearest.push(response.get_node_list())
         self.nearest.remove(toremove)
 
         if self.nearest.have_contacted_all():
@@ -194,6 +189,34 @@ class NodeSpiderCrawl(SpiderCrawl):
         # if all nearest nodes are visited, return them
         return list(self.nearest)
 
+class LocationSpiderCrawl(SpiderCrawl):
+    def find(self):
+        return self._find(FileSystemProtocol.call_find_chunk_location, None)
+
+    def _nodes_found(self, response_dict: dict):
+        """
+        Handle the result of an iteration in _find.
+        """
+        print("entry LocationSpiderCrawl")
+        toremove = []
+        found_values = []
+        for peer_id, response in response_dict.items():
+            response = RPCFindResponse(response)
+            if not response.happened():
+                toremove.append(peer_id)
+            elif response.has_value():
+                found_values.append(response.get_value())
+            else:
+                self.nearest.push(response.get_node_list())
+        self.nearest.remove(toremove)
+
+        if len(found_values) > 0:
+            return found_values
+        if self.nearest.have_contacted_all():
+            # not found!
+            return None
+        return self.find()
+    
 
 class RPCFindResponse:
     def __init__(self, response):

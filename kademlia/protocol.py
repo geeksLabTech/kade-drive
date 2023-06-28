@@ -99,8 +99,7 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
         if conn:
-            response = conn.rpc_find_chunk_location(address, FileSystemProtocol.source_node.id,
-                                           node_to_find.id, is_metadata)
+            response = conn.rpc_find_chunk_location(address, FileSystemProtocol.source_node.id, node_to_find.id, is_metadata)
         print(response)
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
