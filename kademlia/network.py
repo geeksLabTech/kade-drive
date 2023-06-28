@@ -219,35 +219,38 @@ class Server:
         (per section 2.3 of the paper).
         """
         while (True):
-            sleep(5)
-            print("Refreshing Table")
+            try:
+                sleep(5)
+                print("Refreshing Table")
 
-            results = []
-            for node_id in FileSystemProtocol.get_refresh_ids():
-                node = Node(node_id)
-                nearest = FileSystemProtocol.router.find_neighbors(
-                    node, Server.alpha)
-                spider = NodeSpiderCrawl(node, nearest,
-                                         Server.ksize, Server.alpha)
+                results = []
+                for node_id in FileSystemProtocol.get_refresh_ids():
+                    node = Node(node_id)
+                    nearest = FileSystemProtocol.router.find_neighbors(
+                        node, Server.alpha)
+                    spider = NodeSpiderCrawl(node, nearest,
+                                            Server.ksize, Server.alpha)
 
-                results.append(spider.find())
+                    results.append(spider.find())
 
-            # do our crawling
-            print('republishing keys older than 5')
-            for key, value, is_metadata in Server.storage.iter_older_than(5):
-                # print(f'key {key}, value {value}, is_metadata {is_metadata}')
-                Server.set_digest(key, value, is_metadata)
-                Server.storage.update_republish(key)
-            keys_to_replicate = Server.find_replicas()
+                # do our crawling
+                print('republishing keys older than 5')
+                for key, value, is_metadata in Server.storage.iter_older_than(5):
+                    # print(f'key {key}, value {value}, is_metadata {is_metadata}')
+                    Server.set_digest(key, value, is_metadata)
+                    Server.storage.update_republish(key)
+                keys_to_replicate = Server.find_replicas()
 
-            if len(keys_to_replicate):
-                for key, is_metadata in keys_to_replicate:
-                    Server.set_digest(key, Server.storage.get(
-                        key, metadata=is_metadata, update_timestamp=False), is_metadata)
+                if len(keys_to_replicate):
+                    for key, is_metadata in keys_to_replicate:
+                        Server.set_digest(key, Server.storage.get(
+                            key, metadata=is_metadata, update_timestamp=False), is_metadata)
 
-            else:
-                print('no more keys to replicate')
-
+                else:
+                    print('no more keys to replicate')
+            except Exception as e:
+                print("Thrown Exception", e)
+                pass
 
 @rpyc.service
 class ServerService(Service):

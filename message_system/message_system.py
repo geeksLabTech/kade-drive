@@ -153,9 +153,13 @@ class Message_System:
 
     def send_heartbeat(self):
         while True:
-            self.send()
-            time.sleep(0.3)
-
+            try:
+                self.send()
+                time.sleep(0.3)
+            except Exception as e:
+                print("Thrown Exception", e)
+                pass
+            
     def receive(self):
         to_remove = []
         if self.host_ip == None:
