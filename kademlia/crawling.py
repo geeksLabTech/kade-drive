@@ -242,7 +242,7 @@ class RPCFindResponse:
 
     def get_value(self):
         # return the 'value' from the dict
-        return self.response
+        return self.response['value']
 
     def get_node_list(self):
         """

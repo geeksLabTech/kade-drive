@@ -91,13 +91,13 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def call_find_chunk_location(conn, node_to_ask: Node, node_to_find: Node, is_metadata=False):
+    def call_find_chunk_location(conn, node_to_ask: Node, node_to_find: Node):
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
         if conn:
             print('calling rpc_find_chunk_location')
-            print(f'arguments are {address}, {FileSystemProtocol.source_node.id}, {node_to_find.id}, {is_metadata}')
-            response = conn.rpc_find_chunk_location(address, FileSystemProtocol.source_node.id, node_to_find.id, is_metadata)
+            # print(f'arguments are {address}, {FileSystemProtocol.source_node.id}, {node_to_find.id}')
+            response = conn.rpc_find_chunk_location(address, FileSystemProtocol.source_node.id, node_to_find.id)
         print(response)
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 

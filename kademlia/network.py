@@ -299,6 +299,7 @@ class ServerService(Service):
 
     @rpyc.exposed
     def rpc_find_chunk_location(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
+        print('entry in rpc_find_chunk_location')
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
