@@ -106,8 +106,12 @@ class ClientSession:
     def broadcast(self) -> bool:
         print('Listening broadcasts')
         ms = Message_System()
-        ip, port = ms.receive().split(" ")
-
+        try:
+            ip, port = ms.receive().split(" ")
+        except ValueError:
+            print("No server addresses found")
+            ip = None
+            port = None
         if ip:
             self.bootstrap_nodes.append((ip, int(port)))
             return True
@@ -136,13 +140,15 @@ if __name__ == "__main__":
 
     print('Client shell started')
     while True:
-        command = input('Expecting command: ').split(' ')
-        if command[0] == 'exit':
-            break
 
         response = client_session.connect(
             use_broadcast_if_needed=True)
         if not response:
+            break
+
+        
+        command = input('Expecting command: ').split(' ')
+        if command[0] == 'exit':
             break
 
         args = command[1:] if len(command) >= 1 else []

@@ -7,15 +7,12 @@ from socket import SHUT_RDWR
 import sys
 from kademlia.utils import get_ips
 
+
 class Message_System:
 
     def __init__(self, host_ip=None, broadcast_addr=None):
         self.host_ip = host_ip
         self.broadcast_addr = broadcast_addr
-        if host_ip is None or broadcast_addr is None:
-            ip_br = get_ips()
-            self.host_ip = ip_br['addr']
-            self.broadcast_addr = ip_br['broadcast']
 
         self.pendig_send = []
         self.pendig_receive = [
@@ -41,7 +38,7 @@ class Message_System:
         # If we wish to transmit the datagram to multiple NICs, we
         # ought to create a socket for each NIC.
         sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
-                          socket.inet_aton(hostip))
+                          socket.inet_aton(hostip['addr']))
 
         # Transmit the datagram in the buffer
         sender.sendto(msgbuf, mcgrp)
@@ -104,7 +101,7 @@ class Message_System:
                 mcgrpip), socket.INADDR_ANY)
         else:
             mreq = struct.pack("=4s4s",
-                               socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip))
+                               socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip['addr']))
         # receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         # receiver.timeout(5)
         # ready_to_read, _, _ = select.select([receiver], [], [], 10)
@@ -115,19 +112,18 @@ class Message_System:
         try:
             buf, senderaddr = receiver.recvfrom(1024)
         except OSError:
-            return None,None
-        
+            return None, None
+
         # receiver.close()
         # print("GOT IT...")
         # if buf:
         msg = buf.decode()
         print("msg:", msg)
-            # msg = senderaddr = None
-            # Release resources
+        # msg = senderaddr = None
+        # Release resources
         receiver.close()
-            # print(msg, senderaddr)
+        # print(msg, senderaddr)
         return msg, senderaddr
-        
 
     def add_to_send(self, msg, times=1, dest=None):
         package = {'message': msg,
@@ -148,8 +144,9 @@ class Message_System:
         for i in self.pendig_send:
             if i['ip'] == None:
                 # print("sending")
-                self._mc_send(self.host_ip,self.broadcast_addr, 50001,
-                              i['message'].encode())
+                for nic_ip in get_ips():
+                    self._mc_send(nic_ip, self.broadcast_addr, 50001,
+                                  i['message'].encode())
 
     def send_heartbeat(self):
         while True:
@@ -159,7 +156,7 @@ class Message_System:
             except Exception as e:
                 print("Thrown Exception", e)
                 pass
-            
+
     def receive(self):
         to_remove = []
         if self.host_ip == None:
@@ -170,14 +167,18 @@ class Message_System:
             if i['times'] > 0:
                 i -= 1
             print(f"listening in {self.host_ip}")
-            msg, ip = self._mc_recv(self.host_ip, self.broadcast_addr, 50001)
-            if msg:
-                print(f">>> Message from {ip}: {msg}\n")
+            for nic_ip in get_ips():
+                print("NIC", nic_ip)
+                if 'broadcast' in nic_ip: 
+                    msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
+                    if msg:
+                        print(f">>> Message from {ip}: {msg}\n")
+                        break
 
-            # process message
+                        # process message
 
-            if i['times'] == 0:
-                to_remove.append(idx)
+                        if i['times'] == 0:
+                            to_remove.append(idx)
 
         for i in to_remove:
             self.pendig_receive.pop(i)
