@@ -69,10 +69,11 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         print(address)
         print(node_to_find.ip)
+        print(f'Now conn is {conn is not None} and node {node_to_find is not None}')
         response = None
         if conn:
-            response = conn.rpc_find_node((FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id,
-                                          node_to_ask.id)
+            response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
+                                          node_to_find.id)
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
@@ -91,16 +92,13 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def call_find_chunk_location(conn, node_to_ask: Node, node_to_find: Node, is_metadata=False):
-        """
-        async function to call the find value rpc method 
-        """
-        response = None
+    def call_find_chunk_location(conn, node_to_ask: Node, node_to_find: Node):
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
         if conn:
-            response = conn.rpc_find_chunk_location(address, FileSystemProtocol.source_node.id,
-                                           node_to_find.id, is_metadata)
+            print('calling rpc_find_chunk_location')
+            # print(f'arguments are {address}, {FileSystemProtocol.source_node.id}, {node_to_find.id}')
+            response = conn.rpc_find_chunk_location(address, FileSystemProtocol.source_node.id, node_to_find.id)
         print(response)
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
@@ -175,8 +173,8 @@ class FileSystemProtocol:
         If we get a response, add the node to the routing table.  If
         we get no response, make sure it's removed from the routing table.
         """
-        print(response)
-        if not response:
+        print(f'response is {response}')
+        if response is None:
             print("no response from %s, removing from router", node)
             FileSystemProtocol.router.remove_contact(node)
             return response

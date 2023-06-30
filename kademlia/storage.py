@@ -207,11 +207,6 @@ class PersistentStorage:
                         assert value is not None
                         yield key, value, is_metadata
 
-    # def _triple_iter(self):
-    #     ikeys = os.listdir(os.path.join(self.db_path))
-    #     ibirthday = map(operator.itemgetter(0), self.data.values())
-    #     return zip(ikeys, ibirthday)
-
     def keys(self):
         ikeys_files = os.listdir(os.path.join(self.keys_path))
         ikeys = []

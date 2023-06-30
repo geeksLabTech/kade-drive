@@ -16,7 +16,7 @@ from kademlia.routing import RoutingTable
 from kademlia.utils import digest
 from kademlia.storage import PersistentStorage
 from kademlia.node import Node
-from kademlia.crawling import LocationSpiderCrawl, ValueSpiderCrawl
+from kademlia.crawling import ChunkLocationSpiderCrawl, ValueSpiderCrawl
 from kademlia.crawling import NodeSpiderCrawl
 # from models.file import File
 log = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -294,12 +294,15 @@ class ServerService(Service):
         with ServerSession(address[0], address[1]) as conn:
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
-
+        if not FileSystemProtocol.storage.contains(key):
+            return self.rpc_find_node(sender, nodeid, key)
+        
         value = FileSystemProtocol.storage.get(key, None, metadata)
-        return value
+        return {'value': value}
 
     @rpyc.exposed
     def rpc_find_chunk_location(self, sender: tuple[str, str], nodeid: bytes, key: bytes):
+        print('entry in rpc_find_chunk_location')
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
@@ -307,8 +310,8 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         if Server.storage.contains(key):
-            return (Server.node.ip, Server.node.port)
-        return ()
+            return {'value': (Server.node.ip, Server.node.port)}
+        return self.rpc_find_node(sender, nodeid, key)
 
     @rpyc.exposed
     def rpc_ping(self, sender, nodeid: bytes):
@@ -348,8 +351,8 @@ class ServerService(Service):
         # ask for the neighbors of the node
         neighbors = FileSystemProtocol.router.find_neighbors(
             node, exclude=source)
-        if len(neighbors) == 0:
-            neighbors = [Server.node]
+        # if len(neighbors) == 0:
+        #     neighbors = [Server.node]
         print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
 
@@ -418,12 +421,11 @@ class ServerService(Service):
                 return [(Server.node.ip, Server.node.port)]
             return None
 
-        print('Initiating LocationSpiderCrawl')
-        spider = LocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
-        print('Finished LocationSpiderCrawl')
+        print('Initiating ChunkLocationSpiderCrawl')
+        spider = ChunkLocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         results = spider.find()
-        print(f'results of LocationSpider {results}')
-        return spider.find()
+        print(f'results of ChunkLocationSpider {results}')
+        return results
 
     @rpyc.exposed
     def upload_file(self, key: str, data: bytes):
