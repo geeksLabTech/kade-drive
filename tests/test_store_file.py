@@ -15,7 +15,7 @@ def test_store_df():
     initial_bootstrap_nodes = []
     client_session = ClientSession(initial_bootstrap_nodes)
 
-    client_session.ensure_connection(use_broadcast_if_needed=True)
+    client_session.connect(use_broadcast_if_needed=True)
 
     client_session.put("dataset_diabetes", X_pickle)
 
