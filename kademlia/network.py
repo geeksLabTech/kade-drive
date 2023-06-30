@@ -348,8 +348,8 @@ class ServerService(Service):
         # ask for the neighbors of the node
         neighbors = FileSystemProtocol.router.find_neighbors(
             node, exclude=source)
-        if len(neighbors) == 0:
-            neighbors = [Server.node]
+        # if len(neighbors) == 0:
+        #     neighbors = [Server.node]
         print('neighbors of find_node: ', neighbors)
         return list(map(tuple, neighbors))
 

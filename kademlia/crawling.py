@@ -67,6 +67,7 @@ class SpiderCrawl:
                 continue
             session = rpyc.connect(host=peer.ip, port=peer.port)
             conn = session.root
+            print(f'Connection is {conn is not None} and self.node is {self.node is not None}')
             print("Calling ", rpcmethod)
             if is_metadata is None:
                 response = rpcmethod(conn, peer, self.node)

@@ -69,10 +69,11 @@ class FileSystemProtocol:
         address = (node_to_ask.ip, node_to_ask.port)
         print(address)
         print(node_to_find.ip)
+        print(f'Now conn is {conn is not None} and node {node_to_find is not None}')
         response = None
         if conn:
-            response = conn.rpc_find_node((FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port), FileSystemProtocol.source_node.id,
-                                          node_to_ask.id)
+            response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
+                                          node_to_find.id)
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
@@ -172,8 +173,8 @@ class FileSystemProtocol:
         If we get a response, add the node to the routing table.  If
         we get no response, make sure it's removed from the routing table.
         """
-        print(response)
-        if not response:
+        print(f'response is {response}')
+        if response is None:
             print("no response from %s, removing from router", node)
             FileSystemProtocol.router.remove_contact(node)
             return response
