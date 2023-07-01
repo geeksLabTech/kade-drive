@@ -3,8 +3,9 @@ import logging
 import rpyc
 from kademlia.node import Node, NodeHeap
 from kademlia.protocol import FileSystemProtocol, ServerSession
+import logging
 
-log = logging.getLogger(__name__)  
+logger = logging.getLogger(__name__)
 
 
 class SpiderCrawl:
@@ -29,7 +30,7 @@ class SpiderCrawl:
         self.node = node
         self.nearest = NodeHeap(self.node, self.ksize)
         self.last_ids_crawled = []
-        print("creating spider with peers: %s", peers)
+        ("creating spider with peers: %s", peers)
         self.nearest.push(peers)
 
     def _find(self, rpcmethod, is_metadata: None | bool):
@@ -48,7 +49,10 @@ class SpiderCrawl:
              yet queried
           4. repeat, unless nearest list has all been queried, then ur done
         """
-        print("crawling network with nearest: %s", str(tuple(self.nearest)))
+        
+
+
+        logger.debug("crawling network with nearest: %s", str(tuple(self.nearest)))
         # define the alpha based on the latest crawled nodes
         count = self.alpha
         if self.nearest.get_ids() == self.last_ids_crawled:
@@ -62,23 +66,23 @@ class SpiderCrawl:
         # return the info from those nodes
         found_values = []
         for peer in self.nearest.get_uncontacted()[:count]:
-            print("Peer", type(peer), peer)
+            logger.debug("Peer %s %s", type(peer), peer)
             if peer.ip == '192.168.133.1':
                 continue
             session = rpyc.connect(host=peer.ip, port=peer.port)
             conn = session.root
-            print(f'Connection is {conn is not None} and self.node is {self.node is not None}')
-            print("Calling ", rpcmethod)
+            logger.debug(f'Connection is {conn is not None} and self.node is {self.node is not None}')
+            logger.debug("Calling ", rpcmethod)
             if is_metadata is None:
                 response = rpcmethod(conn, peer, self.node)
             else:
                 response = rpcmethod(conn, peer, self.node, is_metadata)
             response_dict[peer.id] = response
             self.nearest.mark_contacted(peer)
-            print("mark contacted successful")
+            logger.debug("mark contacted successful")
             # if session:
             #     session.close()
-        print('conno el response ', response_dict)
+        logger.debug('response %s', response_dict)
         return self._nodes_found(response_dict)
 
     def _nodes_found(self, response_dict):
@@ -105,7 +109,9 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         Handle the result of an iteration in _find.
         """
-        print("entry node Found Value Spider")
+
+
+        logger.debug("entry node Found Value Spider")
         toremove = []
         found_values = []
         for peer_id, response in response_dict.items():
@@ -139,10 +145,13 @@ class ValueSpiderCrawl(SpiderCrawl):
         the value to store it.
         """
         # create a counter for each value found
+        
+
+
         value_counts = Counter(values)
         # if more than one value is found for a key raise a warning
         if len(value_counts) != 1:
-            print(f"Got multiple values for key %i: %s",
+            logger.debug(f"Got multiple values for key %i: %s",
                   self.node.long_id, str(values))
         # get the most common item in the network
         # this is, if there were more than one value
@@ -170,8 +179,10 @@ class NodeSpiderCrawl(SpiderCrawl):
         """
         Handle the result of an iteration in _find.
         """
-        print("entering nodes found Node Spider")
-        print(f'response dict is {response_dict}')
+
+
+        logger.debug("entering nodes found Node Spider")
+        logger.debug(f'response dict is {response_dict}')
 
         toremove = []
         for peer_id, response in response_dict.items():
@@ -198,7 +209,8 @@ class ChunkLocationSpiderCrawl(SpiderCrawl):
         """
         Handle the result of an iteration in _find.
         """
-        print("entry ChunkLocationSpiderCrawl")
+
+        logger.debug("entry ChunkLocationSpiderCrawl")
         toremove = []
         found_values = []
         for peer_id, response in response_dict.items():

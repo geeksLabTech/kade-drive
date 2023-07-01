@@ -1,13 +1,13 @@
 import random
 import logging
 import rpyc
+import logging
 
 from kademlia.node import Node
 # from kademlia.routing import RoutingTable
 from kademlia.storage import PersistentStorage
 from kademlia.utils import digest
-
-log = logging.getLogger(__name__)  # pylint: disable=invalid-name
+logger = logging.getLogger(__name__)
 
 
 class FileSystemProtocol:
@@ -64,12 +64,16 @@ class FileSystemProtocol:
         """
         async function to call the find node rpc method
         """
-        print("inside call find Node")
+        
+
+        logger.debug("inside call find Node")
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
-        print(address)
-        print(node_to_find.ip)
-        print(f'Now conn is {conn is not None} and node {node_to_find is not None}')
+        logger.debug("address"+str(address))
+        logger.debug("Node to find"+str(node_to_find.ip))
+
+        logger.debug(
+            f'Now conn is {conn is not None} and node {node_to_find is not None}')
         response = None
         if conn:
             response = conn.rpc_find_node(address, FileSystemProtocol.source_node.id,
@@ -88,18 +92,24 @@ class FileSystemProtocol:
         if conn:
             response = conn.rpc_find_value(address, FileSystemProtocol.source_node.id,
                                            node_to_find.id, is_metadata)
-        print(response)
+        
+
+        logger.debug(str(response))
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
     def call_find_chunk_location(conn, node_to_ask: Node, node_to_find: Node):
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
+        
+
         if conn:
-            print('calling rpc_find_chunk_location')
+
+            logger.debug('calling rpc_find_chunk_location')
             # print(f'arguments are {address}, {FileSystemProtocol.source_node.id}, {node_to_find.id}')
-            response = conn.rpc_find_chunk_location(address, FileSystemProtocol.source_node.id, node_to_find.id)
-        print(response)
+            response = conn.rpc_find_chunk_location(
+                address, FileSystemProtocol.source_node.id, node_to_find.id)
+        logger.debug(str(response))
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
@@ -110,11 +120,13 @@ class FileSystemProtocol:
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
+        
+
         if conn:
             response = conn.rpc_ping(
                 address, FileSystemProtocol.source_node.id)
 
-        print("Got Response {response}")
+        logger.debug(f"Got Response {response}")
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
@@ -138,13 +150,15 @@ class FileSystemProtocol:
             return
 
         # add node to table
-        print('Adding new node to contacts')
+        
+
+        logger.debug('Adding new node to contacts')
         FileSystemProtocol.router.add_contact(node)
 
-        print("never seen %s before, adding to router", node)
+        logger.info(f"never seen {node} before, adding to router")
         # iterate over storage
         for key, value, is_metadata in FileSystemProtocol.storage:
-            print('entry for')
+            logger.debug('entry for')
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
             neighbors = FileSystemProtocol.router.find_neighbors(keynode)
@@ -160,9 +174,9 @@ class FileSystemProtocol:
                 this_closest = FileSystemProtocol.source_node.distance_to(
                     keynode) < first
             # if not neighbors, store data in the node
-            print(f'neighbors in for {neighbors}')
+            logger.debug(f'neighbors in for {neighbors}')
             if not neighbors or (new_node_close and this_closest):
-                print('calling call_store in welcome_if_new')
+                logger.debug('calling call_store in welcome_if_new')
                 with ServerSession(node.ip, node.port) as conn:
                     FileSystemProtocol.call_store(
                         conn, node, key, value, is_metadata)
@@ -173,15 +187,18 @@ class FileSystemProtocol:
         If we get a response, add the node to the routing table.  If
         we get no response, make sure it's removed from the routing table.
         """
-        print(f'response is {response}')
+        
+
+        logger.debug(f'response is {response}')
         if response is None:
-            print("no response from %s, removing from router", node)
+            # logger.info("no response from %s, removing from router", node)
+            logger.info(f"no response from {node}, removing from router")
             FileSystemProtocol.router.remove_contact(node)
             return response
 
         FileSystemProtocol.welcome_if_new(conn, node)
-        print("got successful response from %s", node)
-        print(response)
+        logger.debug(f"got successful response from {node}")
+        logger.debug(response)
         return response
 
 

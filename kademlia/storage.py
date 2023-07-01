@@ -9,7 +9,8 @@ from abc import abstractmethod, ABC
 from pathlib import Path
 import threading
 import base64
-
+import logging
+logger = logging.getLogger(__name__)
 
 class PersistentStorage:
     """
@@ -60,7 +61,9 @@ class PersistentStorage:
         self.ensure_dir_paths()
         # print('timestamp for',filename)
         data = {"date": datetime.now(), "republish": republish_data}
-        print('mira ruta ', os.path.join(self.timestamp_path, str(filename)))
+        
+
+        logger.debug('mira ruta %s %s', os.path.join(self.timestamp_path, str(filename)))
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             pickle.dump(data, f)
 
@@ -74,8 +77,10 @@ class PersistentStorage:
 
     def delete_old(self):
         self.ensure_dir_paths()
+        
+
         while True:
-            print("checking")
+            logger.debug("checking")
             if self.stop_del_thread:
                 return
             for path, dir, files in os.walk(self.timestamp_path):
@@ -85,7 +90,7 @@ class PersistentStorage:
                             data = pickle.load(f)
 
                         if (datetime.now() - data['date']).seconds > self.ttl:
-                            print(
+                            logger.info(
                                 f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes")
                             if Path(os.path.join(self.values_path, str(file))).exists():
                                 os.remove(os.path.join(
@@ -102,6 +107,8 @@ class PersistentStorage:
             sleep(self.ttl)
 
     def get_value(self, str_key: str, update_timestamp=True, metadata=True):
+        
+
         self.ensure_dir_paths()
         if metadata:
             path = os.path.join(self.metadata_path, str_key)
@@ -115,10 +122,12 @@ class PersistentStorage:
                 self.update_timestamp(str_key, republish_data=True)
             # result = self.db.find_one(File, File.id == key)
         if not result: 
+            logger.error(f"tried to get non existing data with key {str_key}")
             print('Tried to get data that is not in db')
         return result
 
     def set_value(self, key: bytes, value, metadata=True, republish_data=False):
+        
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
         self.update_timestamp(str_key, republish_data)
@@ -128,10 +137,10 @@ class PersistentStorage:
             path = os.path.join(self.values_path, str_key)
         with open(path, "wb") as f:
             try:
-                print('escribiendo')
+                logger.debug('writting data  to file')
                 f.write(value)
             except TypeError:
-                print('unicode_escape')
+                logger.warning('writting with unicode_escape')
                 f.write(value.encode("unicode_escape"))
 
         with open(os.path.join(self.keys_path, str_key), "wb") as f:
@@ -219,8 +228,9 @@ class PersistentStorage:
 
     def __iter__(self):
         self.ensure_dir_paths()
-        print(' ')
-        print('calling iter')
+        
+
+        logger.debug('calling iter')
         ikeys_files = os.listdir(os.path.join(self.keys_path))
         ikeys: list[bytes] = []
         imetadata: list[bool] = []
@@ -229,7 +239,7 @@ class PersistentStorage:
             ikeys.append(k)
             imetadata.append(m)
         # ivalues = map(operator.itemgetter(1), self.data.values())
-        print('ikeys: ', ikeys)
+        logger.debug('ikeys: %s', ikeys)
         ivalues: list[bytes] = []
 
         for i, ik in enumerate(ikeys):

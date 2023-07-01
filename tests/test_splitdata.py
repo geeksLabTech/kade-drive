@@ -6,7 +6,6 @@ from kademlia.network import Server
 
 
 def test_split_data():
-    print('entre')
     mytext = None
     with open('tests/data_to_split.txt', 'rb') as txtfile:
         mytext = txtfile.read()

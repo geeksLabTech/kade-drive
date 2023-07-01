@@ -6,7 +6,8 @@ import threading
 from socket import SHUT_RDWR
 import sys
 from kademlia.utils import get_ips
-
+import logging
+logger = logging.getLogger(__name__)
 
 class Message_System:
 
@@ -60,11 +61,11 @@ class Message_System:
 
     def close_sock(self, sock: socket.socket):
         if Message_System.is_socket_open(sock):
-            print("closing socket", sock)
+            
+            logger.debug(f"closing socket, {str(sock)}")
             try:
                 if sys.platform.startswith('linux'):
                     sock.shutdown(SHUT_RDWR)
-                print("closing socket")
                 sock.close()
             except OSError:
                 pass
@@ -72,6 +73,7 @@ class Message_System:
     def _mc_recv(self, fromnicip, mcgrpip, mcport):
         # print("inside rec")
         bufsize = 1024
+        
 
         # This creates a UDP socket
         receiver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM,
@@ -84,7 +86,7 @@ class Message_System:
         # that must match that of the sender
         # print((mcgrpip, mcport))
         bindaddr = (mcgrpip, mcport)
-        print("listening ", mcgrpip, mcport)
+        logger.debug(f"listening {mcgrpip}, {mcport}")
         receiver.bind(bindaddr)
 
         # This joins the socket to the intended multicast group. The implications
@@ -118,7 +120,7 @@ class Message_System:
         # print("GOT IT...")
         # if buf:
         msg = buf.decode()
-        print("msg:", msg)
+        logger.debug("msg: %s", msg)
         # msg = senderaddr = None
         # Release resources
         receiver.close()
@@ -149,15 +151,20 @@ class Message_System:
                                   i['message'].encode())
 
     def send_heartbeat(self):
+        
+
         while True:
             try:
                 self.send()
                 time.sleep(0.3)
             except Exception as e:
-                print("Thrown Exception", e)
+                logger.error(f"Exception in heartbeat {str(e)}")
+                # print("Thrown Exception", e)
                 pass
 
     def receive(self):
+        
+
         to_remove = []
         if self.host_ip == None:
             self_host = socket.gethostname()
@@ -166,13 +173,13 @@ class Message_System:
         for idx, i in enumerate(self.pendig_receive):
             if i['times'] > 0:
                 i -= 1
-            print(f"listening in {self.host_ip}")
+            logger.debug(f"listening in {self.host_ip}")
             for nic_ip in get_ips():
-                print("NIC", nic_ip)
-                if 'broadcast' in nic_ip: 
+                logger.debug(f"NIC {nic_ip}")
+                if 'broadcast' in nic_ip:
                     msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
                     if msg:
-                        print(f">>> Message from {ip}: {msg}\n")
+                        logger.info(f">>> Message from {ip}: {msg}\n")
                         break
 
                         # process message
