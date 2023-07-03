@@ -3,10 +3,10 @@ import logging
 import rpyc
 import logging
 
-from kademlia.node import Node
+from core.node import Node
 # from kademlia.routing import RoutingTable
-from kademlia.storage import PersistentStorage
-from kademlia.utils import digest
+from core.storage import PersistentStorage
+from core.utils import digest
 logger = logging.getLogger(__name__)
 
 

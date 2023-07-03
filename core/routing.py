@@ -3,11 +3,11 @@ import time
 import operator
 import logging
 
-from kademlia.protocol import FileSystemProtocol, ServerSession
+from core.protocol import FileSystemProtocol, ServerSession
 from itertools import chain
 from collections import OrderedDict
-from kademlia.utils import shared_prefix, bytes_to_bit_string
-from kademlia.node import Node
+from core.utils import shared_prefix, bytes_to_bit_string
+from core.node import Node
 import logging
 logger = logging.getLogger(__name__)
 

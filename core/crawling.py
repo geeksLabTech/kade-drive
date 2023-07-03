@@ -1,8 +1,8 @@
 from collections import Counter
 import logging
 import rpyc
-from kademlia.node import Node, NodeHeap
-from kademlia.protocol import FileSystemProtocol, ServerSession
+from core.node import Node, NodeHeap
+from core.protocol import FileSystemProtocol, ServerSession
 import logging
 
 logger = logging.getLogger(__name__)

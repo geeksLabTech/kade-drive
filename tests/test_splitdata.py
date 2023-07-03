@@ -2,7 +2,7 @@ from client import ClientSession
 import pickle
 import pandas as pd
 from sklearn.datasets import load_diabetes
-from kademlia.network import Server
+from core.network import Server
 
 
 def test_split_data():

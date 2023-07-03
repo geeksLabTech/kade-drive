@@ -1,13 +1,13 @@
 from typer import Typer, Argument, Option
 from typing import Optional
 import socket
-from kademlia.storage import PersistentStorage
-from kademlia.network import Server
+from core.storage import PersistentStorage
+from core.network import Server
 import threading
 import time
 import sys
 from message_system.message_system import Message_System
-from kademlia.utils import get_ips
+from core.utils import get_ips
 import logging
 
 logging.basicConfig(level=logging.INFO,

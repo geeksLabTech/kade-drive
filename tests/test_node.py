@@ -2,7 +2,7 @@ import random
 import hashlib
 
 
-from kademlia.node import Node, NodeHeap
+from core.node import Node, NodeHeap
 
 
 class TestNode:

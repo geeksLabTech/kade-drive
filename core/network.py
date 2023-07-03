@@ -12,13 +12,13 @@ import pickle
 from rpyc.utils.server import ThreadedServer
 import logging
 
-from kademlia.protocol import FileSystemProtocol, ServerSession
-from kademlia.routing import RoutingTable
-from kademlia.utils import digest
-from kademlia.storage import PersistentStorage
-from kademlia.node import Node
-from kademlia.crawling import ChunkLocationSpiderCrawl, ValueSpiderCrawl
-from kademlia.crawling import NodeSpiderCrawl
+from core.protocol import FileSystemProtocol, ServerSession
+from core.routing import RoutingTable
+from core.utils import digest
+from core.storage import PersistentStorage
+from core.node import Node
+from core.crawling import ChunkLocationSpiderCrawl, ValueSpiderCrawl
+from core.crawling import NodeSpiderCrawl
 # from models.file import File
 logger = logging.getLogger(__name__)
 

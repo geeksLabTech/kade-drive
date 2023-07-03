@@ -5,7 +5,7 @@ import select
 import threading
 from socket import SHUT_RDWR
 import sys
-from kademlia.utils import get_ips
+from core.utils import get_ips
 import logging
 logger = logging.getLogger(__name__)
 
