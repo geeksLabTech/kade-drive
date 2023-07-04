@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "py_dfs"
+name = "kade_drive"
 version = "0.1.0"
 description = "distributed file system based on kademlia dht"
-authors = ["DanielUH2019 <danielcardenascabrera2016@gmail.com>, JavierOramas <javiale2000@gmail.com>, Lia001218 <liazerqueraf@gmail.com>"]
+authors = ["DanielUH2019 <danielcardenascabrera2016@gmail.com>", "JavierOramas <javiale2000@gmail.com>", "Lia001218 <liazerqueraf@gmail.com>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "py_dfs"}]
+packages = [{include = "kade_drive"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
