@@ -1,4 +1,4 @@
-from client import ClientSession
+from client.client import ClientSession
 import pickle
 import pandas as pd
 from sklearn.datasets import load_diabetes
