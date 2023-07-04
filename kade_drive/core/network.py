@@ -329,8 +329,6 @@ class ServerService(Service):
         Returns:
             bytes: node id if alive, None if not 
         """
-        
-
         logger.debug(f"rpc ping called from {nodeid}, {sender[0]}, {sender[1]}")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
@@ -342,8 +340,6 @@ class ServerService(Service):
 
     @rpyc.exposed
     def rpc_find_node(self, sender, nodeid: bytes, key: bytes):
-        
-
         logger.debug(
             f"finding neighbors of {int(nodeid.hex(), 16)} in local table")
 
@@ -377,7 +373,7 @@ class ServerService(Service):
         return FileSystemProtocol.storage.contains(key)
 
     @rpyc.exposed
-    def get_file_chunk_value(self, key):
+    def rpc_get_file_chunk_value(self, key):
         return Server.storage.get(key, metadata=False)
 
     @rpyc.exposed
@@ -406,23 +402,25 @@ class ServerService(Service):
         logger.debug(f"Looking up key {key}")
         if apply_hash_to_key:
             key = digest(key)
-        # if this node has it, return it
-        if Server.storage.get(key, True) is not None:
-            return pickle.loads(Server.storage.get(key, True))
+        
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
-            logger.info(f"There are no known neighbors to get key {key}")
+            logger.debug(f"There are no known neighbors to get key {key}")
+            if Server.storage.contains(key) is not None:
+                logger.debug(f'Getting key from this same node')
+                return pickle.loads(Server.storage.get(key, True))
             return None
         spider = ValueSpiderCrawl(node, nearest,
                                   Server.ksize, Server.alpha)
-        metadata_list = pickle.loads(spider.find())
+        data = spider.find()
+        if data is None:
+            return None
+        metadata_list = pickle.loads(data)
         return metadata_list
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
-        
-
         logger.debug('looking file chunk location')
         node = Node(chunk_key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
@@ -440,7 +438,7 @@ class ServerService(Service):
         results = spider.find()
         logger.debug(f'results of ChunkLocationSpider {results}')
         return results
-
+    
     @rpyc.exposed
     def upload_file(self, key, data: bytes, apply_hash_to_key=True):
         chunks = Server.split_data(data, 1000)
