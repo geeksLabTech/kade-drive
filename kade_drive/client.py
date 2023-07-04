@@ -72,12 +72,21 @@ class ClientSession:
 
         return nodes_to_try, remaining_attempts_to_reconnect
 
-    def get(self, key):
-        metadata_list = self.connection.root.get(key)
+    def get(self, key, apply_hash_to_key=True):
+        logger = logging.getLogger(__name__)
+        if not self.connection:
+            logger.error(f'No connection stablished to do get')
+            return None
+        metadata_list = self.connection.root.get(key, apply_hash_to_key)
         logger = logging.getLogger(__name__)
 
         logger.debug(f'metadata_list received {str(len(metadata_list) > 0)}')
         data_received = []
+
+        if metadata_list is None or len(metadata_list) == 0:
+            logger.debug(f'No data with key {key}')
+            return None
+
         for chunk_key in metadata_list:
             # print('chunk key', chunk_key)
             locations: list[tuple[str, int]] = self.connection.root.get_file_chunk_location(
@@ -87,29 +96,36 @@ class ClientSession:
             if self.bootstrap_nodes[0] in locations:
                 logger.debug('Using primary connection to get chunk')
                 data_received.append(
-                    self.connection.root.get_file_chunk_value(chunk_key))
+                    self.connection.root.rpc_get_file_chunk_value(chunk_key))
             else:
-                conn = self._ensure_connection(
+                conn, _ = self._ensure_connection(
                     locations, None, use_broadcast_if_needed=False, update_boostrap_nodes=False)
                 if conn:
                     data_received.append(
-                        conn.root.get_file_chunk_value(chunk_key))
+                        conn.root.rpc_get_file_chunk_value(chunk_key))
                 else:
                     logger.warning('No Servers to get chunk')
 
         # data_recv = bytearray()
         logger.debug('len data received', len(data_received))
         data_received = b''.join(data_received)
-        return pickle.loads(data_received)
-
+        try:
+            data_to_return = pickle.loads(data_received)
+            return data_to_return
+        except pickle.UnpicklingError as e:
+            logger.error(e)
+            return None
+        
     def put(self, key, value: bytes, apply_hash_to_key=True):
         logger = logging.getLogger(__name__)
-
         logger.debug(f'key: {key}, value: {value}')
         # print(self.connection.root.upload_file.)
-        self.connection.root.upload_file(key=key, data=value, apply_hash_to_key=apply_hash_to_key)
-        sleep(1)
-        logger.info(f'put > Success')
+        if self.connection:
+            self.connection.root.upload_file(key=key, data=value, apply_hash_to_key=apply_hash_to_key)
+            sleep(1)
+            logger.info(f'put > Success')
+        else: 
+            logger.error(f'No connection stablished to do put')
 
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
         logger = logging.getLogger(__name__)
