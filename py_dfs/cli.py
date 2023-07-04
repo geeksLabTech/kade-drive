@@ -1,7 +1,7 @@
 
 import sys
 import logging
-from client.client import ClientSession
+from client import ClientSession
 
 client_session: ClientSession | None = None
 

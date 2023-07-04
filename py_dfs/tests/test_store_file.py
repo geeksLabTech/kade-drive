@@ -1,7 +1,7 @@
 from sklearn.datasets import load_diabetes
 import pandas as pd
 import pickle
-from client.client import ClientSession
+from client import ClientSession
 
 def test_store_df():
     X, y = load_diabetes(return_X_y=True)

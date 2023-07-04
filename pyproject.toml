@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "py-dfs"
+name = "py_dfs"
 version = "0.1.0"
 description = "distributed file system based on kademlia dht"
 authors = ["DanielUH2019 <danielcardenascabrera2016@gmail.com>, JavierOramas <javiale2000@gmail.com>, Lia001218 <liazerqueraf@gmail.com>"]
