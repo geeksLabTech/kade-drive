@@ -188,9 +188,6 @@ class Server:
 
     @staticmethod
     def find_replicas():
-        
-
-
         nearest = FileSystemProtocol.router.find_neighbors(
             Server.node, Server.alpha, exclude=Server.node)
         spider = NodeSpiderCrawl(Server.node, nearest,
@@ -445,10 +442,8 @@ class ServerService(Service):
         return results
 
     @rpyc.exposed
-    def upload_file(self, key: str, data: bytes):
+    def upload_file(self, key, data: bytes, apply_hash_to_key=True):
         chunks = Server.split_data(data, 1000)
-        
-
         logger.debug(f'chunks {len(chunks)}, {chunks}')
         digested_chunks = [digest(c) for c in chunks]
         metadata_list = pickle.dumps(digested_chunks)
@@ -458,7 +453,11 @@ class ServerService(Service):
             Server.set_digest(c[0], c[1], metadata=False)
 
         logger.debug("Writting key metadata")
-        Server.set_digest(digest(key), metadata_list)
+        if apply_hash_to_key:
+            dkey = digest(key)
+            Server.set_digest(dkey, metadata_list)
+        else:
+            Server.set_digest(key, metadata_list)
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
