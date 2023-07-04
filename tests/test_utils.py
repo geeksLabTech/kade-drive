@@ -1,6 +1,6 @@
 import hashlib
 
-from kademlia.utils import digest, shared_prefix
+from core.utils import digest, shared_prefix
 
 
 class TestUtils:

@@ -39,18 +39,17 @@ def get_ips():
     # print(interfaces)
 
     # Sort the interfaces by preference: LAN, WLAN, and localhost
-    interfaces = sorted(interfaces, key=lambda x: ("wl" in x, "eth" in x, "en" in x, "lo"  in x ),reverse=True)
+    interfaces = sorted(interfaces, key=lambda x: ("wl" in x, "eth" in x, "en" in x),reverse=True)
 
     ips = []
-    print(interfaces)
     for interface in interfaces:
         try:
             # Get the IP address for the current interface
-            print(ni.ifaddresses(interface)[ni.AF_INET][0])
+            # print(ni.ifaddresses(interface)[ni.AF_INET][0])
             ip = ni.ifaddresses(interface)[ni.AF_INET][0]
             if ip:
-                return ip
+                ips.append(ip)
         except:
             pass
 
-    return ip
+    return ips

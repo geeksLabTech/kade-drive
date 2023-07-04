@@ -1,16 +1,15 @@
 import heapq
 import time
 import operator
-
-from kademlia.protocol import FileSystemProtocol, ServerSession
-from itertools import chain
-from collections import OrderedDict
-from kademlia.utils import shared_prefix, bytes_to_bit_string
-from kademlia.node import Node
 import logging
 
-log = logging.getLogger(__name__)  # pylint: disable=invalid-name
-
+from core.protocol import FileSystemProtocol, ServerSession
+from itertools import chain
+from collections import OrderedDict
+from core.utils import shared_prefix, bytes_to_bit_string
+from core.node import Node
+import logging
+logger = logging.getLogger(__name__)
 
 class KBucket:
     '''
@@ -100,12 +99,13 @@ class KBucket:
 
 class TableTraverser:
     def __init__(self, table: 'RoutingTable', startNode):
+        
         index = table.get_bucket_for(startNode)
-        print(f'table.buckets, {table.buckets}, {index}')
+        logger.debug(f'table.buckets, {table.buckets}, {index}')
         table.buckets[index].touch_last_updated()
-        print('nodes in bucket', table.buckets[index].nodes.values())
+        logger.debug('nodes in bucket %s', table.buckets[index].nodes.values())
         self.current_nodes = table.buckets[index].get_nodes()
-        print('current nodes', self.current_nodes)
+        logger.debug('current nodes %s', self.current_nodes)
         self.left_buckets = table.buckets[:index]
         self.right_buckets = table.buckets[(index + 1):]
         self.left = True
@@ -117,28 +117,32 @@ class TableTraverser:
         """
         Pop an item from the left subtree, then right, then left, etc.
         """
-        print(self.current_nodes)
+        
+
+        logger.debug(self.current_nodes)
         if self.current_nodes and len(self.current_nodes) > 0:
             return self.current_nodes.pop()
 
-        print(self.__dict__)
+        logger.debug(self.__dict__)
         if self.left and self.left_buckets:
             self.current_nodes = self.left_buckets.pop().get_nodes()
-            print(self.current_nodes)
+            logger.debug(self.current_nodes)
             self.left = False
             return next(self)
 
         if self.right_buckets:
             self.current_nodes = self.right_buckets.pop(0).get_nodes()
             self.left = True
-            print(self.current_nodes)
+            logger.debug(self.current_nodes)
 
             return next(self)
-        print("Not found")
+        logger.debug("Not found")
         raise StopIteration
+
 
 class VoidNodeException(Exception):
     pass
+
 
 class RoutingTable:
     def __init__(self, ksize: int, node: Node):
@@ -179,12 +183,14 @@ class RoutingTable:
     def add_contact(self, node: Node):
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
-        print()
-        print('previous nodes in bucket of index ', index, bucket.get_nodes())
+        
+
+        logger.debug(
+            f'previous nodes in bucket of index {index}, {bucket.get_nodes()}')
         # this will succeed unless the bucket is full
         if bucket.add_node(node):
             # print('add node with id :')
-            print('Bucket nodes: ', bucket.get_nodes())
+            logger.debug(f'Bucket nodes:  {bucket.get_nodes()}')
             return
 
         # Per section 4.2 of paper, split if the bucket has the node
@@ -202,31 +208,37 @@ class RoutingTable:
         """
         Get the index of the bucket that the given node would fall into.
         """
+        
+
         node_index: int | None = None
         for index, bucket in enumerate(self.buckets):
-            print('node.long_id', node.long_id)
-            print('bucket.range[1]', bucket.range[1])
+            logger.debug(f'node.long_id {node.long_id}')
+            logger.debug(f'bucket.range[1] {bucket.range[1]}')
             if node.long_id >= bucket.range[1]:
                 continue
-            
+
             node_index = index
             break
         # we should never be here, but make linter happy
         if node_index is None:
+            logger.critical(
+                f"VoidNodeException {node} does not have any bucket to fall into")
             raise VoidNodeException(
                 f'The node {node} does not have any valid bucket to fall into')
 
         return node_index
 
     def find_neighbors(self, node: Node, k: int | None = None, exclude: Node | None = None):
+        
         k = k or self.ksize
         nodes: list[tuple[int, Node]] = []
         for neighbor in TableTraverser(self, node):
             if exclude:
-                print(f'Comparing {neighbor.ip} {neighbor.port} and {exclude.ip} {exclude.port}')
+                logger.debug(
+                    f'Comparing {neighbor.ip} {neighbor.port} and {exclude.ip} {exclude.port}')
             not_excluded = exclude is None or not neighbor.same_home_as(
                 exclude)
-            print('not excluded ', not_excluded)
+            logger.debug(f'not excluded {not_excluded}')
             if neighbor.id != node.id and not_excluded:
                 heapq.heappush(nodes, (node.distance_to(neighbor), neighbor))
             if len(nodes) == k:

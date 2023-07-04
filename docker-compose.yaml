@@ -4,27 +4,12 @@ services:
     image: filesystem-app
     stdin_open: true
     tty: true
-    environment:
-      - MONGODB_URL=mongodb://mongodb:27017/filesystem
     ports:
       - '8085:8085'
-    depends_on:
-      - mongodb
+      - '50001:50001'
     networks:
       - filesystem-network
       - default
-  mongodb:
-    image: docker.uclv.cu/mongo:latest
-    ports:
-      - '27017:27017'
-    volumes:
-      - dbdata:/data/db
-    networks:
-      - filesystem-network
-
-volumes:
-  dbdata:
-
 
 networks:
   filesystem-network:

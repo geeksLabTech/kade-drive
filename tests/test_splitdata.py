@@ -1,12 +1,11 @@
-from client import ClientSession
+from client.client import ClientSession
 import pickle
 import pandas as pd
 from sklearn.datasets import load_diabetes
-from kademlia.network import Server
+from core.network import Server
 
 
 def test_split_data():
-    print('entre')
     mytext = None
     with open('tests/data_to_split.txt', 'rb') as txtfile:
         mytext = txtfile.read()
