@@ -45,10 +45,10 @@ class Server:
         Server.storage = storage or PersistentStorage()
         Server.node = Node(node_id or digest(
             random.getrandbits(255)), ip=ip, port=str(port))
-        logger.debug("NODE ID", Server.node.id)
+        logger.debug(f"NODE ID: {Server.node.id}")
         Server.routing = RoutingTable(Server.ksize, Server.node)
         FileSystemProtocol.init(Server.routing, Server.storage)
-        logger.debug(port, ip)
+        logger.debug(f'{port}, {ip}')
         threading.Thread(target=Server.listen, args=(port, ip)).start()
         refresh_thread = threading.Thread(target=Server._refresh_table)
         refresh_thread.start()
