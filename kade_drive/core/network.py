@@ -12,7 +12,7 @@ import socket
 import pickle
 from rpyc.utils.server import ThreadedServer
 import logging
-
+from core.config import Config
 from core.protocol import FileSystemProtocol, ServerSession
 from core.routing import RoutingTable
 from core.utils import digest
@@ -36,7 +36,7 @@ class Server:
     routing: RoutingTable
 
     @staticmethod
-    def init(ksize=2, alpha=3, ip: str = '0.0.0.0', port: int = 8086, node_id: bytes | None = None, storage: PersistentStorage | None = None):
+    def init(config : Config ,ksize=2, alpha=3, ip: str = '0.0.0.0', port: int = 8086, node_id: bytes | None = None, storage: PersistentStorage | None = None):
         """
         Args:
             ksize (int): Replication factor, determines to how many closest peers a record is replicated
@@ -48,7 +48,7 @@ class Server:
         
         Server.ksize = ksize
         Server.alpha = alpha
-        Server.storage = storage or PersistentStorage()
+        Server.storage = storage or PersistentStorage(config.ttl)
         Server.node = Node(node_id or digest(
             random.getrandbits(255)), ip=ip, port=str(port))
         logger.debug(f"NODE ID: {Server.node.id}")
@@ -56,7 +56,7 @@ class Server:
         FileSystemProtocol.init(Server.routing, Server.storage)
         logger.debug(f'{port}, {ip}')
         threading.Thread(target=Server.listen, args=(port, ip)).start()
-        refresh_thread = threading.Thread(target=Server._refresh_table)
+        refresh_thread = threading.Thread(target=Server._refresh_table, args= (config.refresh_sleep,))
         refresh_thread.start()
 
     @staticmethod
@@ -220,7 +220,7 @@ class Server:
         return return_list
 
     @staticmethod
-    def _refresh_table():
+    def _refresh_table(refresh_sleep):
         """
         Refresh buckets that haven't had any lookups in the last hour
         (per section 2.3 of the paper).
@@ -228,7 +228,7 @@ class Server:
         
         while (True):
             try:
-                sleep(5)
+                sleep(refresh_sleep)
                 logger.info("Refreshing Table")
 
                 results = []

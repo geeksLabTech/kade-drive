@@ -8,6 +8,7 @@ import time
 import sys
 from message_system.message_system import Message_System
 from core.utils import get_ips
+from core.config import Config
 import logging
 
 # Create a file handler
@@ -56,7 +57,7 @@ def start_server(host_ip=None):
         host_ip = socket.gethostbyname(socket.gethostname())
         # client_session = ClientSession(ip=host_ip)
 
-    Server.init(ip=host_ip.split(" ")[0])
+    Server.init(ip=host_ip.split(" ")[0], config = Config())
 
     logger.info(f"broadcasting {Server.node.ip} {Server.node.port}")
     ms.add_to_send(f"dfs {Server.node.ip} {Server.node.port}")
