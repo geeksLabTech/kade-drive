@@ -168,7 +168,7 @@ class Server:
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest:
-            if Server.storage.contains(dkey):
+            if Server.storage.contains(dkey, metadata):
                 if metadata:
                     Server.storage.set_metadata(dkey, value, False)
                 else:
@@ -178,7 +178,7 @@ class Server:
         for n in nodes:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
-                contains = FileSystemProtocol.call_contains(conn, n, dkey)
+                contains = FileSystemProtocol.call_contains(conn, n, dkey, metadata)
                 if not contains:
                     result = FileSystemProtocol.call_store(
                         conn, n, dkey, value, metadata)
@@ -206,7 +206,7 @@ class Server:
             with ServerSession(n.ip, n.port) as conn:
                 # if len(keys_to_find) > 0:
                 for k, is_metadata in keys_to_find:
-                    contains = FileSystemProtocol.call_contains(conn, n, k)
+                    contains = FileSystemProtocol.call_contains(conn, n, k, is_metadata)
                     if contains:
                         if not (k, is_metadata) in keys_dict:
                             keys_dict[(k, is_metadata)] = 0
@@ -302,7 +302,7 @@ class ServerService(Service):
         with ServerSession(address[0], address[1]) as conn:
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
-        if not FileSystemProtocol.storage.contains(key):
+        if not FileSystemProtocol.storage.contains(key, metadata):
             logger.debug(f'Value with key {key} not found, calling rpc_find_node')
             logger.debug(f'type of key is {type(key)}')
             return self.rpc_find_node(sender, nodeid, key)
@@ -322,7 +322,7 @@ class ServerService(Service):
         with ServerSession(address[0], address[1]) as conn:
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
-        if Server.storage.contains(key):
+        if Server.storage.contains(key, False):
             return {'value': (Server.node.ip, Server.node.port)}
         return self.rpc_find_node(sender, nodeid, key)
 
@@ -371,14 +371,14 @@ class ServerService(Service):
         return list(map(tuple, neighbors))
 
     @rpyc.exposed
-    def rpc_contains(self, sender, nodeid: bytes, key: bytes):
+    def rpc_contains(self, sender, nodeid: bytes, key: bytes, is_metadata=True):
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
-        return FileSystemProtocol.storage.contains(key)
+        return FileSystemProtocol.storage.contains(key, is_metadata)
 
     @rpyc.exposed
     def rpc_get_file_chunk_value(self, key):
@@ -437,7 +437,7 @@ class ServerService(Service):
         if not nearest:
             logger.debug(
                 f"There are no known neighbors to get file chunk location {chunk_key}")
-            if Server.storage.contains(chunk_key) is not None:
+            if Server.storage.contains(chunk_key, False) is not None:
                 logger.debug(f'Found in this server, {Server.node.ip}, port, {Server.node.port}')
                 return [(Server.node.ip, Server.node.port)]
             return None

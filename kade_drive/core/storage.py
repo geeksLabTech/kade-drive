@@ -184,14 +184,19 @@ class PersistentStorage:
             result = f.read()
             return result, os.path.exists(os.path.join(self.metadata_path, key))
 
-    def contains(self, key: bytes):
+    def contains(self, key: bytes, is_metadata=True):
         str_key = str(base64.urlsafe_b64encode(key)) 
         logger.debug(f'str_key in contains is {str_key}')
         self.cull()
         # self.update_timestamp(key)
-        path = Path(os.path.join(self.values_path, str_key))
-        if not path.exists():
-            return False
+        if is_metadata:
+            path = Path(os.path.join(self.metadata_path, str_key))
+            if not path.exists():
+                return False
+        else:
+            path = Path(os.path.join(self.values_path, str_key))
+            if not path.exists():
+                return False
 
         # self.update_timestamp(str_key)
         return True

@@ -55,12 +55,12 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def call_contains(conn, node_to_ask, key: bytes):
+    def call_contains(conn, node_to_ask, key: bytes, is_metadata=True):
         response = None
         if conn:
             address = (node_to_ask.ip, node_to_ask.port)
             response = conn.rpc_contains(
-                address, FileSystemProtocol.source_node.id, key)
+                address, FileSystemProtocol.source_node.id, key, is_metadata)
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
