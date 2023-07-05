@@ -136,7 +136,7 @@ class ValueSpiderCrawl(SpiderCrawl):
                 self.nearest.push(response.get_node_list())
         self.nearest.remove(toremove)
         logger.debug(f"found values in _nodes_found {found_values}")
-        if found_values:
+        if len(found_values)>0:
             return self._handle_found_values(found_values)
         if self.nearest.have_contacted_all():
             # not found!
