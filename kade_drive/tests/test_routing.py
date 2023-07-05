@@ -1,5 +1,5 @@
 from random import shuffle
-from kademlia.routing import KBucket, TableTraverser
+from core.routing import KBucket, TableTraverser
 
 
 class TestKBucket:

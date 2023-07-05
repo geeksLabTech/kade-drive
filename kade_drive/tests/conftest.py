@@ -6,9 +6,9 @@ from struct import pack
 
 import pytest
 
-from kademlia.network import Server
-from kademlia.node import Node
-from kademlia.routing import RoutingTable
+from core.network import Server
+from core.node import Node
+from core.routing import RoutingTable
 
 
 # @pytest.fixture()

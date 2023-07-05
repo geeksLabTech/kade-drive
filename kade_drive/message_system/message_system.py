@@ -5,17 +5,15 @@ import select
 import threading
 from socket import SHUT_RDWR
 import sys
-from kademlia.utils import get_ips
+from core.utils import get_ips
+import logging
+logger = logging.getLogger(__name__)
 
 class Message_System:
 
     def __init__(self, host_ip=None, broadcast_addr=None):
         self.host_ip = host_ip
         self.broadcast_addr = broadcast_addr
-        if host_ip is None or broadcast_addr is None:
-            ip_br = get_ips()
-            self.host_ip = ip_br['addr']
-            self.broadcast_addr = ip_br['broadcast']
 
         self.pendig_send = []
         self.pendig_receive = [
@@ -41,7 +39,7 @@ class Message_System:
         # If we wish to transmit the datagram to multiple NICs, we
         # ought to create a socket for each NIC.
         sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
-                          socket.inet_aton(hostip))
+                          socket.inet_aton(hostip['addr']))
 
         # Transmit the datagram in the buffer
         sender.sendto(msgbuf, mcgrp)
@@ -63,11 +61,11 @@ class Message_System:
 
     def close_sock(self, sock: socket.socket):
         if Message_System.is_socket_open(sock):
-            print("closing socket", sock)
+            
+            logger.debug(f"closing socket, {str(sock)}")
             try:
                 if sys.platform.startswith('linux'):
                     sock.shutdown(SHUT_RDWR)
-                print("closing socket")
                 sock.close()
             except OSError:
                 pass
@@ -75,6 +73,7 @@ class Message_System:
     def _mc_recv(self, fromnicip, mcgrpip, mcport):
         # print("inside rec")
         bufsize = 1024
+        
 
         # This creates a UDP socket
         receiver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM,
@@ -87,7 +86,7 @@ class Message_System:
         # that must match that of the sender
         # print((mcgrpip, mcport))
         bindaddr = (mcgrpip, mcport)
-        print("listening ", mcgrpip, mcport)
+        logger.debug(f"listening {mcgrpip}, {mcport}")
         receiver.bind(bindaddr)
 
         # This joins the socket to the intended multicast group. The implications
@@ -104,7 +103,7 @@ class Message_System:
                 mcgrpip), socket.INADDR_ANY)
         else:
             mreq = struct.pack("=4s4s",
-                               socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip))
+                               socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip['addr']))
         # receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         # receiver.timeout(5)
         # ready_to_read, _, _ = select.select([receiver], [], [], 10)
@@ -115,19 +114,18 @@ class Message_System:
         try:
             buf, senderaddr = receiver.recvfrom(1024)
         except OSError:
-            return None,None
-        
+            return None, None
+
         # receiver.close()
         # print("GOT IT...")
         # if buf:
         msg = buf.decode()
-        print("msg:", msg)
-            # msg = senderaddr = None
-            # Release resources
+        logger.debug("msg: %s", msg)
+        # msg = senderaddr = None
+        # Release resources
         receiver.close()
-            # print(msg, senderaddr)
+        # print(msg, senderaddr)
         return msg, senderaddr
-        
 
     def add_to_send(self, msg, times=1, dest=None):
         package = {'message': msg,
@@ -148,15 +146,25 @@ class Message_System:
         for i in self.pendig_send:
             if i['ip'] == None:
                 # print("sending")
-                self._mc_send(self.host_ip,self.broadcast_addr, 50001,
-                              i['message'].encode())
+                for nic_ip in get_ips():
+                    self._mc_send(nic_ip, self.broadcast_addr, 50001,
+                                  i['message'].encode())
 
     def send_heartbeat(self):
+        
+
         while True:
-            self.send()
-            time.sleep(0.3)
+            try:
+                self.send()
+                time.sleep(0.3)
+            except Exception as e:
+                logger.error(f"Exception in heartbeat {str(e)}")
+                # print("Thrown Exception", e)
+                pass
 
     def receive(self):
+        
+
         to_remove = []
         if self.host_ip == None:
             self_host = socket.gethostname()
@@ -165,15 +173,19 @@ class Message_System:
         for idx, i in enumerate(self.pendig_receive):
             if i['times'] > 0:
                 i -= 1
-            print(f"listening in {self.host_ip}")
-            msg, ip = self._mc_recv(self.host_ip, self.broadcast_addr, 50001)
-            if msg:
-                print(f">>> Message from {ip}: {msg}\n")
+            logger.debug(f"listening in {self.host_ip}")
+            for nic_ip in get_ips():
+                logger.debug(f"NIC {nic_ip}")
+                if 'broadcast' in nic_ip:
+                    msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
+                    if msg:
+                        logger.info(f">>> Message from {ip}: {msg}\n")
+                        break
 
-            # process message
+                        # process message
 
-            if i['times'] == 0:
-                to_remove.append(idx)
+                        if i['times'] == 0:
+                            to_remove.append(idx)
 
         for i in to_remove:
             self.pendig_receive.pop(i)
