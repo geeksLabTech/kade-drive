@@ -17,8 +17,8 @@ logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
 
 
-def start_server(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
-    # host_ip = socket.gethostbyname(socket.gethostname())
+def start_server(host_ip=None, bootstrap_nodes=None):
+    # host_ip = socket.gethostbynahost_ipme(socket.gethostname())
     broadcast = None
     logger.debug(host_ip)
     # print(host_ip)
@@ -26,7 +26,7 @@ def start_server(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
         ip_br = get_ips()[0]
         broadcast = ip_br['broadcast']
         host_ip = ip_br['addr']
-    logger.debug(host_ip)
+    logger.info(host_ip)
 
     # print(host_ip)
     ms = Message_System(host_ip, broadcast)
@@ -34,7 +34,7 @@ def start_server(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
     if bootstrap_nodes is None:
         logger.info("No bootstrap Nodes given, trying to auto-detect")
 
-        msg = ms.receive()
+        msg = ms.receive(service_name='dfs')
         logger.debug(msg)
         if msg:
             hosts.append(msg)
@@ -44,7 +44,9 @@ def start_server(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
             logger.info("No servers answered :(")
         # time.sleep(1)
 
+
     if host_ip is None:
+        logger.warning("aaa", socket.get_hostname())
         host_ip = socket.gethostbyname(socket.gethostname())
         # client_session = ClientSession(ip=host_ip)
 
@@ -54,10 +56,10 @@ def start_server(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
     ms.add_to_send(f"{Server.node.ip} {Server.node.port}")
     heartbeat_thread = threading.Thread(target=ms.send_heartbeat)
     heartbeat_thread.start()
-    # Server.init(ip="192.168.26.2")
-    if bootstrap_nodes:
-        target_host, target_port = bootstrap_nodes.split(' ')
-        Server.bootstrap([(target_host, target_port)])
+    # # Server.init(ip="192.168.26.2")
+    # if bootstrap_nodes:
+    #     target_host, target_port = bootstrap_nodes.split(' ')
+    #     Server.bootstrap([(target_host, target_port)])
 
     logger.info(f'Server started at {host_ip}')
 
@@ -66,7 +68,7 @@ app = Typer()
 
 
 @app.command()
-def _start(host_ip=Option(None), bootstrap_nodes=Option(None)):
+def _start(host_ip=Option(str), bootstrap_nodes=Option(list)):
     logger.debug(host_ip)
     if bootstrap_nodes:
         start_server(host_ip, bootstrap_nodes)
@@ -75,4 +77,4 @@ def _start(host_ip=Option(None), bootstrap_nodes=Option(None)):
 
 
 if __name__ == '__main__':
-    _start()
+    app()

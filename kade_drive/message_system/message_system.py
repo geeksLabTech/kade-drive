@@ -9,6 +9,7 @@ from core.utils import get_ips
 import logging
 logger = logging.getLogger(__name__)
 
+
 class Message_System:
 
     def __init__(self, host_ip=None, broadcast_addr=None):
@@ -61,7 +62,7 @@ class Message_System:
 
     def close_sock(self, sock: socket.socket):
         if Message_System.is_socket_open(sock):
-            
+
             logger.debug(f"closing socket, {str(sock)}")
             try:
                 if sys.platform.startswith('linux'):
@@ -73,7 +74,6 @@ class Message_System:
     def _mc_recv(self, fromnicip, mcgrpip, mcport):
         # print("inside rec")
         bufsize = 1024
-        
 
         # This creates a UDP socket
         receiver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM,
@@ -151,7 +151,6 @@ class Message_System:
                                   i['message'].encode())
 
     def send_heartbeat(self):
-        
 
         while True:
             try:
@@ -162,8 +161,7 @@ class Message_System:
                 # print("Thrown Exception", e)
                 pass
 
-    def receive(self):
-        
+    def receive(self, service_name: str):
 
         to_remove = []
         if self.host_ip == None:
@@ -178,8 +176,9 @@ class Message_System:
                 logger.debug(f"NIC {nic_ip}")
                 if 'broadcast' in nic_ip:
                     msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
-                    if msg:
+                    if msg.startswith(service_name):
                         logger.info(f">>> Message from {ip}: {msg}\n")
+                        msg = msg.removeprefix(service_name+' ')
                         break
 
                         # process message
