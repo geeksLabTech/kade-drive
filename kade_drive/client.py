@@ -7,6 +7,10 @@ from message_system.message_system import Message_System
 
 import logging
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+logger.info("TESTTTTTT")
 # rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 
 
@@ -73,14 +77,13 @@ class ClientSession:
         return nodes_to_try, remaining_attempts_to_reconnect
 
     def get(self, key, apply_hash_to_key=True):
-        logger = logging.getLogger(__name__)
         if not self.connection:
             logger.error(f'No connection stablished to do get')
             return None
         metadata_list = self.connection.root.get(key, apply_hash_to_key)
-        logger = logging.getLogger(__name__)
         if metadata_list:
-            logger.debug(f'metadata_list received {str(len(metadata_list) > 0)}')
+            logger.debug(
+                f'metadata_list received {str(len(metadata_list) > 0)}')
         data_received = []
 
         if metadata_list is None or len(metadata_list) == 0:
@@ -117,8 +120,6 @@ class ClientSession:
             return None
 
     def put(self, key, value: bytes, apply_hash_to_key=True):
-        logger = logging.getLogger(__name__)
-        logger.debug(f'key: {key}, value: {value}')
         # print(self.connection.root.upload_file.)
         if self.connection:
             self.connection.root.upload_file(
@@ -129,8 +130,6 @@ class ClientSession:
             logger.error(f'No connection stablished to do put')
 
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
-        logger = logging.getLogger(__name__)
-
         nodes_to_add = [node for node in connection.root.find_neighbors(
         ) if node not in self.bootstrap_nodes]
         self.bootstrap_nodes.extend(nodes_to_add)
