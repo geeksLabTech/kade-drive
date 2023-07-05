@@ -192,7 +192,7 @@ class PersistentStorage:
         if not path.exists():
             return False
 
-        self.update_timestamp(str_key)
+        # self.update_timestamp(str_key)
         return True
 
     def __getitem__(self, key: bytes):
