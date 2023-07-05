@@ -21,6 +21,7 @@ def start_server(host_ip=None):
     # host_ip = socket.gethostbynahost_ipme(socket.gethostname())
     broadcast = None
     logger.debug(host_ip)
+    bootstrap_nodes = None
     # print(host_ip)
     if host_ip is None:
         ip_br = get_ips()[0]
