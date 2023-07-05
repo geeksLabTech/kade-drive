@@ -1,6 +1,7 @@
 """
 Package for interacting on the network at a high level.
 """
+import base64
 import random
 import logging
 from rpyc import Service
@@ -302,7 +303,8 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         if not FileSystemProtocol.storage.contains(key):
-            logger.debug(f'Value not found calling rpc_find_node')
+            logger.debug(f'Value with key {key} not found, calling rpc_find_node')
+            logger.debug(f'type of key is {type(key)} and to string {str(base64.urlsafe_b64encode(key)) }')
             return self.rpc_find_node(sender, nodeid, key)
 
         value = FileSystemProtocol.storage.get(key, None, metadata)
