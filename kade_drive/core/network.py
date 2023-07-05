@@ -302,9 +302,11 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         if not FileSystemProtocol.storage.contains(key):
+            logger.debug(f'Value not found calling rpc_find_node')
             return self.rpc_find_node(sender, nodeid, key)
 
         value = FileSystemProtocol.storage.get(key, None, metadata)
+        logger.debug(f'returning value {value}')
         return {'value': value}
 
     @rpyc.exposed
