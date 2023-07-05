@@ -164,18 +164,18 @@ class Message_System:
     def receive(self, service_name: str):
 
         to_remove = []
-        if self.host_ip == None:
-            self_host = socket.gethostname()
-            self.host_ip = socket.gethostbyname(self_host)
         # self.host_ip = "192.168.26.1"
+        print("receiving", self.pendig_receive)
         for idx, i in enumerate(self.pendig_receive):
+            # print(i)
             if i['times'] > 0:
                 i -= 1
-            logger.debug(f"listening in {self.host_ip}")
+            logger.info(f"listening in {self.host_ip}")
             for nic_ip in get_ips():
-                logger.debug(f"NIC {nic_ip}")
+                print(f"NIC {nic_ip}")
                 if 'broadcast' in nic_ip:
                     msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
+                    print(msg)
                     if msg.startswith(service_name):
                         logger.info(f">>> Message from {ip}: {msg}\n")
                         msg = msg.removeprefix(service_name+' ')

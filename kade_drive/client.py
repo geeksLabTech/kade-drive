@@ -115,16 +115,17 @@ class ClientSession:
         except pickle.UnpicklingError as e:
             logger.error(e)
             return None
-        
+
     def put(self, key, value: bytes, apply_hash_to_key=True):
         logger = logging.getLogger(__name__)
         logger.debug(f'key: {key}, value: {value}')
         # print(self.connection.root.upload_file.)
         if self.connection:
-            self.connection.root.upload_file(key=key, data=value, apply_hash_to_key=apply_hash_to_key)
+            self.connection.root.upload_file(
+                key=key, data=value, apply_hash_to_key=apply_hash_to_key)
             sleep(1)
             logger.info(f'put > Success')
-        else: 
+        else:
             logger.error(f'No connection stablished to do put')
 
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
@@ -139,7 +140,8 @@ class ClientSession:
         print('Listening broadcasts')
         ms = Message_System()
         try:
-            ip, port = ms.receive().split(" ")
+            ip, port = ms.receive(service_name='dfs').split(" ")
+            print(ip, port)
         except ValueError:
             ip = None
             port = None
@@ -149,5 +151,3 @@ class ClientSession:
 
         print('No broadcasts received.')
         return False
-
-

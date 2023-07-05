@@ -27,7 +27,7 @@ def start_server(host_ip=None):
         broadcast = ip_br['broadcast']
         host_ip = ip_br['addr']
     logger.info(host_ip)
-    return
+
     # print(host_ip)
     ms = Message_System(host_ip, broadcast)
     hosts = []
@@ -50,7 +50,7 @@ def start_server(host_ip=None):
     Server.init(ip=host_ip.split(" ")[0])
 
     logger.info(f"broadcasting {Server.node.ip} {Server.node.port}")
-    ms.add_to_send(f"{Server.node.ip} {Server.node.port}")
+    ms.add_to_send(f"dfs {Server.node.ip} {Server.node.port}")
     heartbeat_thread = threading.Thread(target=ms.send_heartbeat)
     heartbeat_thread.start()
     # # Server.init(ip="192.168.26.2")
@@ -65,7 +65,7 @@ app = Typer()
 
 
 @app.command()
-def _start(host_ip=Option(str)):
+def _start(host_ip=Option(default=None)):
     logger.debug(host_ip)
     start_server(host_ip)
 

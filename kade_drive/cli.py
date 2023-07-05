@@ -5,7 +5,6 @@ from client import ClientSession
 
 client_session: ClientSession | None = None
 
-
 if __name__ == "__main__":
     ip = None
     port = 8086
@@ -18,7 +17,6 @@ if __name__ == "__main__":
 
     initial_bootstrap_nodes = [(ip, int(port))] if ip else []
     client_session = ClientSession(initial_bootstrap_nodes)
-    logger = logging.getLogger(__name__)
 
     print('Wellcome to CLI interface for distributed Filesystem')
     while True:
@@ -46,7 +44,7 @@ exit - * - close the client
             print(
                 f'command {command[0]} not found, use "help" to see supported commands')
             continue
-        logger.debug(f'calling {func} with arguments: {args}')
+        # logger.debug(f'calling {func} with arguments: {args}')
 
         result = func(client_session, *args)
         if result:
