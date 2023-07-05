@@ -63,7 +63,7 @@ class PersistentStorage:
         data = {"date": datetime.now(), "republish": republish_data}
         
 
-        logger.debug('mira ruta %s %s', os.path.join(self.timestamp_path, str(filename)))
+        logger.debug(f'mira ruta {os.path.join(self.timestamp_path, str(filename))}')
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             pickle.dump(data, f)
 

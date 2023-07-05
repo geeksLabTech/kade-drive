@@ -37,14 +37,14 @@ def start_server(host_ip=None):
     logger.debug(msg)
     if msg:
         hosts.append(msg)
-        logger.debug("Found ", msg)
+        logger.debug(f"Found {msg}")
         bootstrap_nodes = msg
     else:
         logger.info("No servers answered :(")
     # time.sleep(1)
 
     if host_ip is None:
-        logger.warning("aaa", socket.get_hostname())
+        logger.warning(f"aaa {socket.get_hostname()}")
         host_ip = socket.gethostbyname(socket.gethostname())
         # client_session = ClientSession(ip=host_ip)
 
