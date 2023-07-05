@@ -10,7 +10,7 @@ from message_system.message_system import Message_System
 from core.utils import get_ips
 import logging
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
 # Create a logger instance
@@ -54,9 +54,9 @@ def start_server(host_ip=None):
     heartbeat_thread = threading.Thread(target=ms.send_heartbeat)
     heartbeat_thread.start()
     # # Server.init(ip="192.168.26.2")
-    # if bootstrap_nodes:
-    #     target_host, target_port = bootstrap_nodes.split(' ')
-    #     Server.bootstrap([(target_host, target_port)])
+    if bootstrap_nodes:
+        target_host, target_port = bootstrap_nodes.split(' ')
+        Server.bootstrap([(target_host, target_port)])
 
     logger.info(f'Server started at {host_ip}')
 

@@ -172,7 +172,7 @@ class Message_System:
                 i -= 1
             logger.info(f"listening in {self.host_ip}")
             for nic_ip in get_ips():
-                print(f"NIC {nic_ip}")
+                # print(f"NIC {nic_ip}")
                 if 'broadcast' in nic_ip:
                     msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
                     print(msg)
