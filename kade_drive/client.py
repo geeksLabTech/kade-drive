@@ -81,6 +81,7 @@ class ClientSession:
             logger.error(f'No connection stablished to do get')
             return None
         metadata_list = self.connection.root.get(key, apply_hash_to_key)
+        logger.debug(f"METADATAAAAA {metadata_list}")
         if metadata_list:
             logger.debug(
                 f'metadata_list received {str(len(metadata_list) > 0)}')

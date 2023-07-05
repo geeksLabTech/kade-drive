@@ -419,7 +419,9 @@ class ServerService(Service):
                                   Server.ksize, Server.alpha)
         data = spider.find()
         if data is None:
+            logger.debug("NONE DATA")
             return None
+        logger.debug(f"DATA {data}")
         metadata_list = pickle.loads(data)
         return metadata_list
 
