@@ -91,7 +91,6 @@ class Server:
         # print(spider)
         res = spider.find()
         logger.debug('results of spider find: %s', res)
-        logger.debug(res)
 
         return res
 
