@@ -186,6 +186,7 @@ class PersistentStorage:
 
     def contains(self, key: bytes):
         str_key = str(base64.urlsafe_b64encode(key)) 
+        logger.debug(f'str_key in contains is {str_key}')
         self.cull()
         # self.update_timestamp(key)
         path = Path(os.path.join(self.values_path, str_key))

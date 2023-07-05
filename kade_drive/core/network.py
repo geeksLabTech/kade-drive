@@ -304,7 +304,7 @@ class ServerService(Service):
         # get value from storage
         if not FileSystemProtocol.storage.contains(key):
             logger.debug(f'Value with key {key} not found, calling rpc_find_node')
-            logger.debug(f'type of key is {type(key)} and to string {str(base64.urlsafe_b64encode(key)) }')
+            logger.debug(f'type of key is {type(key)}')
             return self.rpc_find_node(sender, nodeid, key)
 
         value = FileSystemProtocol.storage.get(key, None, metadata)
