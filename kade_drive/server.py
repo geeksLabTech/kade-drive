@@ -17,7 +17,7 @@ logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
 
 
-def start_(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
+def start_server(host_ip: Optional[str], bootstrap_nodes: Optional[str] = None):
     # host_ip = socket.gethostbyname(socket.gethostname())
     broadcast = None
     logger.debug(host_ip)
@@ -66,13 +66,13 @@ app = Typer()
 
 
 @app.command()
-def start(host_ip=Option(None), bootstrap_nodes=Option(None)):
+def _start(host_ip=Option(None), bootstrap_nodes=Option(None)):
     logger.debug(host_ip)
     if bootstrap_nodes:
-        start_(host_ip, bootstrap_nodes)
+        start_server(host_ip, bootstrap_nodes)
     else:
-        start_(host_ip)
+        start_server(host_ip)
 
 
 if __name__ == '__main__':
-    app()
+    _start()
