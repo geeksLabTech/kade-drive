@@ -17,7 +17,7 @@ logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
 logger = logging.getLogger(__name__)
 
 
-def start_server(host_ip=None, bootstrap_nodes=None):
+def start_server(host_ip=None):
     # host_ip = socket.gethostbynahost_ipme(socket.gethostname())
     broadcast = None
     logger.debug(host_ip)
@@ -27,23 +27,20 @@ def start_server(host_ip=None, bootstrap_nodes=None):
         broadcast = ip_br['broadcast']
         host_ip = ip_br['addr']
     logger.info(host_ip)
-
+    return
     # print(host_ip)
     ms = Message_System(host_ip, broadcast)
     hosts = []
-    if bootstrap_nodes is None:
-        logger.info("No bootstrap Nodes given, trying to auto-detect")
 
-        msg = ms.receive(service_name='dfs')
-        logger.debug(msg)
-        if msg:
-            hosts.append(msg)
-            logger.debug("Found ", msg)
-            bootstrap_nodes = msg
-        else:
-            logger.info("No servers answered :(")
-        # time.sleep(1)
-
+    msg = ms.receive(service_name='dfs')
+    logger.debug(msg)
+    if msg:
+        hosts.append(msg)
+        logger.debug("Found ", msg)
+        bootstrap_nodes = msg
+    else:
+        logger.info("No servers answered :(")
+    # time.sleep(1)
 
     if host_ip is None:
         logger.warning("aaa", socket.get_hostname())
@@ -68,12 +65,9 @@ app = Typer()
 
 
 @app.command()
-def _start(host_ip=Option(str), bootstrap_nodes=Option(list)):
+def _start(host_ip=Option(str)):
     logger.debug(host_ip)
-    if bootstrap_nodes:
-        start_server(host_ip, bootstrap_nodes)
-    else:
-        start_server(host_ip)
+    start_server(host_ip)
 
 
 if __name__ == '__main__':
