@@ -411,7 +411,7 @@ class ServerService(Service):
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
             logger.debug(f"There are no known neighbors to get key {key}")
-            if Server.storage.contains(key) is not None:
+            if Server.storage.contains(key):
                 logger.debug(f'Getting key from this same node')
                 return pickle.loads(Server.storage.get(key, True))
             return None

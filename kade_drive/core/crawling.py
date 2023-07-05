@@ -75,8 +75,14 @@ class SpiderCrawl:
             logger.debug("Peer %s %s", type(peer), peer)
             if peer.ip == '192.168.133.1':
                 continue
-            session = rpyc.connect(host=peer.ip, port=peer.port)
-            conn = session.root
+            try: 
+                session = rpyc.connect(host=peer.ip, port=peer.port)
+                conn = session.root
+            except ConnectionError as e:
+                logger.warning(f'Failed to connect to {peer.id} {peer.ip}, e: {e}')
+                session = None
+                conn = None
+            
             logger.debug(f'Connection is {conn is not None} and self.node is {self.node is not None}')
             logger.debug(f"Calling : {rpcmethod}")
             if is_metadata is None:
@@ -129,7 +135,7 @@ class ValueSpiderCrawl(SpiderCrawl):
                 self.nearest_without_value.push(peer)
                 self.nearest.push(response.get_node_list())
         self.nearest.remove(toremove)
-
+        logger.debug(f"found values in _nodes_found {found_values}")
         if found_values:
             return self._handle_found_values(found_values)
         if self.nearest.have_contacted_all():
