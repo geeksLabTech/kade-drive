@@ -10,11 +10,20 @@ from message_system.message_system import Message_System
 from core.utils import get_ips
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
+# Create a file handler
+file_handler = logging.FileHandler('log_file.log')
+
+# Set the logging format
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Add the file handler to the logger
+logging.basicConfig(level=logging.DEBUG, 
                     format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
 logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
 # Create a logger instance
 logger = logging.getLogger(__name__)
+logger.addHandler(file_handler)
 
 
 def start_server(host_ip=None):

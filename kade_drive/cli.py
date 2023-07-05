@@ -47,7 +47,7 @@ exit - * - close the client
         # logger.debug(f'calling {func} with arguments: {args}')
 
         result = func(client_session, *args)
-        if result:
+        if result is not None:
             print(f'result > {result}')
         # else:
         #     print(f'result > None')

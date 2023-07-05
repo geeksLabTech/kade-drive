@@ -10,8 +10,14 @@ from pathlib import Path
 import threading
 import base64
 import logging
-logger = logging.getLogger(__name__)
 
+
+# Create a file handler
+file_handler = logging.FileHandler('log_file.log')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger = logging.getLogger(__name__)
+logger.addHandler(file_handler)
 class PersistentStorage:
     """
     This class allows to persist files on disk using mongodb.

@@ -79,8 +79,8 @@ class ClientSession:
             return None
         metadata_list = self.connection.root.get(key, apply_hash_to_key)
         logger = logging.getLogger(__name__)
-
-        logger.debug(f'metadata_list received {str(len(metadata_list) > 0)}')
+        if metadata_list:
+            logger.debug(f'metadata_list received {str(len(metadata_list) > 0)}')
         data_received = []
 
         if metadata_list is None or len(metadata_list) == 0:

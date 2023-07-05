@@ -9,8 +9,14 @@ from collections import OrderedDict
 from core.utils import shared_prefix, bytes_to_bit_string
 from core.node import Node
 import logging
-logger = logging.getLogger(__name__)
 
+
+# Create a file handler
+file_handler = logging.FileHandler('log_file.log')
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+logger = logging.getLogger(__name__)
+logger.addHandler(file_handler)
 class KBucket:
     '''
     K is the number of entries in a bucket, their node IDs are expected to be randomly distributed within the ID-range the bucket covers
