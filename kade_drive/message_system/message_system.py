@@ -175,22 +175,17 @@ class Message_System:
         for idx, i in enumerate(self.pendig_receive):
             # print(i)
             if i['times'] > 0:
-                i -= 1
+                i['times'] -= 1
             logger.info(f"listening in {self.host_ip}")
             for nic_ip in get_ips():
                 # print(f"NIC {nic_ip}")
                 if 'broadcast' in nic_ip:
                     msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
-                    print(msg)
-                    if msg.startswith(service_name):
+                    
+                    if msg is not None and msg.startswith(service_name):
                         logger.info(f">>> Message from {ip}: {msg}\n")
                         msg = msg.removeprefix(service_name+' ')
                         break
-
-                        # process message
-
-                        if i['times'] == 0:
-                            to_remove.append(idx)
 
         for i in to_remove:
             self.pendig_receive.pop(i)
