@@ -1,5 +1,5 @@
 from typer import Typer, Argument, Option
-from typing import Optional
+from typing import Match, Optional
 import socket
 from core.storage import PersistentStorage
 from core.network import Server
@@ -18,12 +18,11 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 
 # Add the file handler to the logger
-logging.basicConfig(level=logging.DEBUG, 
-                    format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
-logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
+# logging.basicConfig(level=logging.INFO,
+#                     format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
+# logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
 # Create a logger instance
 logger = logging.getLogger(__name__)
-logger.addHandler(file_handler)
 
 
 def start_server(host_ip=None):
@@ -75,7 +74,22 @@ app = Typer()
 
 
 @app.command()
-def _start(host_ip=Option(default=None)):
+def _start(host_ip=Option(default=None), log_level=Option(default='INFO')):
+
+    if log_level == 'INFO':
+        log_level = logging.INFO
+    if log_level == 'DEBUG':
+        log_level = logging.DEBUG
+    if log_level == 'WARNING':
+        log_level = logging.WARNING
+
+    logging.basicConfig(level=log_level,
+                        format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
+
+    logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
+    # Create a logger instance
+    logger = logging.getLogger(__name__)
+
     logger.debug(host_ip)
     start_server(host_ip)
 

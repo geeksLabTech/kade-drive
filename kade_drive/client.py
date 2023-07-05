@@ -7,12 +7,12 @@ from message_system.message_system import Message_System
 
 import logging
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
-logger.info("TESTTTTTT")
+# logger.info("TESTTTTTT")
 # rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
-
+try:
+    logger = logging.getLogger(__name__)
+except:
+    pass
 
 class ClientSession:
     """
@@ -21,7 +21,10 @@ class ClientSession:
     accessing to the other functionality
     """
 
-    def __init__(self, bootstrap_nodes: list[tuple[str, int]]) -> None:
+    def __init__(self, bootstrap_nodes: list[tuple[str, int]], log_level=logging.INFO) -> None:
+        logging.basicConfig(level=log_level,
+                            format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
+        logger = logging.getLogger(__name__)
         self.connection: rpyc.Connection | None = None
         self.bootstrap_nodes: list[tuple[str, int]] = bootstrap_nodes
 
