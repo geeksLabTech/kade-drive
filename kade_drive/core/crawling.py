@@ -72,7 +72,7 @@ class SpiderCrawl:
             session = rpyc.connect(host=peer.ip, port=peer.port)
             conn = session.root
             logger.debug(f'Connection is {conn is not None} and self.node is {self.node is not None}')
-            logger.debug("Calling ", rpcmethod)
+            logger.debug(f"Calling : {rpcmethod}")
             if is_metadata is None:
                 response = rpcmethod(conn, peer, self.node)
             else:
@@ -109,8 +109,6 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         Handle the result of an iteration in _find.
         """
-
-
         logger.debug("entry node Found Value Spider")
         toremove = []
         found_values = []
