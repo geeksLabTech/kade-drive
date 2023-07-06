@@ -92,8 +92,6 @@ class SpiderCrawl:
             response_dict[peer.id] = response
             self.nearest.mark_contacted(peer)
             logger.debug("mark contacted successful")
-            # if session:
-            #     session.close()
         logger.debug('response %s', response_dict)
         return self._nodes_found(response_dict)
 

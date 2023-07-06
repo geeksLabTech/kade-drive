@@ -4,7 +4,6 @@ import rpyc
 import logging
 
 from core.node import Node
-# from kademlia.routing import RoutingTable
 from core.storage import PersistentStorage
 from core.utils import digest
 
@@ -111,7 +110,6 @@ class FileSystemProtocol:
         if conn:
 
             logger.debug('calling rpc_find_chunk_location')
-            # print(f'arguments are {address}, {FileSystemProtocol.source_node.id}, {node_to_find.id}')
             response = conn.rpc_find_chunk_location(
                 address, FileSystemProtocol.source_node.id, node_to_find.id)
         logger.debug(str(response))
@@ -196,7 +194,6 @@ class FileSystemProtocol:
 
         logger.debug(f'response is {response}')
         if response is None:
-            # logger.info("no response from %s, removing from router", node)
             logger.info(f"no response from {node}, removing from router")
             FileSystemProtocol.router.remove_contact(node)
             return response

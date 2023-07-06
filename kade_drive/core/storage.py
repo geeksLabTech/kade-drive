@@ -38,10 +38,8 @@ class PersistentStorage:
         self.keys_path = 'static/keys'
         self.timestamp_path = 'timestamps'
         self.db = []
-        # self.data = OrderedDict()
         self.ttl = ttl
         self.stop_del_thread = False
-        # self.timedelta = ttl
 
         self.del_thread = threading.Thread(target=self.delete_old)
         self.del_thread.start()
@@ -65,7 +63,6 @@ class PersistentStorage:
 
     def update_timestamp(self, filename: str, republish_data=False):
         self.ensure_dir_paths()
-        # print('timestamp for',filename)
         data = {"date": datetime.now(), "republish": republish_data}
         
 
@@ -126,7 +123,6 @@ class PersistentStorage:
         if result is not None:
             if update_timestamp:
                 self.update_timestamp(str_key, republish_data=True)
-            # result = self.db.find_one(File, File.id == key)
         if not result: 
             logger.error(f"tried to get non existing data with key {str_key}")
             print('Tried to get data that is not in db')
@@ -151,10 +147,6 @@ class PersistentStorage:
 
         with open(os.path.join(self.keys_path, str_key), "wb") as f:
             f.write(key)
-            # try:
-            #     f.write(key)
-            # except TypeError:
-            #     f.write(key.encode("unicode_escape"))
 
     def set_metadata(self, key, value, republish_data: bool):
         self.ensure_dir_paths()
@@ -165,9 +157,7 @@ class PersistentStorage:
         """
         Check if there exist data older that {self.ttl} and remove it.
         """
-        # for _ in self.iter_older_than(self.ttl):
-        #     key, _ = self.data.popitem(last=False)
-        #     self.db.remove(File, File.id == key)
+       
 
     def get(self, key: bytes, default=None, update_timestamp=True, metadata=True):
         str_key = str(base64.urlsafe_b64encode(key)) 
@@ -188,7 +178,6 @@ class PersistentStorage:
         str_key = str(base64.urlsafe_b64encode(key)) 
         logger.debug(f'str_key in contains is {str_key}')
         self.cull()
-        # self.update_timestamp(key)
         if is_metadata:
             path = Path(os.path.join(self.metadata_path, str_key))
             if not path.exists():
@@ -198,7 +187,6 @@ class PersistentStorage:
             if not path.exists():
                 return False
 
-        # self.update_timestamp(str_key)
         return True
 
     def __getitem__(self, key: bytes):
@@ -211,10 +199,10 @@ class PersistentStorage:
 
     def __repr__(self):
         self.cull()
-        # return repr(self.data)
+
 
     def iter_older_than(self, seconds_old):
-        # log.warning("iterating")
+
         self.ensure_dir_paths()
         for path, dir, files in os.walk(self.timestamp_path):
             for file in files:
@@ -250,7 +238,7 @@ class PersistentStorage:
             k, m = self.get_key_in_bytes(key_name)
             ikeys.append(k)
             imetadata.append(m)
-        # ivalues = map(operator.itemgetter(1), self.data.values())
+
         logger.debug('ikeys: %s', ikeys)
         ivalues: list[bytes] = []
 

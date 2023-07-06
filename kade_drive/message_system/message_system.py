@@ -114,7 +114,7 @@ class Message_System:
         # receiver.timeout(5)
         # ready_to_read, _, _ = select.select([receiver], [], [], 10)
 
-        # print("Listening now...")
+
         self.stop_listening(receiver)
         # receiver.shutdown(1)
         try:
@@ -122,15 +122,13 @@ class Message_System:
         except OSError:
             return None, None
 
-        # receiver.close()
-        # print("GOT IT...")
-        # if buf:
+      
         msg = buf.decode()
         logger.debug("msg: %s", msg)
-        # msg = senderaddr = None
+      
         # Release resources
         receiver.close()
-        # print(msg, senderaddr)
+   
         return msg, senderaddr
 
     def add_to_send(self, msg, times=1, dest=None):
@@ -147,11 +145,11 @@ class Message_System:
         if self.host_ip == None:
             self_host = socket.gethostname()
             self.host_ip = socket.gethostbyname(self_host)
-        # self.host_ip = "192.168.26.1"
+        
 
         for i in self.pendig_send:
             if i['ip'] == None:
-                # print("sending")
+                
                 for nic_ip in get_ips():
                     self._mc_send(nic_ip, self.broadcast_addr, 50001,
                                   i['message'].encode())
@@ -164,21 +162,21 @@ class Message_System:
                 time.sleep(0.3)
             except Exception as e:
                 logger.error(f"Exception in heartbeat {str(e)}")
-                # print("Thrown Exception", e)
+               
                 pass
 
     def receive(self, service_name: str):
 
         to_remove = []
-        # self.host_ip = "192.168.26.1"
+       
         print("receiving", self.pendig_receive)
         for idx, i in enumerate(self.pendig_receive):
-            # print(i)
+            
             if i['times'] > 0:
                 i['times'] -= 1
             logger.info(f"listening in {self.host_ip}")
             for nic_ip in get_ips():
-                # print(f"NIC {nic_ip}")
+             
                 if 'broadcast' in nic_ip:
                     msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
                     

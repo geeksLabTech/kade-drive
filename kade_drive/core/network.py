@@ -88,13 +88,9 @@ class Server:
         logger.debug(
             f"Attempting to bootstrap node with {len(addrs)} initial contacts")
         cos = list(map(Server.bootstrap_node, addrs))
-        # gathered = await asyncio.gather(*cos)
-        # print(cos)
         nodes = [node for node in cos if node is not None]
-        # print(nodes)
         spider = NodeSpiderCrawl(Server.node, nodes,
                                  Server.ksize, Server.alpha)
-        # print(spider)
         res = spider.find()
         logger.debug('results of spider find: %s', res)
 
@@ -107,7 +103,6 @@ class Server:
             if conn:
                 response = conn.rpc_ping(
                     (Server.node.ip, Server.node.port), Server.node.id)
-            # print(bytes(response))
                 node = Node(response, addr[0], addr[1]) if response else None
                 response = FileSystemProtocol.process_response(
                     conn, response, node)
@@ -204,7 +199,6 @@ class Server:
         keys_dict = {}
         for n in nodes:
             with ServerSession(n.ip, n.port) as conn:
-                # if len(keys_to_find) > 0:
                 for k, is_metadata in keys_to_find:
                     contains = FileSystemProtocol.call_contains(conn, n, k, is_metadata)
                     if contains:
@@ -244,7 +238,6 @@ class Server:
                 # do our crawling
                 logger.debug('Republishing old keys')
                 for key, value, is_metadata in Server.storage.iter_older_than(5):
-                    # print(f'key {key}, value {value}, is_metadata {is_metadata}')
                     Server.set_digest(key, value, is_metadata)
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
@@ -365,8 +358,6 @@ class ServerService(Service):
         # ask for the neighbors of the node
         neighbors = FileSystemProtocol.router.find_neighbors(
             node, exclude=source)
-        # if len(neighbors) == 0:
-        #     neighbors = [Server.node]
         logger.debug(f'neighbors of find_node: { neighbors}')
         return list(map(tuple, neighbors))
 
@@ -478,7 +469,6 @@ class ServerService(Service):
             raise TypeError(
                 f"Value must be of type int, float, bool, str, or bytes, received {value}"
             )
-        # print("setting '%s' = '%s' on network", key, value)
         if apply_hash_to_key:
             key = digest(key)
         return Server.set_digest(key, value)
@@ -502,4 +492,4 @@ def check_dht_value_type(value):
         str,
         bytes
     ]
-    return type(value) in typeset  # pylint: disable=unidiomatic-typecheck
+    return type(value) in typeset  

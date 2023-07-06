@@ -195,7 +195,6 @@ class RoutingTable:
             f'previous nodes in bucket of index {index}, {bucket.get_nodes()}')
         # this will succeed unless the bucket is full
         if bucket.add_node(node):
-            # print('add node with id :')
             logger.debug(f'Bucket nodes:  {bucket.get_nodes()}')
             return
 
@@ -251,4 +250,4 @@ class RoutingTable:
                 break
 
         return [item[1] for item in heapq.nsmallest(k, nodes)]
-        # return list(map(operator.itemgetter(1), heapq.nsmallest(k, nodes)))
+

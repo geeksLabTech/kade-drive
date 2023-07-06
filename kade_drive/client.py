@@ -7,8 +7,7 @@ from message_system.message_system import Message_System
 
 import logging
 
-# logger.info("TESTTTTTT")
-# rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
+
 try:
     logger = logging.getLogger(__name__)
 except:
@@ -95,7 +94,7 @@ class ClientSession:
             return None
 
         for chunk_key in metadata_list:
-            # print('chunk key', chunk_key)
+    
             locations: list[tuple[str, int]] = self.connection.root.get_file_chunk_location(
                 chunk_key)
             logger.debug(
@@ -113,7 +112,7 @@ class ClientSession:
                 else:
                     logger.warning('No Servers to get chunk')
 
-        # data_recv = bytearray()
+   
         logger.debug(f'len data received {len(data_received)}')
         data_received = b''.join(data_received)
         try:
@@ -124,7 +123,7 @@ class ClientSession:
             return None
 
     def put(self, key, value: bytes, apply_hash_to_key=True):
-        # print(self.connection.root.upload_file.)
+       
         if self.connection:
             self.connection.root.upload_file(
                 key=key, data=value, apply_hash_to_key=apply_hash_to_key)

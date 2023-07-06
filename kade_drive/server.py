@@ -27,18 +27,18 @@ logger = logging.getLogger(__name__)
 
 
 def start_server(host_ip=None):
-    # host_ip = socket.gethostbynahost_ipme(socket.gethostname())
+
     broadcast = None
     logger.debug(host_ip)
     bootstrap_nodes = None
-    # print(host_ip)
+
     if host_ip is None:
         ip_br = get_ips()[0]
         broadcast = ip_br['broadcast']
         host_ip = ip_br['addr']
     logger.info(host_ip)
 
-    # print(host_ip)
+ 
     ms = Message_System(host_ip, broadcast)
     hosts = []
 
@@ -50,12 +50,12 @@ def start_server(host_ip=None):
         bootstrap_nodes = msg
     else:
         logger.info("No servers answered :(")
-    # time.sleep(1)
+
 
     if host_ip is None:
         logger.warning(f"aaa {socket.get_hostname()}")
         host_ip = socket.gethostbyname(socket.gethostname())
-        # client_session = ClientSession(ip=host_ip)
+ 
 
     Server.init(ip=host_ip.split(" ")[0], config = Config())
 
@@ -63,7 +63,7 @@ def start_server(host_ip=None):
     ms.add_to_send(f"dfs {Server.node.ip} {Server.node.port}")
     heartbeat_thread = threading.Thread(target=ms.send_heartbeat)
     heartbeat_thread.start()
-    # # Server.init(ip="192.168.26.2")
+
     if bootstrap_nodes:
         target_host, target_port = bootstrap_nodes.split(' ')
         Server.bootstrap([(target_host, target_port)])

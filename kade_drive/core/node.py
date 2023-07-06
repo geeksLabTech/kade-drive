@@ -1,4 +1,3 @@
-# from operator import itemgetter
 import heapq
 
 
@@ -117,7 +116,7 @@ class NodeHeap:
     def __iter__(self):
         nodes = heapq.nsmallest(self.maxsize, self.heap)
         yield from (item[1] for item in nodes)
-        # return iter(map(itemgetter(1), nodes))
+       
 
     def __contains__(self, node: Node):
         for _, other in self.heap:

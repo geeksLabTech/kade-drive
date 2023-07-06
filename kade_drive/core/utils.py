@@ -36,7 +36,7 @@ def bytes_to_bit_string(bites):
 def get_ips():
     # Get all network interfaces
     interfaces = ni.interfaces()
-    # print(interfaces)
+
 
     # Sort the interfaces by preference: LAN, WLAN, and localhost
     interfaces = sorted(interfaces, key=lambda x: ("wl" in x, "eth" in x, "en" in x),reverse=True)
@@ -45,7 +45,7 @@ def get_ips():
     for interface in interfaces:
         try:
             # Get the IP address for the current interface
-            # print(ni.ifaddresses(interface)[ni.AF_INET][0])
+           
             ip = ni.ifaddresses(interface)[ni.AF_INET][0]
             if ip:
                 ips.append(ip)
