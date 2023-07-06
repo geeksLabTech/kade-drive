@@ -54,8 +54,9 @@ def get_ips():
             if ip:
                 ips.append(ip)
         except Exception as e:
-            logger = logging.getLogger(__name__)
-            logger.warning(f"The following exception was throwed in get_ips {e}")
+            # Investigate why this fails so much
+            # logger = logging.getLogger(__name__)
+            # logger.warning(f"The following exception was throwed in get_ips {e}")
             pass
 
     return ips
