@@ -22,7 +22,7 @@ file_handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 
 
-def start_server(host_ip=None):
+def start_server(host_ip=None, config: Config|None=None):
     broadcast = None
     logger.debug(host_ip)
     bootstrap_nodes = None
@@ -49,7 +49,9 @@ def start_server(host_ip=None):
         logger.warning(f"aaa {socket.get_hostname()}")
         host_ip = socket.gethostbyname(socket.gethostname())
 
-    Server.init(ip=host_ip.split(" ")[0], config=Config())
+    if config is None:
+        config = Config()
+    Server.init(ip=host_ip.split(" ")[0], config=config)
 
     logger.info(f"broadcasting {Server.node.ip} {Server.node.port}")
     ms.add_to_send(f"dfs {Server.node.ip} {Server.node.port}")
