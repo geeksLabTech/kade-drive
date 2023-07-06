@@ -14,7 +14,7 @@ class TestKBucket:
         assert two.range == (6, 10)
 
     def test_split_no_overlap(self):  # pylint: disable=no-self-use
-        left, right = KBucket(0, 2 ** 160, 20).split()
+        left, right = KBucket(0, 2**160, 20).split()
         assert (right.range[0] - left.range[1]) == 1
 
     def test_add_node(self, mknode):  # pylint: disable=no-self-use
@@ -49,8 +49,8 @@ class TestKBucket:
         assert list(replacement_nodes.values()) == nodes[k:]
 
         bucket.remove_node(nodes.pop(0))
-        assert list(bucket.nodes.values()) == nodes[:k-1] + nodes[-1:]
-        assert list(replacement_nodes.values()) == nodes[k-1:-1]
+        assert list(bucket.nodes.values()) == nodes[: k - 1] + nodes[-1:]
+        assert list(replacement_nodes.values()) == nodes[k - 1 : -1]
 
         shuffle(nodes)
         for node in nodes:
@@ -75,7 +75,7 @@ class TestKBucket:
 
         replacement_nodes = bucket.replacement_nodes
         assert len(list(replacement_nodes.values())) == k * factor
-        assert list(replacement_nodes.values()) == nodes[k + 1:]
+        assert list(replacement_nodes.values()) == nodes[k + 1 :]
         assert nodes[k] not in list(replacement_nodes.values())
 
 
@@ -112,8 +112,18 @@ class TestTableTraverser:
         fake_server.router.buckets = buckets
 
         # expected nodes order
-        expected_nodes = [nodes[5], nodes[4], nodes[3], nodes[2], nodes[7],
-                          nodes[6], nodes[1], nodes[0], nodes[9], nodes[8]]
+        expected_nodes = [
+            nodes[5],
+            nodes[4],
+            nodes[3],
+            nodes[2],
+            nodes[7],
+            nodes[6],
+            nodes[1],
+            nodes[0],
+            nodes[9],
+            nodes[8],
+        ]
 
         start_node = nodes[4]
         table_traverser = TableTraverser(fake_server.router, start_node)

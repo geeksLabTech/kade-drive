@@ -26,7 +26,7 @@ def test_store_df():
     sleep(5)
     value_getted = client_session.get("dataset_diabetes")
 
-    print('value getted ', value_getted)
+    print("value getted ", value_getted)
     assert X.equals(value_getted)
 
 

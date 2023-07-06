@@ -6,9 +6,10 @@ import operator
 import netifaces as ni
 import logging
 
+
 def digest(string):
     if not isinstance(string, bytes):
-        string = str(string).encode('utf8')
+        string = str(string).encode("utf8")
     return hashlib.sha1(string).digest()
 
 
@@ -31,28 +32,30 @@ def shared_prefix(args):
 
 
 def bytes_to_bit_string(bites):
-    bits = [bin(bite)[2:].rjust(8, '0') for bite in bites]
+    bits = [bin(bite)[2:].rjust(8, "0") for bite in bites]
     return "".join(bits)
+
 
 def get_ips():
     # Get all network interfaces
     interfaces = ni.interfaces()
 
-
     # Sort the interfaces by preference: LAN, WLAN, and localhost
-    interfaces = sorted(interfaces, key=lambda x: ("wl" in x, "eth" in x, "en" in x),reverse=True)
+    interfaces = sorted(
+        interfaces, key=lambda x: ("wl" in x, "eth" in x, "en" in x), reverse=True
+    )
 
     ips = []
     for interface in interfaces:
         try:
             # Get the IP address for the current interface
-           
+
             ip = ni.ifaddresses(interface)[ni.AF_INET][0]
             if ip:
                 ips.append(ip)
         except Exception as e:
             logger = logging.getLogger(__name__)
-            logger.warning(f'The following exception was throwed in get_ips {e}')
+            logger.warning(f"The following exception was throwed in get_ips {e}")
             pass
 
     return ips

@@ -10,19 +10,23 @@ from core.node import Node
 
 
 # Create a file handler
-file_handler = logging.FileHandler('log_file.log')
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler = logging.FileHandler("log_file.log")
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 logger.addHandler(file_handler)
+
+
 class KBucket:
-    '''
+    """
     K is the number of entries in a bucket, their node IDs are expected to be randomly distributed within the ID-range the bucket covers
     Each node is putted in a bucket based on how far away they are from the source node.
     This way when you are looking for some node you don't have to bother all possible nodes
-    '''
+    """
 
-    def __init__(self, rangeLower: int, rangeUpper: int, ksize: int, replacementNodeFactor=5):
+    def __init__(
+        self, rangeLower: int, rangeUpper: int, ksize: int, replacementNodeFactor=5
+    ):
         self.range = (rangeLower, rangeUpper)
         self.nodes: OrderedDict[bytes, Node] = OrderedDict()
         self.replacement_nodes: OrderedDict[bytes, Node] = OrderedDict()
@@ -102,16 +106,15 @@ class KBucket:
 
 
 class TableTraverser:
-    def __init__(self, table: 'RoutingTable', startNode):
-        
+    def __init__(self, table: "RoutingTable", startNode):
         index = table.get_bucket_for(startNode)
-        logger.debug(f'table.buckets, {table.buckets}, {index}')
+        logger.debug(f"table.buckets, {table.buckets}, {index}")
         table.buckets[index].touch_last_updated()
-        logger.debug('nodes in bucket %s', table.buckets[index].nodes.values())
+        logger.debug("nodes in bucket %s", table.buckets[index].nodes.values())
         self.current_nodes = table.buckets[index].get_nodes()
-        logger.debug('current nodes %s', self.current_nodes)
+        logger.debug("current nodes %s", self.current_nodes)
         self.left_buckets = table.buckets[:index]
-        self.right_buckets = table.buckets[(index + 1):]
+        self.right_buckets = table.buckets[(index + 1) :]
         self.left = True
 
     def __iter__(self):
@@ -121,7 +124,6 @@ class TableTraverser:
         """
         Pop an item from the left subtree, then right, then left, etc.
         """
-        
 
         logger.debug(self.current_nodes)
         if self.current_nodes and len(self.current_nodes) > 0:
@@ -161,7 +163,7 @@ class RoutingTable:
         self.flush()
 
     def flush(self):
-        self.buckets = [KBucket(0, 2 ** 160, self.ksize)]
+        self.buckets = [KBucket(0, 2**160, self.ksize)]
 
     def split_bucket(self, index: int):
         one, two = self.buckets[index].split()
@@ -187,13 +189,11 @@ class RoutingTable:
     def add_contact(self, node: Node):
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
-        
 
-        logger.debug(
-            f'previous nodes in bucket of index {index}, {bucket.get_nodes()}')
+        logger.debug(f"previous nodes in bucket of index {index}, {bucket.get_nodes()}")
         # this will succeed unless the bucket is full
         if bucket.add_node(node):
-            logger.debug(f'Bucket nodes:  {bucket.get_nodes()}')
+            logger.debug(f"Bucket nodes:  {bucket.get_nodes()}")
             return
 
         # Per section 4.2 of paper, split if the bucket has the node
@@ -211,12 +211,11 @@ class RoutingTable:
         """
         Get the index of the bucket that the given node would fall into.
         """
-        
 
         node_index: int | None = None
         for index, bucket in enumerate(self.buckets):
-            logger.debug(f'node.long_id {node.long_id}')
-            logger.debug(f'bucket.range[1] {bucket.range[1]}')
+            logger.debug(f"node.long_id {node.long_id}")
+            logger.debug(f"bucket.range[1] {bucket.range[1]}")
             if node.long_id >= bucket.range[1]:
                 continue
 
@@ -225,27 +224,29 @@ class RoutingTable:
         # we should never be here, but make linter happy
         if node_index is None:
             logger.critical(
-                f"VoidNodeException {node} does not have any bucket to fall into")
+                f"VoidNodeException {node} does not have any bucket to fall into"
+            )
             raise VoidNodeException(
-                f'The node {node} does not have any valid bucket to fall into')
+                f"The node {node} does not have any valid bucket to fall into"
+            )
 
         return node_index
 
-    def find_neighbors(self, node: Node, k: int | None = None, exclude: Node | None = None):
-        
+    def find_neighbors(
+        self, node: Node, k: int | None = None, exclude: Node | None = None
+    ):
         k = k or self.ksize
         nodes: list[tuple[int, Node]] = []
         for neighbor in TableTraverser(self, node):
             if exclude:
                 logger.debug(
-                    f'Comparing {neighbor.ip} {neighbor.port} and {exclude.ip} {exclude.port}')
-            not_excluded = exclude is None or not neighbor.same_home_as(
-                exclude)
-            logger.debug(f'not excluded {not_excluded}')
+                    f"Comparing {neighbor.ip} {neighbor.port} and {exclude.ip} {exclude.port}"
+                )
+            not_excluded = exclude is None or not neighbor.same_home_as(exclude)
+            logger.debug(f"not excluded {not_excluded}")
             if neighbor.id != node.id and not_excluded:
                 heapq.heappush(nodes, (node.distance_to(neighbor), neighbor))
             if len(nodes) == k:
                 break
 
         return [item[1] for item in heapq.nsmallest(k, nodes)]
-

@@ -9,27 +9,29 @@ import logging
 
 
 # Create a file handler
-file_handler = logging.FileHandler('log_file.log')
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler = logging.FileHandler("log_file.log")
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 logger.addHandler(file_handler)
 
-class Message_System:
 
+class Message_System:
     def __init__(self, host_ip=None, broadcast_addr=None):
         self.host_ip = host_ip
         self.broadcast_addr = broadcast_addr
 
         self.pendig_send = []
-        self.pendig_receive = [
-            {'port': "0.0.0.0", "times": -1}
-        ]
+        self.pendig_receive = [{"port": "0.0.0.0", "times": -1}]
 
     def _mc_send(self, hostip, mcgrpip, mcport, msgbuf):
         # This creates a UDP socket
-        sender = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM,
-                               proto=socket.IPPROTO_UDP, fileno=None)
+        sender = socket.socket(
+            family=socket.AF_INET,
+            type=socket.SOCK_DGRAM,
+            proto=socket.IPPROTO_UDP,
+            fileno=None,
+        )
         # This defines a multicast end point, that is a pair
         #   (multicast group ip address, send-to port nubmer)
         mcgrp = (mcgrpip, mcport)
@@ -44,8 +46,9 @@ class Message_System:
         # uses the default interface (ifindex = 1 if loopback is 0)
         # If we wish to transmit the datagram to multiple NICs, we
         # ought to create a socket for each NIC.
-        sender.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF,
-                          socket.inet_aton(hostip['addr']))
+        sender.setsockopt(
+            socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(hostip["addr"])
+        )
 
         # Transmit the datagram in the buffer
         sender.sendto(msgbuf, mcgrp)
@@ -67,10 +70,9 @@ class Message_System:
 
     def close_sock(self, sock: socket.socket):
         if Message_System.is_socket_open(sock):
-
             logger.debug(f"closing socket, {str(sock)}")
             try:
-                if sys.platform.startswith('linux'):
+                if sys.platform.startswith("linux"):
                     sock.shutdown(SHUT_RDWR)
                 sock.close()
             except OSError:
@@ -80,8 +82,12 @@ class Message_System:
         # print("inside rec")
 
         # This creates a UDP socket
-        receiver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM,
-                                 proto=socket.IPPROTO_UDP, fileno=None)
+        receiver = socket.socket(
+            family=socket.AF_INET,
+            type=socket.SOCK_DGRAM,
+            proto=socket.IPPROTO_UDP,
+            fileno=None,
+        )
         receiver.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
         # This configure the socket to receive datagrams sent to this multicast
@@ -102,16 +108,15 @@ class Message_System:
         # receive multicast datagrams from multiple NICs, we ought to create a
         # socket for each NIC. Also note that we identify a NIC by its assigned IP
         # address.
-        if fromnicip == '0.0.0.0':
-            struct.pack("=4sl", socket.inet_aton(
-                mcgrpip), socket.INADDR_ANY)
+        if fromnicip == "0.0.0.0":
+            struct.pack("=4sl", socket.inet_aton(mcgrpip), socket.INADDR_ANY)
         else:
-            struct.pack("=4s4s",
-                               socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip['addr']))
+            struct.pack(
+                "=4s4s", socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip["addr"])
+            )
         # receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         # receiver.timeout(5)
         # ready_to_read, _, _ = select.select([receiver], [], [], 10)
-
 
         self.stop_listening(receiver)
         # receiver.shutdown(1)
@@ -120,22 +125,20 @@ class Message_System:
         except OSError:
             return None, None
 
-      
         msg = buf.decode()
         logger.debug("msg: %s", msg)
-      
+
         # Release resources
         receiver.close()
-   
+
         return msg, senderaddr
 
     def add_to_send(self, msg, times=1, dest=None):
-        package = {'message': msg,
-                   'times': times}
+        package = {"message": msg, "times": times}
 
         if dest is None:
-            package['ip'] = None
-            package['port'] = None
+            package["ip"] = None
+            package["port"] = None
 
         self.pendig_send.append(package)
 
@@ -143,44 +146,39 @@ class Message_System:
         if self.host_ip is None:
             self_host = socket.gethostname()
             self.host_ip = socket.gethostbyname(self_host)
-        
 
         for i in self.pendig_send:
-            if i['ip'] is None:
-                
+            if i["ip"] is None:
                 for nic_ip in get_ips():
-                    self._mc_send(nic_ip, self.broadcast_addr, 50001,
-                                  i['message'].encode())
+                    self._mc_send(
+                        nic_ip, self.broadcast_addr, 50001, i["message"].encode()
+                    )
 
     def send_heartbeat(self):
-
         while True:
             try:
                 self.send()
                 time.sleep(0.3)
             except Exception as e:
                 logger.error(f"Exception in heartbeat {str(e)}")
-               
+
                 pass
 
     def receive(self, service_name: str):
-
         to_remove = []
-       
+
         print("receiving", self.pendig_receive)
         for idx, i in enumerate(self.pendig_receive):
-            
-            if i['times'] > 0:
-                i['times'] -= 1
+            if i["times"] > 0:
+                i["times"] -= 1
             logger.info(f"listening in {self.host_ip}")
             for nic_ip in get_ips():
-             
-                if 'broadcast' in nic_ip:
-                    msg, ip = self._mc_recv(nic_ip, nic_ip['broadcast'], 50001)
-                    
+                if "broadcast" in nic_ip:
+                    msg, ip = self._mc_recv(nic_ip, nic_ip["broadcast"], 50001)
+
                     if msg is not None and msg.startswith(service_name):
                         logger.info(f">>> Message from {ip}: {msg}\n")
-                        msg = msg.removeprefix(service_name+' ')
+                        msg = msg.removeprefix(service_name + " ")
                         break
 
         for i in to_remove:
