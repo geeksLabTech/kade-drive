@@ -3,7 +3,6 @@ import logging
 import rpyc
 from core.node import Node, NodeHeap
 from core.protocol import FileSystemProtocol, ServerSession
-import logging
 
 
 # Create a file handler
@@ -70,7 +69,6 @@ class SpiderCrawl:
         # for each peer in the alpha not visited nodes
         # perform the rpc protocol method call
         # return the info from those nodes
-        found_values = []
         for peer in self.nearest.get_uncontacted()[:count]:
             logger.debug("Peer %s %s", type(peer), peer)
             if peer.ip == '192.168.133.1':
@@ -159,7 +157,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         value_counts = Counter(values)
         # if more than one value is found for a key raise a warning
         if len(value_counts) != 1:
-            logger.debug(f"Got multiple values for key %i: %s",
+            logger.debug("Got multiple values for key %i: %s",
                   self.node.long_id, str(values))
         # get the most common item in the network
         # this is, if there were more than one value

@@ -1,6 +1,5 @@
 import heapq
 import time
-import operator
 import logging
 
 from core.protocol import FileSystemProtocol, ServerSession
@@ -8,7 +7,6 @@ from itertools import chain
 from collections import OrderedDict
 from core.utils import shared_prefix, bytes_to_bit_string
 from core.node import Node
-import logging
 
 
 # Create a file handler

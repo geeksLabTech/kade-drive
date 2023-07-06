@@ -1,6 +1,5 @@
 
 import sys
-import logging
 from client import ClientSession
 
 client_session: ClientSession | None = None

@@ -1,7 +1,6 @@
 import random
 import logging
 import rpyc
-import logging
 
 from core.node import Node
 from core.storage import PersistentStorage

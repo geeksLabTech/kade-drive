@@ -23,7 +23,7 @@ class ClientSession:
     def __init__(self, bootstrap_nodes: list[tuple[str, int]], log_level=logging.INFO) -> None:
         logging.basicConfig(level=log_level,
                             format='%(asctime)s  - %(name)s - %(levelname)s - %(message)s')
-        logger = logging.getLogger(__name__)
+        logging.getLogger(__name__)
         self.connection: rpyc.Connection | None = None
         self.bootstrap_nodes: list[tuple[str, int]] = bootstrap_nodes
 
@@ -80,7 +80,7 @@ class ClientSession:
 
     def get(self, key, apply_hash_to_key=True):
         if not self.connection:
-            logger.error(f'No connection stablished to do get')
+            logger.error('No connection stablished to do get')
             return None
         metadata_list = self.connection.root.get(key, apply_hash_to_key)
         logger.debug(f"METADATAAAAA {metadata_list}")
@@ -128,9 +128,9 @@ class ClientSession:
             self.connection.root.upload_file(
                 key=key, data=value, apply_hash_to_key=apply_hash_to_key)
             sleep(1)
-            logger.info(f'put > Success')
+            logger.info('put > Success')
         else:
-            logger.error(f'No connection stablished to do put')
+            logger.error('No connection stablished to do put')
 
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
         nodes_to_add = [node for node in connection.root.find_neighbors(

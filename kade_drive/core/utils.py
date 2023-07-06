@@ -4,6 +4,7 @@ General catchall for functions that don't make sense as methods.
 import hashlib
 import operator
 import netifaces as ni
+import logging
 
 def digest(string):
     if not isinstance(string, bytes):
@@ -49,7 +50,9 @@ def get_ips():
             ip = ni.ifaddresses(interface)[ni.AF_INET][0]
             if ip:
                 ips.append(ip)
-        except:
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.warning(f'The following exception was throwed in get_ips {e}')
             pass
 
     return ips

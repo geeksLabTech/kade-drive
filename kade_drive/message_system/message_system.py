@@ -1,7 +1,6 @@
 import socket
 import struct
 import time
-import select
 import threading
 from socket import SHUT_RDWR
 import sys
@@ -79,7 +78,6 @@ class Message_System:
 
     def _mc_recv(self, fromnicip, mcgrpip, mcport):
         # print("inside rec")
-        bufsize = 1024
 
         # This creates a UDP socket
         receiver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM,
@@ -105,10 +103,10 @@ class Message_System:
         # socket for each NIC. Also note that we identify a NIC by its assigned IP
         # address.
         if fromnicip == '0.0.0.0':
-            mreq = struct.pack("=4sl", socket.inet_aton(
+            struct.pack("=4sl", socket.inet_aton(
                 mcgrpip), socket.INADDR_ANY)
         else:
-            mreq = struct.pack("=4s4s",
+            struct.pack("=4s4s",
                                socket.inet_aton(mcgrpip), socket.inet_aton(fromnicip['addr']))
         # receiver.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
         # receiver.timeout(5)
@@ -135,20 +133,20 @@ class Message_System:
         package = {'message': msg,
                    'times': times}
 
-        if dest == None:
+        if dest is None:
             package['ip'] = None
             package['port'] = None
 
         self.pendig_send.append(package)
 
     def send(self):
-        if self.host_ip == None:
+        if self.host_ip is None:
             self_host = socket.gethostname()
             self.host_ip = socket.gethostbyname(self_host)
         
 
         for i in self.pendig_send:
-            if i['ip'] == None:
+            if i['ip'] is None:
                 
                 for nic_ip in get_ips():
                     self._mc_send(nic_ip, self.broadcast_addr, 50001,

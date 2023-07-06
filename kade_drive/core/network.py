@@ -1,17 +1,14 @@
 """
 Package for interacting on the network at a high level.
 """
-import base64
 import random
 import logging
 from rpyc import Service
 import threading
 from time import sleep
 import rpyc
-import socket
 import pickle
 from rpyc.utils.server import ThreadedServer
-import logging
 from core.config import Config
 from core.protocol import FileSystemProtocol, ServerSession
 from core.routing import RoutingTable
@@ -202,7 +199,7 @@ class Server:
                 for k, is_metadata in keys_to_find:
                     contains = FileSystemProtocol.call_contains(conn, n, k, is_metadata)
                     if contains:
-                        if not (k, is_metadata) in keys_dict:
+                        if (k, is_metadata) not in keys_dict:
                             keys_dict[(k, is_metadata)] = 0
                         keys_dict[(k, is_metadata)] += 1
 
@@ -407,7 +404,7 @@ class ServerService(Service):
         if not nearest:
             logger.debug(f"There are no known neighbors to get key {key}")
             if Server.storage.contains(key):
-                logger.debug(f'Getting key from this same node')
+                logger.debug('Getting key from this same node')
                 return pickle.loads(Server.storage.get(key, True))
             return None
         spider = ValueSpiderCrawl(node, nearest,

@@ -1,4 +1,3 @@
-from client import ClientSession
 import pickle
 import pandas as pd
 from sklearn.datasets import load_diabetes
@@ -25,8 +24,6 @@ def test_split_dataframe():
     y = pd.DataFrame(y)
 
     X_pickle = pickle.dumps(X)
-    y_pickle = pickle.dumps(y)
-    print('entre')
 
     assert X_pickle is not None
     chunks = Server.split_data(X_pickle, 10000)
