@@ -1,16 +1,16 @@
 services:
-  filesystem-app:
+  kade-drive:
     build: .
-    image: filesystem-app
+    image: kade-drive
     stdin_open: true
     tty: true
     ports:
       - '8085:8085'
       - '50001:50001'
     networks:
-      - filesystem-network
+      - kade-drive-network
       - default
 
 networks:
-  filesystem-network:
+  kade-drive-network:
     driver: bridge
