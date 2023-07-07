@@ -1,6 +1,6 @@
 import hashlib
 
-from core.utils import digest, shared_prefix
+from kade_drive.core.utils import digest, shared_prefix
 
 
 class TestUtils:

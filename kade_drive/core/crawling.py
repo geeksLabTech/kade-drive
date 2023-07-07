@@ -1,8 +1,8 @@
 from collections import Counter
 import logging
 import rpyc
-from core.node import Node, NodeHeap
-from core.protocol import FileSystemProtocol, ServerSession
+from kade_drive.core.node import Node, NodeHeap
+from kade_drive.core.protocol import FileSystemProtocol, ServerSession
 
 
 # Create a file handler

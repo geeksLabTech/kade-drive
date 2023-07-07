@@ -1,10 +1,10 @@
 from typer import Typer, Option
 import socket
-from core.network import Server
+from kade_drive.core.network import Server
 import threading
-from message_system.message_system import Message_System
-from core.utils import get_ips
-from core.config import Config
+from kade_drive.message_system.message_system import Message_System
+from kade_drive.core.utils import get_ips
+from kade_drive.core.config import Config
 import logging
 
 # Create a file handler
@@ -22,7 +22,7 @@ file_handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 
 
-def start_server(host_ip=None, config: Config|None=None):
+def start_server(host_ip=None, config: Config | None = None):
     broadcast = None
     logger.debug(host_ip)
     bootstrap_nodes = None
@@ -70,12 +70,15 @@ app = Typer()
 
 @app.command()
 def start(host_ip=Option(default=None), log_level=Option(default="INFO")):
-    if log_level == "INFO":
-        log_level = logging.INFO
-    if log_level == "DEBUG":
-        log_level = logging.DEBUG
-    if log_level == "WARNING":
-        log_level = logging.WARNING
+    match log_level:
+        case 'INFO':
+            log_level = logging.INFO 
+        case 'DEBUG':
+            log_level = logging.DEBUG
+        case 'WARNING':
+            log_level = logging.WARNING
+        case _:
+            log_level = logging.INFO
 
     logging.basicConfig(
         level=log_level, format="%(asctime)s  - %(name)s - %(levelname)s - %(message)s"
@@ -84,7 +87,8 @@ def start(host_ip=Option(default=None), log_level=Option(default="INFO")):
     logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
     # Create a logger instance
     logger = logging.getLogger(__name__)
-
+    if not type(host_ip) == str:
+        host_ip = None
     logger.debug(host_ip)
     start_server(host_ip)
 

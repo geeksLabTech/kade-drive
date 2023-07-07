@@ -9,14 +9,14 @@ from time import sleep
 import rpyc
 import pickle
 from rpyc.utils.server import ThreadedServer
-from core.config import Config
-from core.protocol import FileSystemProtocol, ServerSession
-from core.routing import RoutingTable
-from core.utils import digest
-from core.storage import PersistentStorage
-from core.node import Node
-from core.crawling import ChunkLocationSpiderCrawl, ValueSpiderCrawl
-from core.crawling import NodeSpiderCrawl
+from kade_drive.core.config import Config
+from kade_drive.core.protocol import FileSystemProtocol, ServerSession
+from kade_drive.core.routing import RoutingTable
+from kade_drive.core.utils import digest
+from kade_drive.core.storage import PersistentStorage
+from kade_drive.core.node import Node
+from kade_drive.core.crawling import ChunkLocationSpiderCrawl, ValueSpiderCrawl
+from kade_drive.core.crawling import NodeSpiderCrawl
 
 # from models.file import File
 

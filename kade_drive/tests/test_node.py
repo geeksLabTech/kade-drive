@@ -2,7 +2,7 @@ import random
 import hashlib
 
 
-from core.node import Node, NodeHeap
+from kade_drive.core.node import Node, NodeHeap
 
 
 class TestNode:

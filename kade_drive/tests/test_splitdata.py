@@ -1,7 +1,7 @@
 import pickle
 import pandas as pd
 from sklearn.datasets import load_diabetes
-from core.network import Server
+from kade_drive.core.network import Server
 
 
 def test_split_data():

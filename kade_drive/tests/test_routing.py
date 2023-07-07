@@ -1,5 +1,5 @@
 from random import shuffle
-from core.routing import KBucket, TableTraverser
+from kade_drive.core.routing import KBucket, TableTraverser
 
 
 class TestKBucket:

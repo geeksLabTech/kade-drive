@@ -2,11 +2,11 @@ import heapq
 import time
 import logging
 
-from core.protocol import FileSystemProtocol, ServerSession
+from kade_drive.core.protocol import FileSystemProtocol, ServerSession
 from itertools import chain
 from collections import OrderedDict
-from core.utils import shared_prefix, bytes_to_bit_string
-from core.node import Node
+from kade_drive.core.utils import shared_prefix, bytes_to_bit_string
+from kade_drive.core.node import Node
 
 
 # Create a file handler

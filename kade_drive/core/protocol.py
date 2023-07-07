@@ -2,9 +2,9 @@ import random
 import logging
 import rpyc
 
-from core.node import Node
-from core.storage import PersistentStorage
-from core.utils import digest
+from kade_drive.core.node import Node
+from kade_drive.core.storage import PersistentStorage
+from kade_drive.core.utils import digest
 
 
 # Create a file handler

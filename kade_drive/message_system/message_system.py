@@ -4,7 +4,7 @@ import time
 import threading
 from socket import SHUT_RDWR
 import sys
-from core.utils import get_ips
+from kade_drive.core.utils import get_ips
 import logging
 
 

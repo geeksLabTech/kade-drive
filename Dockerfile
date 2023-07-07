@@ -36,6 +36,5 @@ COPY README.md /home/app/
 COPY poetry.lock /home/app/
 
 RUN poetry install --no-interaction
-    # && pip3 install -e kade_drive
 
-CMD ["python3", "kade_drive/server.py"]
+CMD ["poetry", "run", "server"]

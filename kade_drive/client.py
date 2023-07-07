@@ -2,7 +2,7 @@ import pickle
 import rpyc
 from time import sleep
 from rpyc.core.protocol import PingError
-from message_system.message_system import Message_System
+from kade_drive.message_system.message_system import Message_System
 
 import logging
 
