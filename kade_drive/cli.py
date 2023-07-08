@@ -44,10 +44,7 @@ exit - * - close the client
             print(
                 f'command {command[0]} not found, use "help" to see supported commands')
             continue
-        # logger.debug(f'calling {func} with arguments: {args}')
 
         result = func(client_session, *args)
         if result is not None:
             print(f'result > {result}')
-        # else:
-        #     print(f'result > None')

@@ -7,8 +7,6 @@ from message_system.message_system import Message_System
 
 import logging
 
-# logger.info("TESTTTTTT")
-# rpyc.core.protocol.DEFAULT_CONFIG['allow_pickle'] = True
 try:
     logger = logging.getLogger(__name__)
 except:

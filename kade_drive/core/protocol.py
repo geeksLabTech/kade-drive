@@ -4,7 +4,6 @@ import rpyc
 import logging
 
 from core.node import Node
-# from kademlia.routing import RoutingTable
 from core.storage import PersistentStorage
 from core.utils import digest
 
