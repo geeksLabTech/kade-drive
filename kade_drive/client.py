@@ -2,7 +2,7 @@ import pickle
 import rpyc
 from time import sleep
 from rpyc.core.protocol import PingError
-from kade_drive.message_system.message_system import Message_System
+from message_system.message_system import MessageSystem
 
 import logging
 
@@ -193,7 +193,7 @@ class ClientSession:
 
     def broadcast(self) -> bool:
         print("Listening broadcasts")
-        ms = Message_System()
+        ms = MessageSystem()
         try:
             ip, port = ms.receive(service_name="dfs").split(" ")
             print(ip, port)
