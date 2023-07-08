@@ -6,9 +6,9 @@
 
 # import pytest
 
-# from core.network import Server
-# from core.node import Node
-# from core.routing import RoutingTable
+# from kade_drive.core.network import Server
+# from kade_drive.core.node import Node
+# from kade_drive.core.routing import RoutingTable
 
 
 # # @pytest.fixture()

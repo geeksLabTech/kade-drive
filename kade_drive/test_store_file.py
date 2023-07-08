@@ -12,7 +12,6 @@ def test_store_df():
     y = pd.DataFrame(y)
 
     X_pickle = pickle.dumps(X)
-    y_pickle = pickle.dumps(y)
 
     initial_bootstrap_nodes = []
     client_session = ClientSession(initial_bootstrap_nodes)
@@ -27,7 +26,7 @@ def test_store_df():
     sleep(5)
     value_getted = client_session.get("dataset_diabetes")
 
-    print('value getted ', value_getted)
+    print("value getted ", value_getted)
     assert X.equals(value_getted)
 
 

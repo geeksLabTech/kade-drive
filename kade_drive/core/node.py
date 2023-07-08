@@ -1,4 +1,3 @@
-# from operator import itemgetter
 import heapq
 
 class Node:
@@ -8,7 +7,8 @@ class Node:
     This class should generally not be instantiated directly, as it is a low
     level construct mostly used by the router.
     """
-    def __init__(self, node_id: bytes, ip: str|None = None, port: str|None = None):
+
+    def __init__(self, node_id: bytes, ip: str | None = None, port: str | None = None):
         """
         Create a Node instance.
 
@@ -22,10 +22,10 @@ class Node:
         self.port = port
         self.long_id = int(node_id.hex(), 16)
 
-    def same_home_as(self, node: 'Node'):
+    def same_home_as(self, node: "Node"):
         return self.ip == node.ip and self.port == node.port
 
-    def distance_to(self, node: 'Node'):
+    def distance_to(self, node: "Node"):
         """
         Get the distance between this node and another.
         """
@@ -48,6 +48,7 @@ class NodeHeap:
     """
     A heap of nodes ordered by distance to a given node.
     """
+
     def __init__(self, node: Node, maxsize: int):
         """
         Constructor.
@@ -115,7 +116,6 @@ class NodeHeap:
     def __iter__(self):
         nodes = heapq.nsmallest(self.maxsize, self.heap)
         yield from (item[1] for item in nodes)
-        # return iter(map(itemgetter(1), nodes))
 
     def __contains__(self, node: Node):
         for _, other in self.heap:
