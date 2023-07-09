@@ -67,7 +67,7 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
     
     @staticmethod
-    def call_contains(conn, node_to_ask, key: bytes, is_metadata=True):
+    def call_check_if_new_value_exists(conn, node_to_ask, key: bytes, is_metadata=True):
         response = None
         if conn:
             address = (node_to_ask.ip, node_to_ask.port)
