@@ -130,11 +130,11 @@ class ClientSession:
         if not self.connection:
             logger.error("No connection stablished to do get")
             return None
-        
+
         try:
             metadata_list = self.connection.root.get(key, apply_hash_to_key)
         except EOFError as e:
-            logger.error(f'Connection lost in get when doing get rpc, exception: {e}')
+            logger.error(f"Connection lost in get when doing get rpc, exception: {e}")
             return None
         logger.debug(f"METADATAAAAA {metadata_list}")
         if metadata_list:
@@ -151,7 +151,9 @@ class ClientSession:
                     tuple[str, int]
                 ] = self.connection.root.get_file_chunk_location(chunk_key)
             except EOFError as e:
-                logger.error(f'Connection lost in get when doing get_file_chunk_location, exception: {e}')
+                logger.error(
+                    f"Connection lost in get when doing get_file_chunk_location, exception: {e}"
+                )
                 return None
             logger.debug(f"locations for chunk_key {chunk_key} are {locations}")
             if self.bootstrap_nodes[0] in locations:
@@ -161,7 +163,9 @@ class ClientSession:
                         self.connection.root.rpc_get_file_chunk_value(chunk_key)
                     )
                 except EOFError as e:
-                    logger.error(f'Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}')
+                    logger.error(
+                        f"Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}"
+                    )
                     return None
             else:
                 conn, _ = self._ensure_connection(
@@ -172,9 +176,13 @@ class ClientSession:
                 )
                 if conn:
                     try:
-                        data_received.append(conn.root.rpc_get_file_chunk_value(chunk_key))
+                        data_received.append(
+                            conn.root.rpc_get_file_chunk_value(chunk_key)
+                        )
                     except EOFError as e:
-                        logger.error(f'Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}')
+                        logger.error(
+                            f"Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}"
+                        )
                         return None
                 else:
                     logger.warning("No Servers to get chunk")
@@ -198,11 +206,11 @@ class ClientSession:
                 logger.info("put > Success")
                 return True
             except EOFError as e:
-                logger.error(f'Connection lost in put, exception: {e}')
-            
+                logger.error(f"Connection lost in put, exception: {e}")
+
         else:
             logger.error("No connection stablished to do put")
-        
+
         return False
 
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
@@ -215,8 +223,7 @@ class ClientSession:
             self.bootstrap_nodes.extend(nodes_to_add)
             logger.debug(f"Neighbors {self.bootstrap_nodes}")
         except EOFError as e:
-            logger.error(f'Connection lost in _update_bootstrap_nodes, exception: {e}')
-        
+            logger.error(f"Connection lost in _update_bootstrap_nodes, exception: {e}")
 
     def broadcast(self) -> bool:
         print("Listening broadcasts")
