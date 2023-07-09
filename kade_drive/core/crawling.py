@@ -6,7 +6,7 @@ from kade_drive.core.protocol import FileSystemProtocol, ServerSession
 
 
 # Create a file handler
-file_handler = logging.FileHandler("log_file.log")
+# file_handler = logging.FileHandler("log_file.log")
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)

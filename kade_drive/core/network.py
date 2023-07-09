@@ -21,7 +21,7 @@ from kade_drive.core.utils import is_port_in_use
 # from models.file import File
 
 # Create a file handler
-file_handler = logging.FileHandler("log_file.log")
+# file_handler = logging.FileHandler("log_file.log")
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
@@ -281,6 +281,98 @@ class Server:
 @rpyc.service
 class ServerService(Service):
     @rpyc.exposed
+    def rpc_get_file_chunk_value(self, key):
+        return Server.storage.get(key, metadata=False)
+
+    @rpyc.exposed
+    def get(self, key, apply_hash_to_key=True):
+        """
+        Get a key if the network has it.
+
+        Returns:
+            :class:`None` if not found, the value otherwise.
+        """
+
+        logger.debug(f"Looking up key {key}")
+        if apply_hash_to_key:
+            key = digest(key)
+
+        node = Node(key)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
+        if not nearest:
+            logger.debug(f"There are no known neighbors to get key {key}")
+            if Server.storage.contains(key):
+                logger.debug("Getting key from this same node")
+                return pickle.loads(Server.storage.get(key, True))
+            return None
+        spider = ValueSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
+        data = spider.find()
+        if data is None:
+            logger.debug("NONE DATA")
+            return None
+        logger.debug(f"DATA {data}")
+        metadata_list = pickle.loads(data)
+        return metadata_list
+
+    @rpyc.exposed
+    def upload_file(self, key, data: bytes, apply_hash_to_key=True):
+        chunks = Server.split_data(data, 1000)
+        logger.debug(f"chunks {len(chunks)}, {chunks}")
+        digested_chunks = [digest(c) for c in chunks]
+        metadata_list = pickle.dumps(digested_chunks)
+        processed_chunks = ((digest(c), c) for c in chunks)
+
+        for c in processed_chunks:
+            Server.set_digest(c[0], c[1], metadata=False)
+
+        logger.debug("Writting key metadata")
+        if apply_hash_to_key:
+            dkey = digest(key)
+            Server.set_digest(dkey, metadata_list)
+        else:
+            Server.set_digest(key, metadata_list)
+
+    @rpyc.exposed
+    def get_file_chunk_location(self, chunk_key):
+        logger.debug("looking file chunk location")
+        node = Node(chunk_key)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
+        if not nearest:
+            logger.debug(
+                f"There are no known neighbors to get file chunk location {chunk_key}"
+            )
+            if Server.storage.contains(chunk_key, False) is not None:
+                logger.debug(
+                    f"Found in this server, {Server.node.ip}, port, {Server.node.port}"
+                )
+                return [(Server.node.ip, Server.node.port)]
+            return None
+
+        logger.debug("Initiating ChunkLocationSpiderCrawl")
+        spider = ChunkLocationSpiderCrawl(
+            node, nearest, Server.ksize, Server.alpha)
+        results = spider.find()
+        logger.debug(f"results of ChunkLocationSpider {results}")
+        return results
+
+
+    @rpyc.exposed
+    def rpc_find_chunk_location(
+        self, sender: tuple[str, str], nodeid: bytes, key: bytes
+    ):
+        logger.debug("entry in rpc_find_chunk_location")
+
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        # get value from storage
+        if Server.storage.contains(key, False):
+            return {"value": (Server.node.ip, Server.node.port)}
+        return self.rpc_find_node(sender, nodeid, key)
+
+    @rpyc.exposed
     def rpc_store(self, sender, nodeid: bytes, key: bytes, value, metadata=True):
         """Instructs a node to store a value
 
@@ -332,22 +424,6 @@ class ServerService(Service):
         value = FileSystemProtocol.storage.get(key, None, metadata)
         logger.debug(f"returning value {value}")
         return {"value": value}
-
-    @rpyc.exposed
-    def rpc_find_chunk_location(
-        self, sender: tuple[str, str], nodeid: bytes, key: bytes
-    ):
-        logger.debug("entry in rpc_find_chunk_location")
-
-        source = Node(nodeid, sender[0], sender[1])
-        # if a new node is sending the request, give all data it should contain
-        address = (source.ip, source.port)
-        with ServerSession(address[0], address[1]) as conn:
-            FileSystemProtocol.welcome_if_new(conn, source)
-        # get value from storage
-        if Server.storage.contains(key, False):
-            return {"value": (Server.node.ip, Server.node.port)}
-        return self.rpc_find_node(sender, nodeid, key)
 
     @rpyc.exposed
     def rpc_ping(self, sender, nodeid: bytes):
@@ -403,10 +479,6 @@ class ServerService(Service):
         return FileSystemProtocol.storage.contains(key, is_metadata)
 
     @rpyc.exposed
-    def rpc_get_file_chunk_value(self, key):
-        return Server.storage.get(key, metadata=False)
-
-    @rpyc.exposed
     def bootstrappable_neighbors(self):
         """
         Get a :class:`list` of (ip, port) :class:`tuple` pairs suitable for
@@ -419,77 +491,6 @@ class ServerService(Service):
         """
         neighbors = FileSystemProtocol.router.find_neighbors(Server.node)
         return [tuple(n)[-2:] for n in neighbors]
-
-    @rpyc.exposed
-    def get(self, key, apply_hash_to_key=True):
-        """
-        Get a key if the network has it.
-
-        Returns:
-            :class:`None` if not found, the value otherwise.
-        """
-
-        logger.debug(f"Looking up key {key}")
-        if apply_hash_to_key:
-            key = digest(key)
-
-        node = Node(key)
-        nearest = FileSystemProtocol.router.find_neighbors(node)
-        if not nearest:
-            logger.debug(f"There are no known neighbors to get key {key}")
-            if Server.storage.contains(key):
-                logger.debug("Getting key from this same node")
-                return pickle.loads(Server.storage.get(key, True))
-            return None
-        spider = ValueSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
-        data = spider.find()
-        if data is None:
-            logger.debug("NONE DATA")
-            return None
-        logger.debug(f"DATA {data}")
-        metadata_list = pickle.loads(data)
-        return metadata_list
-
-    @rpyc.exposed
-    def get_file_chunk_location(self, chunk_key):
-        logger.debug("looking file chunk location")
-        node = Node(chunk_key)
-        nearest = FileSystemProtocol.router.find_neighbors(node)
-        if not nearest:
-            logger.debug(
-                f"There are no known neighbors to get file chunk location {chunk_key}"
-            )
-            if Server.storage.contains(chunk_key, False) is not None:
-                logger.debug(
-                    f"Found in this server, {Server.node.ip}, port, {Server.node.port}"
-                )
-                return [(Server.node.ip, Server.node.port)]
-            return None
-
-        logger.debug("Initiating ChunkLocationSpiderCrawl")
-        spider = ChunkLocationSpiderCrawl(
-            node, nearest, Server.ksize, Server.alpha)
-        results = spider.find()
-        logger.debug(f"results of ChunkLocationSpider {results}")
-        return results
-
-    @rpyc.exposed
-    def upload_file(self, key, data: bytes, apply_hash_to_key=True):
-        chunks = Server.split_data(data, 1000)
-        logger.debug(f"chunks {len(chunks)}, {chunks}")
-        digested_chunks = [digest(c) for c in chunks]
-        metadata_list = pickle.dumps(digested_chunks)
-        processed_chunks = ((digest(c), c) for c in chunks)
-
-        for c in processed_chunks:
-            Server.set_digest(c[0], c[1], metadata=False)
-
-        logger.debug("Writting key metadata")
-        if apply_hash_to_key:
-            dkey = digest(key)
-            Server.set_digest(dkey, metadata_list)
-        else:
-            Server.set_digest(key, metadata_list)
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
