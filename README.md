@@ -22,7 +22,7 @@ start_server()
 
 ## Client
 
-### Note: Make shure that there exist at least a server in the local network
+### Note: Make sure that there exist at least a server in the local network
 
 ```Python
 from kade_drive.cli import ClientSession
