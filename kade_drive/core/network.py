@@ -194,8 +194,11 @@ class Server:
         for n in nodes:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
-                contains, date = FileSystemProtocol.call_check_if_new_value_exists(
+                response = FileSystemProtocol.call_check_if_new_value_exists(
                     conn, n, dkey)
+                contains, date = None, None 
+                if response is not None:
+                    contains, date = response
                 if local_last_write is None or date is None or date < local_last_write:
                     result = FileSystemProtocol.call_store(
                         conn, n, dkey, value, metadata
@@ -509,20 +512,6 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         return FileSystemProtocol.storage.check_if_new_value_exists(key)
-
-    @rpyc.exposed
-    def bootstrappable_neighbors(self):
-        """
-        Get a :class:`list` of (ip, port) :class:`tuple` pairs suitable for
-        use as an argument to the bootstrap method.
-
-        The server should have been bootstrapped
-        already - this is just a utility for getting some neighbors and then
-        storing them if this server is going down for a while.  When it comes
-        back up, the list of nodes can be used to bootstrap.
-        """
-        neighbors = FileSystemProtocol.router.find_neighbors(Server.node)
-        return [tuple(n)[-2:] for n in neighbors]
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
