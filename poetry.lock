@@ -28,6 +28,21 @@ files = [
 ]
 
 [[package]]
+name = "message-system"
+version = "0.1.2"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.10,<4.0"
+files = [
+    {file = "message_system-0.1.2-py3-none-any.whl", hash = "sha256:ab7179734a5db43e1dc65ffe6d76d851ca84ab7d8194c7b20c45a264c0cc71f6"},
+    {file = "message_system-0.1.2.tar.gz", hash = "sha256:dd0c70c81d2cad5e120720ccd94c8fc7c3a2488b176a0a98fdc8496a4884daf5"},
+]
+
+[package.dependencies]
+netifaces = ">=0.11.0,<0.12.0"
+
+[[package]]
 name = "netifaces"
 version = "0.11.0"
 description = "Portable network interface information."
@@ -163,4 +178,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "79734d4a134d4303f01a1a686ce1ce64c852fc1fc5be0a7932d509af643320c7"
+content-hash = "5b99efb78b45c8e855fd85d8834078a8a4a3dda404d3993af374324d8ea37c27"

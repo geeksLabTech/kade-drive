@@ -2,8 +2,7 @@ from typer import Typer, Option
 import socket
 from kade_drive.core.network import Server
 import threading
-from kade_drive.message_system.message_system import Message_System
-from kade_drive.core.utils import get_ips
+from message_system.message_system import MessageSystem
 from kade_drive.core.config import Config
 import logging
 
@@ -28,12 +27,12 @@ def start_server(host_ip=None, config: Config | None = None):
     bootstrap_nodes = None
 
     if host_ip is None:
-        ip_br = get_ips()[0]
+        ip_br = MessageSystem.get_ips()[0]
         broadcast = ip_br["broadcast"]
         host_ip = ip_br["addr"]
     logger.info(host_ip)
 
-    ms = Message_System(host_ip, broadcast)
+    ms = MessageSystem(host_ip, broadcast)
     hosts = []
 
     msg = ms.receive(service_name="dfs")
@@ -46,7 +45,7 @@ def start_server(host_ip=None, config: Config | None = None):
         logger.info("No servers answered :(")
 
     if host_ip is None:
-        logger.warning(f"aaa {socket.get_hostname()}")
+        logger.warning(f"aaa {socket.gethostname()}")
         host_ip = socket.gethostbyname(socket.gethostname())
 
     if config is None:
