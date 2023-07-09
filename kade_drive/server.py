@@ -72,7 +72,7 @@ app = Typer()
 def start(host_ip=Option(default=None), log_level=Option(default="INFO")):
     match log_level:
         case 'INFO':
-            log_level = logging.INFO 
+            log_level = logging.INFO
         case 'DEBUG':
             log_level = logging.DEBUG
         case 'WARNING':
@@ -84,7 +84,7 @@ def start(host_ip=Option(default=None), log_level=Option(default="INFO")):
         level=log_level, format="%(asctime)s  - %(name)s - %(levelname)s - %(message)s"
     )
 
-    logging.getLogger("SERVER/8086").setLevel(logging.CRITICAL)
+    logging.getLogger("SERVER").setLevel(logging.CRITICAL+1)
     # Create a logger instance
     logger = logging.getLogger(__name__)
     if not type(host_ip) == str:

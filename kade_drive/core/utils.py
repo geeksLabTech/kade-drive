@@ -5,6 +5,7 @@ import hashlib
 import operator
 import netifaces as ni
 import logging
+import socket
 
 
 def digest(string):
@@ -60,3 +61,28 @@ def get_ips():
             pass
 
     return ips
+
+
+def is_port_in_use(host, port):
+    try:
+        # Create a socket object
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Set a timeout value for the socket
+        sock.settimeout(1)
+
+        # Try to connect to the host and port
+        result = sock.connect_ex((host, port))
+
+        # If the connection was successful, the port is in use
+        if result == 0:
+            return True
+        else:
+            return False
+
+    except socket.error as e:
+        print(f"Error: {e}")
+
+    finally:
+        # Close the socket
+        sock.close()
