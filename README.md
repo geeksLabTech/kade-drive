@@ -1,3 +1,17 @@
+![Python Version](https://img.shields.io/badge/Python-3.10-blue)
+![Code Style](https://img.shields.io/badge/Code%20Style-Black-black)
+![Poetry Version](https://img.shields.io/badge/Poetry-1.3.1-blue)
+![Docker Support](https://img.shields.io/badge/Docker-Supported-brightgreen?logo=docker)
+![Docker Build Status](https://img.shields.io/docker/build/geekslabtech/kade-drive)
+![Visits](https://badges.pufler.dev/visits/geeksLabTech/kade-drive)
+![Contributors](https://img.shields.io/github/contributors/geeksLabTech/kade-drive)
+![Release Version](https://img.shields.io/github/v/release/geeksLabTech/kade-drive)
+![Documentation](https://img.shields.io/badge/docs-available-brightgreen)
+![Package Version](https://img.shields.io/pypi/v/kade-drive)
+![Downloads](https://img.shields.io/pypi/dm/kade-drive)
+![Release Date](https://img.shields.io/github/release-date/geeksLabTech/kade-drive)
+![Code Size](https://img.shields.io/github/languages/code-size/geeksLabTech/kade-drive)
+
 Distributed file system based on <https://github.com/bmuller/kademlia> for the final project of distributed systems
 
 ## Documentation
@@ -12,7 +26,7 @@ https://geekslabtech.github.io/kade-drive/
 ## Installation
 
 ```console
-- pip install kade-drive
+pip install kade-drive
 ```
 
 ## Server
