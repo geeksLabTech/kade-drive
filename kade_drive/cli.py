@@ -1,5 +1,5 @@
 import sys
-from client import ClientSession
+from kade_drive.client import ClientSession
 
 
 def start_cli(ip=None, port=8086):
