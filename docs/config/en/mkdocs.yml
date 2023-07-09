@@ -3,6 +3,10 @@ docs_dir: ../../docs/en/
 site_dir: ../../generated/en
 
 theme:
+  highlightjs: true
+  hljs_languages:
+        - Python
+        - Console
   language: en
   custom_dir: ../../overrides
   favicon: assets/images/favicon.ico
@@ -23,8 +27,9 @@ plugins:
       lang: en 
 
 nav:
-  - home: index.md
-  - 1 - Introduction: introduction.md
+  - 1 - Introduction: index.md
+  - 1.1 - Installation: installation-setup.md
+  - 1.2 - Examples: examples.md 
   - 2 - Description: description.md
   - 3 - Persistence: persistence.md
   - 4 - Client: client.md

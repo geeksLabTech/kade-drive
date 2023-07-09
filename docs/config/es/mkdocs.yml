@@ -3,6 +3,10 @@ docs_dir: ../../docs/es/
 site_dir: ../../generated/es
 
 theme:
+  highlightjs: true
+  hljs_languages:
+        - Python
+        - Console
   language: es
   custom_dir: ../../overrides
   favicon: assets/images/favicon.ico
@@ -23,8 +27,9 @@ plugins:
 
 
 nav:
-  - home: index.md
-  - introduccion: introducción.md
+  - introduccion: index.md
+  - instalación: instalacion.md
+  - ejemplos: ejemplos.md
   - descripcion: descripcion.md
   - persistencia: persistencia.md
   - cliente: cliente.md
@@ -34,3 +39,4 @@ nav:
   - por-que-kademlia: por-que-kademlia.md
   - analisis-cap: analisis-cap.md
   - recomendaciones: recomendaciones.md
+  - 

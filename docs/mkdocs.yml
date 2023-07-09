@@ -1,5 +1,7 @@
 site_name: Kade Drive DHT
-theme: material
+theme: 
+  highlightjs: true
+  name: material
 docs_dir: docs/en
 
 plugins:
@@ -18,7 +20,14 @@ extra:
 # General configuration
 markdown_extensions:
   - admonition
-  # Add more markdown extensions as needed
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
 
 # Additional configuration options
 # ...
+

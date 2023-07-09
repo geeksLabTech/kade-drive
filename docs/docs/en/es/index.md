@@ -1,17 +1,7 @@
-# Welcome to MkDocs
+# Introducción
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+Este proyecto utiliza como punto de partida Kademlia. Kademlia es una tabla de hash distribuida, que permite que millones de ordenadores se organicen automáticamente en una red, se comuniquen con otros ordenadores de la red y compartan recursos.
 
-## Commands
+Se hace uso de varios enfoques e ideas propuestas por Kademlia, muchas de ellas se usan como base para ampliar las funcionalidades del proyecto y otras son utilizadas de la misma manera que Kademlia.
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
-
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+Una vez que se tiene un sistema de ficheros se integra a AutoGOAL para resolver problemas de aprendizaje de máquina de una manera más eficiente en cuanto a rendimiento, uso de la red y almacenamiento.
