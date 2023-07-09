@@ -59,11 +59,20 @@ class PersistentStorage:
 
         os.makedirs(self.timestamp_path, exist_ok=True)
 
-    def update_timestamp(self, filename: str, republish_data=False):
+    def update_timestamp(self, filename: str, republish_data=False, is_write=False):
         self.ensure_dir_paths()
-        data = {"date": datetime.now(), "republish": republish_data}
 
-        logger.debug(f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
+        with open(os.path.join(self.timestamp_path, str(filename)), "rb") as f:
+            data = pickle.load(f)
+
+        data["date"] = datetime.now()
+        data["republish"] = republish_data
+
+        if is_write:
+            data['last_write'] = datetime.now()
+
+        logger.debug(
+            f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             pickle.dump(data, f)
 
@@ -95,15 +104,19 @@ class PersistentStorage:
                                 f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes"
                             )
                             if Path(os.path.join(self.values_path, str(file))).exists():
-                                os.remove(os.path.join(self.values_path, str(file)))
+                                os.remove(os.path.join(
+                                    self.values_path, str(file)))
                             if Path(
                                 os.path.join(self.metadata_path, str(file))
                             ).exists():
-                                os.remove(os.path.join(self.metadata_path, str(file)))
+                                os.remove(os.path.join(
+                                    self.metadata_path, str(file)))
                             if Path(os.path.join(self.keys_path, str(file))).exists():
-                                os.remove(os.path.join(self.keys_path, str(file)))
+                                os.remove(os.path.join(
+                                    self.keys_path, str(file)))
 
-                            os.remove(os.path.join(self.timestamp_path, str(file)))
+                            os.remove(os.path.join(
+                                self.timestamp_path, str(file)))
             sleep(self.ttl)
 
     def get_value(self, str_key: str, update_timestamp=True, metadata=True):
@@ -126,7 +139,7 @@ class PersistentStorage:
     def set_value(self, key: bytes, value, metadata=True, republish_data=False):
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
-        self.update_timestamp(str_key, republish_data)
+        self.update_timestamp(str_key, republish_data, is_write=True)
         if metadata:
             path = os.path.join(self.metadata_path, str_key)
         else:
@@ -182,6 +195,16 @@ class PersistentStorage:
                 return False
 
         return True
+    def check_if_new_value_exists(self, key):
+        str_key = str(base64.urlsafe_b64encode(key))
+        path = Path(os.path.join(self.timestamp_path, str_key))
+        if not path.exists():
+            return False, None
+
+        with open(os.path.join(self.timestamp_path, str(filename)), "rb") as f:
+            data = pickle.load(f)
+
+        return True, data['last_write']
 
     def __getitem__(self, key: bytes):
         self.cull()
@@ -200,7 +223,6 @@ class PersistentStorage:
             for file in files:
                 if Path(os.path.join(self.timestamp_path, file)).exists():
                     with open(os.path.join(self.timestamp_path, file), "rb") as f:
-                        sleep(0.1)
                         data = pickle.load(f)
                     if (datetime.now() - data["date"]).seconds >= seconds_old or data[
                         "republish"
@@ -210,7 +232,7 @@ class PersistentStorage:
                             str(file), update_timestamp=False, metadata=is_metadata
                         )
                         assert value is not None
-                        yield key, value, is_metadata
+                        yield key, value, is_metadata, data['last_write']
 
     def keys(self):
         ikeys_files = os.listdir(os.path.join(self.keys_path))
@@ -238,5 +260,6 @@ class PersistentStorage:
         ivalues: list[bytes] = []
 
         for i, ik in enumerate(ikeys):
-            ivalues.append(self.get(ik, update_timestamp=False, metadata=imetadata[i]))
+            ivalues.append(
+                self.get(ik, update_timestamp=False, metadata=imetadata[i]))
         return zip(ikeys, ivalues, imetadata)

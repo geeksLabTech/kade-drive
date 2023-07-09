@@ -156,7 +156,7 @@ class Server:
         return chunks
 
     @staticmethod
-    def set_digest(dkey: bytes, value, metadata=True, exclude_current=False):
+    def set_digest(dkey: bytes, value, metadata=True, exclude_current=False, local_last_write = None):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
@@ -184,7 +184,7 @@ class Server:
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
-        if Server.node.distance_to(node) < biggest:
+        if Server.node.distance_to(node) < biggest and not exclude_current:
             if metadata:
                 Server.storage.set_metadata(dkey, value, False)
             else:
@@ -194,9 +194,9 @@ class Server:
         for n in nodes:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
-                contains = FileSystemProtocol.call_contains(
-                    conn, n, dkey, metadata)
-                if not contains:
+                contains, date = FileSystemProtocol.call_check_if_new_value_exists(
+                    conn, n, dkey)
+                if local_last_write is None or date is None or date < local_last_write:
                     result = FileSystemProtocol.call_store(
                         conn, n, dkey, value, metadata
                     )
@@ -260,7 +260,7 @@ class Server:
                 # Republishing keys to mantain the network updated
 
                 logger.debug("Republishing old keys")
-                for key, value, is_metadata in Server.storage.iter_older_than(5):
+                for key, value, is_metadata, last_write in Server.storage.iter_older_than(5):
                     Server.set_digest(key, value, is_metadata,
                                       exclude_current=True)
                     Server.storage.update_republish(key)
@@ -270,6 +270,9 @@ class Server:
 
                 if len(keys_to_replicate):
                     for key, is_metadata in keys_to_replicate:
+                        _, local_last_write = Server.storage.check_if_new_value_exists(
+                            key)
+
                         Server.set_digest(
                             key,
                             Server.storage.get(
@@ -277,6 +280,7 @@ class Server:
                             ),
                             is_metadata,
                             exclude_current=True,
+                            local_last_write=local_last_write
                         )
 
             except Exception as e:
@@ -495,6 +499,16 @@ class ServerService(Service):
             FileSystemProtocol.welcome_if_new(conn, source)
         # get value from storage
         return FileSystemProtocol.storage.contains(key, is_metadata)
+
+    @rpyc.exposed
+    def rpc_check_if_new_value_exists(self, sender, nodeid: bytes, key: bytes, is_metadata=True):
+        source = Node(nodeid, sender[0], sender[1])
+        # if a new node is sending the request, give all data it should contain
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            FileSystemProtocol.welcome_if_new(conn, source)
+        # get value from storage
+        return FileSystemProtocol.storage.check_if_new_value_exists(key)
 
     @rpyc.exposed
     def bootstrappable_neighbors(self):
