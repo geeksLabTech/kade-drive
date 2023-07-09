@@ -1,0 +1,36 @@
+site_name: Kade Drive DHT
+docs_dir: ../../docs/es/
+site_dir: ../../generated/es
+
+theme:
+  language: es
+  custom_dir: ../../overrides
+  favicon: assets/images/favicon.ico
+  name: material
+
+extra:
+  alternate:
+    - name: Español
+      link: ../es/
+      lang: es
+    - name: English
+      link: ../en/
+      lang: en
+
+plugins:
+  - search:                                         
+      lang: es
+
+
+nav:
+  - home: index.md
+  - introduccion: introducción.md
+  - descripcion: descripcion.md
+  - persistencia: persistencia.md
+  - cliente: cliente.md
+  - autodescubrimiento: autodescubrimiento.md
+  - replicacion: replicacion.md
+  - tolerancia-fallas: tolerancia-fallas.md
+  - por-que-kademlia: por-que-kademlia.md
+  - analisis-cap: analisis-cap.md
+  - recomendaciones: recomendaciones.md

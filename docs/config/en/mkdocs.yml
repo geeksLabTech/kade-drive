@@ -1,0 +1,35 @@
+site_name: Kade Drive DHT
+docs_dir: ../../docs/en/
+site_dir: ../../generated/en
+
+theme:
+  language: en
+  custom_dir: ../../overrides
+  favicon: assets/images/favicon.ico
+  name: material
+
+extra:
+  alternate:
+    - name: Español
+      link: docs/es/
+      lang: es
+    - name: English
+      link: docs/en/
+      lang: en
+
+plugins:
+  - search:                                         
+      lang: en 
+
+nav:
+  - home: index.md
+  - 1 - Introduction: introduction.md
+  - 2 - Description: description.md
+  - 3 - Persistence: persistence.md
+  - 4 - Client: client.md
+  - 5 - Autodiscovery: autodiscovery.md
+  - 6 - Replication: replication.md
+  - 7 - Fault Tolerance: fault-tolerance.md
+  - 8 - Why Kademlia: why-kademlia.md
+  - 9 - CAP Theorem Analysis: cap-analysis.md
+  - 10 - Recommendations: recommendations.md

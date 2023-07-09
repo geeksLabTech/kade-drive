@@ -1,3 +1,54 @@
-site_name: My Docs
-theme:
-  name: material
+site_name: Kade Drive DHT
+theme: material
+docs_dir: docs/
+language: en
+
+plugins:
+  - search
+
+extra:
+  alternate:
+    - name: English
+      link: en/
+      lang: en
+    - name: Español
+      link: es/
+      lang: es
+    # Add more languages as needed
+
+  # English configuration
+  en:
+    nav:
+    - Home: en/index.md
+    - 1 - Introduction: en/introduction.md
+    - 2 - Description: en/description.md
+    - 3 - Persistence: en/persistence.md
+    - 4 - Client: en/client.md
+    - 5 - Auto Discovery: en/autodiscovery.md
+    - 6 - Replication: en/replication.md
+    - 7 - Fault Tolerance: en/fault-tolerance.md
+    - 8 - Why Kademlia?: en/why-kademlia.md
+    - 9 - CAP Analysis: en/cap-analysis.md
+    - 10 - Recommendations: en/recommendations.md
+
+  es:
+    nav:
+      - Inicio: es/index.md
+      - 1 - Introducción: es/introducción.md
+      - 2 - Descripción: es/descripción.md
+      - 3 - Persistencia: es/persistencia.md
+      - 4 - Cliente: es/cliente.md
+      - 5 - Autodescubrimiento: es/autodescubrimiento.md
+      - 6 - Replicación: es/replicacion.md
+      - 7 - Tolerancia a Fallas: es/tolerancia-fallas.md
+      - 8 - ¿Por qué Kademlia?: es/por-que-kademlia.md
+      - 9 - Análisis del teorema CAP: es/analisis-cap.md
+      - 10 - Recomendaciones: es/recomendaciones.md
+
+# General configuration
+markdown_extensions:
+  - admonition
+  # Add more markdown extensions as needed
+
+# Additional configuration options
+# ...
