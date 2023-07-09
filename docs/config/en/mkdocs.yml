@@ -10,12 +10,13 @@ theme:
 
 extra:
   alternate:
-    - name: Español
-      link: docs/es/
-      lang: es
     - name: English
-      link: docs/en/
+      link: docs/docs/en/index.md
       lang: en
+    - name: Español
+      link: docs/docs/es/index.md
+      lang: es
+    # Add more lang
 
 plugins:
   - search:                                         

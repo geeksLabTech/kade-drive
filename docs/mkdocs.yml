@@ -1,0 +1,24 @@
+site_name: Kade Drive DHT
+theme: material
+docs_dir: docs/en
+
+plugins:
+  - search
+
+extra:
+  alternate:
+    - name: English
+      link: index.html
+      lang: en
+    - name: Español
+      link: es/index.html
+      lang: es
+    # Add more languages as needed
+
+# General configuration
+markdown_extensions:
+  - admonition
+  # Add more markdown extensions as needed
+
+# Additional configuration options
+# ...
