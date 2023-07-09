@@ -150,7 +150,7 @@ class Server:
         return chunks
 
     @staticmethod
-    def set_digest(dkey: bytes, value, metadata=True):
+    def set_digest(dkey: bytes, value, metadata=True, exclude_current=False):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
@@ -160,10 +160,10 @@ class Server:
         assert node is not None
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
-            logger.warning(
+            logger.debug(
                 "There are no known neighbors to set key %s", dkey.hex())
 
-            if not Server.storage.contains(dkey):
+            if not exclude_current:
                 logger.info("storing in current server")
                 if metadata:
                     Server.storage.set_metadata(dkey, value, False)
@@ -179,11 +179,10 @@ class Server:
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest:
-            if Server.storage.contains(dkey, metadata):
-                if metadata:
-                    Server.storage.set_metadata(dkey, value, False)
-                else:
-                    Server.storage.set_value(dkey, value, False)
+            if metadata:
+                Server.storage.set_metadata(dkey, value, False)
+            else:
+                Server.storage.set_value(dkey, value, False)
 
         any_result = False
         for n in nodes:
@@ -259,7 +258,7 @@ class Server:
                 # do our crawling
                 logger.debug("Republishing old keys")
                 for key, value, is_metadata in Server.storage.iter_older_than(5):
-                    Server.set_digest(key, value, is_metadata)
+                    Server.set_digest(key, value, is_metadata, exclude_current=True)
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 
@@ -271,6 +270,7 @@ class Server:
                                 key, metadata=is_metadata, update_timestamp=False
                             ),
                             is_metadata,
+                            exclude_current=True
                         )
 
             except Exception as e:
