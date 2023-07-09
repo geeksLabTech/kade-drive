@@ -2,6 +2,7 @@
 
 Para algoritmo de republicaci´on implementado se utiliza un Thread que se
 ejecuta cada un intervalo de tiempo i y consiste en lo siguiente:
+
 - Recorrer todas las llaves en el storage cuyo timestamp sea mayor que un
 tiempo t y aquellas que tengan republish en True son republicadas por el
 nodo.

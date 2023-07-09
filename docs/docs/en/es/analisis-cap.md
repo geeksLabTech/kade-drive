@@ -1,4 +1,5 @@
 # Análisis del teorema CAP
+
 El teorema CAP, tambi´en conocido como el teorema de Brewer, es un concepto fundamental en los sistemas distribuidos que establece que es imposible
 que un almac´en de datos distribuido proporcione simult´aneamente consistencia
 (C), disponibilidad (A) y tolerancia a particiones (P).
@@ -27,5 +28,5 @@ aislados debido a problemas de red.
 
 Todos estos puntos se analizan asumiendo que no se sobrepasa la capacidad
 de recuperaci´on del sistema, si se superase dicho punto el sistema comenzar´a
-a ver afectada la disponibilidad. Pero esto solo Ocurrir´ıa en caso de fallos simult´aneos, puesto que el sistema es capaz de recuperarse de fallos eventuales
+a ver afectada la disponibilidad. Pero esto solo Ocurrir´ıa en caso de un cierto numero fallos simult´aneos, puesto que el sistema es capaz de recuperarse de fallos eventuales
 sin ning´un problema.

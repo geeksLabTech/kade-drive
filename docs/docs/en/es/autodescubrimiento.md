@@ -8,6 +8,7 @@ vecinos. El mecanismo es accesible desde el cliente, haciendo transparente la
 conexi´on para el usuario.
 
 ## Desventajas de este enfoque
+
 Como se utiliza broadcast para el autodescubrimiento esto solo es posible
 en una red local, o utilizando una (o varias) PC como puente entre distintas
 subredes, haciendo que si por alguna raz´on no existiese una forma de conectar

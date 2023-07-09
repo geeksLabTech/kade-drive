@@ -1,6 +1,7 @@
-# Cliente 
+# Cliente
 
 Se desarrolló un cliente que cuenta con las siguientes características:
+
 - Puede recibir puntos de entrada a la red, conocidos como bootstrap nodes
 para una conexi´on directa con el sistema de ficheros
 - Posee un mecanismo de auto-descubrimiento recibiendo broadcast por todas las NICs de la pc, si no recibe ning´un bootstrap node o no es capaz de

@@ -4,7 +4,7 @@ prefijo binario de los ID de kademlia hace que se env´ıe la informaci´on haci
 nodo m´as cercano, minimizando la cantidad de saltos entre nodos y la latencia
 de la red en general.
 Otra de las ventajas de este protocolo es la capacidad de manejar fallos de
-nodos y particionado de la red. El mecanismo de refrescado de Kademlia garantiza que se mantengan actualizadas las tablas de ruta de los nodos, manteniendo
+nodos y particionado de la red. El mecanismo de republicaci´on de Kademlia garantiza que se mantengan actualizadas las tablas de ruta de los nodos, manteniendo
 as´ı la conectividad en la red y evitando la p´erdida de datos dentro de lo posible.
 Los datos pueden estar dispersos en m´ultiples nodos de la red. Kademlia
 utiliza una tabla hash distribuida para mantener un registro de la ubicaci´on de
@@ -16,7 +16,7 @@ red. Esta capacidad de almacenamiento y recuperaci´on distribuida de datos de
 Kademlia es especialmente ´util para los sistemas que suelen manejar grandes
 vol´umenes de datos que necesitan ser procesados en paralelo. Al distribuir los
 datos entre varios nodos, se puede lograr un procesamiento y an´alisis m´as r´apido
-y eficiente.
+y eficiente. En comparacion con alternativas como Chord, kademlia es una mejor opcion para aplicaciones que requieran un enrutamiento eficiente y frecuentes actualizaciones de informacion el cual se cree que sera el principal caso de uso de este sistema posterior a su integracion con [Autogoal](https://github.com/autogoal/autogoal)
 
 ## Ejemplos reales del uso de kademlia
 
