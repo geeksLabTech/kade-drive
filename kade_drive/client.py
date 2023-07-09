@@ -129,13 +129,13 @@ class ClientSession:
     def get(self, key, apply_hash_to_key=True):
         if not self.connection:
             logger.error("No connection stablished to do get")
-            return None
+            return None, None
 
         try:
             metadata_list = self.connection.root.get(key, apply_hash_to_key)
         except EOFError as e:
             logger.error(f"Connection lost in get when doing get rpc, exception: {e}")
-            return None
+            return None, None
         logger.debug(f"METADATAAAAA {metadata_list}")
         if metadata_list:
             logger.debug(f"metadata_list received {str(len(metadata_list) > 0)}")
@@ -143,7 +143,7 @@ class ClientSession:
 
         if metadata_list is None or len(metadata_list) == 0:
             logger.debug(f"No data with key {key}")
-            return None
+            return None, self.connection
 
         for chunk_key in metadata_list:
             try:
@@ -154,7 +154,7 @@ class ClientSession:
                 logger.error(
                     f"Connection lost in get when doing get_file_chunk_location, exception: {e}"
                 )
-                return None
+                return None, None
             logger.debug(f"locations for chunk_key {chunk_key} are {locations}")
             if self.bootstrap_nodes[0] in locations:
                 logger.debug("Using primary connection to get chunk")
@@ -166,7 +166,7 @@ class ClientSession:
                     logger.error(
                         f"Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}"
                     )
-                    return None
+                    return None, None
             else:
                 conn, _ = self._ensure_connection(
                     locations,
@@ -183,7 +183,7 @@ class ClientSession:
                         logger.error(
                             f"Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}"
                         )
-                        return None
+                        return None, None
                 else:
                     logger.warning("No Servers to get chunk")
 
@@ -191,12 +191,12 @@ class ClientSession:
         data_received = b"".join(data_received)
         try:
             data_to_return = pickle.loads(data_received)
-            return data_to_return
+            return data_to_return, self.connection
         except pickle.UnpicklingError as e:
             logger.error(e)
-            return None
+            return None, self.connection
 
-    def put(self, key, value: bytes, apply_hash_to_key=True) -> bool:
+    def put(self, key, value: bytes, apply_hash_to_key=True):
         if self.connection:
             try:
                 self.connection.root.upload_file(
@@ -204,14 +204,14 @@ class ClientSession:
                 )
                 sleep(1)
                 logger.info("put > Success")
-                return True
+                return True, self.connection
             except EOFError as e:
                 logger.error(f"Connection lost in put, exception: {e}")
 
         else:
             logger.error("No connection stablished to do put")
 
-        return False
+        return False, None
 
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
         try:

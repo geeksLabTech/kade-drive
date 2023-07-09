@@ -31,7 +31,7 @@ exit - * - close the client
             continue
         args = command[1:] if len(command) >= 1 else []
         func = getattr(ClientSession, command[0], None)
-        if func is None or not callable(func):
+        if func is None or not callable(func) or not func in ['get', 'put'] :
             print(
                 f'command {command[0]} not found, use "help" to see supported commands'
             )
@@ -44,7 +44,7 @@ exit - * - close the client
                     "Error Connecting to the network, Please check your conectivity and verify that at least one server is online."
                 )
                 break
-        result = func(client_session, *args)
+        result, response = func(client_session, *args)
         if result is not None:
             print(f"result > {result}")
 
