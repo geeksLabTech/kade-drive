@@ -2,7 +2,7 @@ site_name: Kade Drive DHT
 theme: 
   highlightjs: true
   name: material
-docs_dir: docs/en
+docs_dir: docs/docs/en
 
 plugins:
   - search
