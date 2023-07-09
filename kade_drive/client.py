@@ -130,7 +130,12 @@ class ClientSession:
         if not self.connection:
             logger.error("No connection stablished to do get")
             return None
-        metadata_list = self.connection.root.get(key, apply_hash_to_key)
+        
+        try:
+            metadata_list = self.connection.root.get(key, apply_hash_to_key)
+        except EOFError as e:
+            logger.error(f'Connection lost in get when doing get rpc, exception: {e}')
+            return None
         logger.debug(f"METADATAAAAA {metadata_list}")
         if metadata_list:
             logger.debug(f"metadata_list received {str(len(metadata_list) > 0)}")
@@ -141,15 +146,23 @@ class ClientSession:
             return None
 
         for chunk_key in metadata_list:
-            locations: list[
-                tuple[str, int]
-            ] = self.connection.root.get_file_chunk_location(chunk_key)
+            try:
+                locations: list[
+                    tuple[str, int]
+                ] = self.connection.root.get_file_chunk_location(chunk_key)
+            except EOFError as e:
+                logger.error(f'Connection lost in get when doing get_file_chunk_location, exception: {e}')
+                return None
             logger.debug(f"locations for chunk_key {chunk_key} are {locations}")
             if self.bootstrap_nodes[0] in locations:
                 logger.debug("Using primary connection to get chunk")
-                data_received.append(
-                    self.connection.root.rpc_get_file_chunk_value(chunk_key)
-                )
+                try:
+                    data_received.append(
+                        self.connection.root.rpc_get_file_chunk_value(chunk_key)
+                    )
+                except EOFError as e:
+                    logger.error(f'Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}')
+                    return None
             else:
                 conn, _ = self._ensure_connection(
                     locations,
@@ -158,7 +171,11 @@ class ClientSession:
                     update_boostrap_nodes=False,
                 )
                 if conn:
-                    data_received.append(conn.root.rpc_get_file_chunk_value(chunk_key))
+                    try:
+                        data_received.append(conn.root.rpc_get_file_chunk_value(chunk_key))
+                    except EOFError as e:
+                        logger.error(f'Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}')
+                        return None
                 else:
                     logger.warning("No Servers to get chunk")
 
@@ -171,24 +188,35 @@ class ClientSession:
             logger.error(e)
             return None
 
-    def put(self, key, value: bytes, apply_hash_to_key=True):
+    def put(self, key, value: bytes, apply_hash_to_key=True) -> bool:
         if self.connection:
-            self.connection.root.upload_file(
-                key=key, data=value, apply_hash_to_key=apply_hash_to_key
-            )
-            sleep(1)
-            logger.info("put > Success")
+            try:
+                self.connection.root.upload_file(
+                    key=key, data=value, apply_hash_to_key=apply_hash_to_key
+                )
+                sleep(1)
+                logger.info("put > Success")
+                return True
+            except EOFError as e:
+                logger.error(f'Connection lost in put, exception: {e}')
+            
         else:
             logger.error("No connection stablished to do put")
+        
+        return False
 
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
-        nodes_to_add = [
-            node
-            for node in connection.root.find_neighbors()
-            if node not in self.bootstrap_nodes
-        ]
-        self.bootstrap_nodes.extend(nodes_to_add)
-        logger.debug(f"Neighbors {self.bootstrap_nodes}")
+        try:
+            nodes_to_add = [
+                node
+                for node in connection.root.find_neighbors()
+                if node not in self.bootstrap_nodes
+            ]
+            self.bootstrap_nodes.extend(nodes_to_add)
+            logger.debug(f"Neighbors {self.bootstrap_nodes}")
+        except EOFError as e:
+            logger.error(f'Connection lost in _update_bootstrap_nodes, exception: {e}')
+        
 
     def broadcast(self) -> bool:
         print("Listening broadcasts")
