@@ -29,14 +29,14 @@ files = [
 
 [[package]]
 name = "message-system"
-version = "0.1.0"
+version = "0.1.2"
 description = ""
 category = "main"
 optional = false
 python-versions = ">=3.10,<4.0"
 files = [
-    {file = "message_system-0.1.0-py3-none-any.whl", hash = "sha256:8d714e7c82da757306391dfc180f01e672099dade43f0986983e6353ea2ed37c"},
-    {file = "message_system-0.1.0.tar.gz", hash = "sha256:a9137b48a757c3b64b92c63d92b10ee3c0532d8ed6551d2cb0e3cd9e11944f9e"},
+    {file = "message_system-0.1.2-py3-none-any.whl", hash = "sha256:ab7179734a5db43e1dc65ffe6d76d851ca84ab7d8194c7b20c45a264c0cc71f6"},
+    {file = "message_system-0.1.2.tar.gz", hash = "sha256:dd0c70c81d2cad5e120720ccd94c8fc7c3a2488b176a0a98fdc8496a4884daf5"},
 ]
 
 [package.dependencies]
@@ -178,4 +178,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "2ef59db62cf0062f33637640339d497172d3073737443140f8cfd4e9ab563c9d"
+content-hash = "5b99efb78b45c8e855fd85d8834078a8a4a3dda404d3993af374324d8ea37c27"
