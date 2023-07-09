@@ -62,7 +62,7 @@ class PersistentStorage:
     def update_timestamp(self, filename: str, republish_data=False, is_write=False):
         self.ensure_dir_paths()
         data = {}
-        if os.exists(os.path.join(self.timestamp_path, str(filename))):
+        if os.path.exists(os.path.join(self.timestamp_path, str(filename))):
             with open(os.path.join(self.timestamp_path, str(filename)), "rb") as f:
                 data = pickle.load(f)
 
@@ -203,7 +203,7 @@ class PersistentStorage:
         if not path.exists():
             return False, None
 
-        with open(os.path.join(self.timestamp_path, str(filename)), "rb") as f:
+        with open(os.path.join(self.timestamp_path, str_key), "rb") as f:
             data = pickle.load(f)
 
         return True, data['last_write']
