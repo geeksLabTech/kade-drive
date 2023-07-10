@@ -27,6 +27,9 @@
     
       <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
       
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
       
 
     
@@ -51,7 +54,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber">
   
     
     
@@ -104,6 +114,32 @@
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
     
     
       <div class="md-header__option">
@@ -677,19 +713,9 @@
 
 
 <h1 id="autodescubrimiento">Autodescubrimiento</h1>
-<p>Para el mecanismo de auto descubrimiento se crea tambi´en un Thread que
-emite un latido en las direcciones de broadcast de cada una de las NICs del host,
-con un identificador de la fuente del broadcast e ip y puerto ”dfs ip puerto”.
-Cada vez que un nuevo nodo entra a la red escucha los broadcast para encontrar
-vecinos. El mecanismo es accesible desde el cliente, haciendo transparente la
-conexi´on para el usuario.</p>
+<p>Para el mecanismo de autodescubrimiento, también se crea un hilo (Thread) que emite un latido en las direcciones de broadcast de cada una de las NICs del host, con un identificador de la fuente del broadcast, la IP y el puerto "dfs ip puerto". Cada vez que un nuevo nodo se une a la red, escucha los mensajes de difusión (broadcast) para encontrar vecinos. Este mecanismo es accesible desde el cliente, lo que hace que la conexión sea transparente para el usuario.</p>
 <h2 id="desventajas-de-este-enfoque">Desventajas de este enfoque</h2>
-<p>Como se utiliza broadcast para el autodescubrimiento esto solo es posible
-en una red local, o utilizando una (o varias) PC como puente entre distintas
-subredes, haciendo que si por alguna raz´on no existiese una forma de conectar
-localmente las computadoras, estas no ser´an capaces de encontrarse, no obstante
-como el sistema est´a pensado para conexi´on de distintas estaciones de trabajo
-se asume que estas estar´an en la misma red local haciendo factible este enfoque.</p>
+<p>Una desventaja de este enfoque es que se utiliza el broadcast para el autodescubrimiento, lo que solo es posible en una red local o mediante el uso de una (o varias) PC como puentes entre diferentes subredes. Esto significa que si no existe una forma de conectar las computadoras localmente, no podrán descubrirse entre sí. Sin embargo, dado que el sistema está diseñado para la conexión de diferentes estaciones de trabajo, se asume que estarán en la misma red local, lo que hace factible este enfoque.</p>
 
 
 

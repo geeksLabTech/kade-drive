@@ -27,6 +27,9 @@
     
       <link rel="stylesheet" href="../assets/stylesheets/main.26e3688c.min.css">
       
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ecc896b0.min.css">
+      
       
 
     
@@ -51,7 +54,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber">
   
     
     
@@ -63,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#05-client" class="md-skip">
+        <a href="#client" class="md-skip">
           Skip to content
         </a>
       
@@ -104,6 +114,32 @@
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
     
     
       <div class="md-header__option">
@@ -628,13 +664,13 @@
                   
 
 
-<h1 id="05-client">05 - Client</h1>
+<h1 id="client">Client</h1>
 <p>A client has been developed with the following features:</p>
 <ul>
-<li>It can receive entry points to the network, known as bootstrap nodes, for a direct connection to the file system.</li>
-<li>It has an autodiscovery mechanism that listens to broadcasts on all NICs (Network Interface Cards) of the PC. If it doesn't receive any bootstrap node or is unable to connect to any, it can use this functionality to automatically discover a node.</li>
-<li>It has the ability to discover other nodes automatically by connecting to a node and exploring its neighbors.</li>
-<li>It handles errors related to network instability or unexpected node failures. The user can specify the number of connection retries when a connection to a node is lost. It maintains a queue of known nodes, and when the maximum number of connection retries is reached for a node, it is removed from the queue and the next node is used. It is also possible to specify whether the autodiscovery mechanism should be used when the queue becomes empty.</li>
+<li>It can receive entry points to the network, known as <strong>bootstrap nodes</strong>, to establish a direct connection with the file system.</li>
+<li>It has a self-discovery mechanism that listens for broadcast messages on all NICs of the PC. If it doesn't receive any <strong>bootstrap node</strong> or can't establish a connection with any, it can use this functionality to automatically find a node.</li>
+<li>It has the ability to automatically discover other nodes by connecting to an existing node and obtaining information about its neighbors.</li>
+<li>It handles errors related to network instability or unexpected node failures. The user can set the number of connection retries when the connection to a node is lost. It also maintains a queue of known nodes. When the connection retries with a node are exhausted, it is removed from the queue and the next one is tried. It is also possible to specify whether to use the self-discovery mechanism when the queue is empty.</li>
 </ul>
 
 

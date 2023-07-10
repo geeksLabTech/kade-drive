@@ -27,6 +27,9 @@
     
       <link rel="stylesheet" href="../assets/stylesheets/main.26e3688c.min.css">
       
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ecc896b0.min.css">
+      
       
 
     
@@ -51,7 +54,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber">
   
     
     
@@ -63,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#02-why-kademlia" class="md-skip">
+        <a href="#why-kademlia" class="md-skip">
           Skip to content
         </a>
       
@@ -104,6 +114,32 @@
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
     
     
       <div class="md-header__option">
@@ -290,7 +326,7 @@
       
         <li class="md-nav__item">
   <a href="#real-world-examples-of-kademlia-usage" class="md-nav__link">
-    Real-World Examples of Kademlia Usage
+    Real-world Examples of Kademlia Usage
   </a>
   
 </li>
@@ -654,7 +690,7 @@
       
         <li class="md-nav__item">
   <a href="#real-world-examples-of-kademlia-usage" class="md-nav__link">
-    Real-World Examples of Kademlia Usage
+    Real-world Examples of Kademlia Usage
   </a>
   
 </li>
@@ -674,16 +710,17 @@
                   
 
 
-<h1 id="02-why-kademlia">02 - Why Kademlia?</h1>
-<p>One of the advantages of Kademlia is the efficiency of its routing algorithm, which allows for efficient communication between nodes in the network. The binary prefix of Kademlia IDs ensures that information is sent to the closest node, minimizing the number of hops and network latency overall.</p>
-<p>Another advantage of this protocol is its ability to handle node failures and network partitioning. Kademlia's refreshing mechanism ensures that node routing tables stay up to date, maintaining network connectivity and minimizing data loss as much as possible.</p>
-<p>Data can be distributed across multiple nodes in the network. Kademlia uses a distributed hash table to keep track of data locations in the network. This allows nodes to efficiently find the location of data they need to process or analyze. Additionally, Kademlia's architecture ensures fault tolerance, meaning that if a node disconnects or fails, the data will still be available on other nodes in the network. This distributed storage and retrieval capability of Kademlia is particularly useful for systems that handle large volumes of data requiring parallel processing. By distributing the data among multiple nodes, faster and more efficient processing and analysis can be achieved.</p>
-<h2 id="real-world-examples-of-kademlia-usage">Real-World Examples of Kademlia Usage</h2>
-<p>Some companies that utilize this protocol include:</p>
+<h1 id="why-kademlia">Why Kademlia?</h1>
+<p>One of the advantages of Kademlia is the efficiency of its routing algorithm, which enables efficient communication between nodes in the network. The binary prefix of Kademlia IDs ensures that information is routed to the closest node, minimizing the number of hops between nodes and overall network latency.</p>
+<p>Another advantage of this protocol is its ability to handle node failures and network partitioning. The republishing mechanism in Kademlia ensures that nodes' routing tables stay updated, maintaining connectivity in the network and minimizing data loss as much as possible.</p>
+<p>Data can be distributed across multiple nodes in the network. Kademlia uses a distributed hash table to keep track of the data's location in the network. This enables nodes to efficiently find the location of the data they need to process or analyze. Additionally, the architecture of Kademlia ensures fault tolerance, meaning that if a node becomes disconnected or fails, the data will still be available on other nodes in the network.</p>
+<p>This capability of distributed storage and retrieval of data in Kademlia is particularly useful for systems that handle large volumes of data that need to be processed in parallel. By distributing the data among multiple nodes, faster and more efficient processing and analysis can be achieved. Compared to alternatives like Chord, Kademlia is a better choice for applications that require efficient routing and frequent information updates, which is believed to be the main use case for this system after its integration with <a href="https://github.com/autogoal/autogoal">Autogoal</a>.</p>
+<h2 id="real-world-examples-of-kademlia-usage">Real-world Examples of Kademlia Usage</h2>
+<p>Some companies that use this protocol include:</p>
 <ul>
-<li>Storj: A cloud storage platform that used a modified version of the Kademlia protocol in its version 3 for implementing a system with DNS-like capabilities.</li>
-<li>Ethereum Protocol: The Ethereum protocol uses a slightly modified version of Kademlia, maintaining the XOR-based ID identification and K-buckets.</li>
-<li>The Interplanetary FileSystem (IPFS): In the implementation of IPFS, the NodeID contains a direct map to IPFS file hashes. Each node also stores information on where to obtain the file or resource.</li>
+<li>Storj: A cloud storage platform that used a modified version of the protocol in its version 3 for implementing a system with DNS-like capabilities.</li>
+<li>Ethereum Protocol: The Ethereum protocol uses a slightly modified version of Kademlia, maintaining the XOR-based ID method and K-buckets.</li>
+<li>The Interplanetary FileSystem (IPFS): In the implementation of IPFS, the NodeID contains a direct mapping to IPFS file hashes. Each node also stores information on where to obtain the file or resource.</li>
 </ul>
 
 

@@ -27,6 +27,9 @@
     
       <link rel="stylesheet" href="../assets/stylesheets/main.26e3688c.min.css">
       
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ecc896b0.min.css">
+      
       
 
     
@@ -51,7 +54,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber">
   
     
     
@@ -63,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#08-fault-tolerance" class="md-skip">
+        <a href="#fault-tolerance" class="md-skip">
           Skip to content
         </a>
       
@@ -104,6 +114,32 @@
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
     
     
       <div class="md-header__option">
@@ -628,22 +664,21 @@
                   
 
 
-<h1 id="08-fault-tolerance">08 - Fault Tolerance</h1>
-<p>Nodes maintain information about other nodes in the network by storing them in their routing table. Each node has a list of "k-buckets" that contain the contact details of other nodes in the network, classified based on their proximity in the ID space.</p>
-<p>When a node becomes unresponsive or disconnects, other nodes in the network detect the lack of response after a certain period of time. At that point, the failed node is considered inactive.</p>
+<h1 id="fault-tolerance">Fault Tolerance</h1>
+<p>Nodes maintain information about other nearby nodes in the network by storing these nodes in their routing table. Each node has a list of <code>k-buckets</code> that contain the contact details of other nodes in the network, categorized based on their proximity in the ID space.</p>
+<p>When a node becomes unresponsive or disconnects, other nodes in the network detect the lack of response after a specified period of time. At that point, the failed node is considered inactive.</p>
 <p>When a node detects the inactivity of another node, it updates its routing table by removing the entry of the failed node. Additionally, the node performs a series of actions to maintain connectivity and redundancy in the network.</p>
 <ul>
 <li>
-<p>Data Replication: If the failed node was storing data, other nodes in the network can take the responsibility of maintaining replicas of that data. This ensures that the data remains available even if the original node disconnects. The nodes that will assume this responsibility are those that are closest using the same XOR metric with IDs to keep the network as optimized as possible.</p>
+<p>Data Replication: If the failed node was storing data, other nodes in the network can assume the responsibility of maintaining replicas of that data. This way, the data remains available even if the original node becomes disconnected. The nodes that will take up this responsibility will be those that are closest using the same XOR metric with IDs to keep the network as optimized as possible.</p>
 </li>
 <li>
-<p>Responsibility Transfer: If the failed node was responsible for certain identifiers in the network, other nodes take over the responsibility of handling them. This ensures that access to the data or resources is not lost.</p>
+<p>Routing Information Update: Nodes that had the failed node in their routing table update that entry by removing it. This way, the nodes avoid sending messages or performing actions towards a node that is no longer available.</p>
 </li>
 <li>
-<p>Routing Information Update: Nodes that had the failed node in their routing table update that entry by removing it. This way, nodes avoid sending messages or performing actions towards a node that is no longer available.</p>
+<p>Contact expiration ensures that the information stored in the network remains accessible even when individual nodes fail. By removing inactive nodes from the buckets, it ensures that routing paths are updated and kept efficient.</p>
 </li>
 </ul>
-<p>The expiration of contact ensures that the information stored in the network remains accessible even when individual nodes fail. By removing inactive nodes from the buckets, it ensures that routing paths are updated and kept efficient.</p>
 
 
 

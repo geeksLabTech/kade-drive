@@ -25,6 +25,9 @@
     
       <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
       
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
       
 
     
@@ -49,7 +52,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber">
   
     
     
@@ -102,6 +112,32 @@
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
     
     
       <div class="md-header__option">
@@ -630,20 +666,18 @@
 
 <h1 id="recomendaciones">Recomendaciones</h1>
 <ul>
-<li>Dada la ca´ıda de un nodo de la red, mantener de alguna manera el id del
-nodo anterior para si su informaci´on se mantuviese a´un en disco y actualizada
-cargar con este id puede ser m´as eficiente que iniciar como un nodo nuevo y
-comanzar nuevamente el proceso de balanceo de la red.</li>
-<li>En la implementaci´on original de kademlia, la comunicaci´on entre nodos
-se realiza mediante <code>UDP</code>. Dada la limitaci´on de <code>UDP</code> para manejar grandes
-cantidades de informaci´on se cambi´o a <code>TCP</code>, pero esta es menos eficiente para
-las tareas que no sean transferencia de datos de almacenamiento. Implementar
-un doble protocolo de comunicaci´on entre los nodos deber´ıa representar una
-mejor´ıa en el rendimiento de la red.</li>
-<li>Cambiar el algoritmo de hash utilizado de sha1 a sha256 dado q sha1 ya no es considerado
-seguro y sus vulnerabilidades hacen mas facil a los atacantes realizar actividades maliciosas</li>
-<li>Implementar un mecanismo de testing automatico distribuido utilizando tecnicas como <code>chaos testing</code>
-y <code>swarm testing</code></li>
+<li>
+<p>Dada la caída de un nodo de la red, mantener de alguna manera el ID del nodo anterior. Si su información aún se mantiene en disco y actualizada, cargar con este ID puede ser más eficiente que iniciar como un nodo nuevo y comenzar nuevamente el proceso de balanceo de la red.</p>
+</li>
+<li>
+<p>En la implementación original de Kademlia, la comunicación entre nodos se realiza mediante UDP. Sin embargo, debido a las limitaciones de UDP para manejar grandes cantidades de información, se cambió a TCP. No obstante, TCP es menos eficiente para tareas que no sean transferencia de datos de almacenamiento. Implementar un doble protocolo de comunicación entre los nodos debería representar una mejora en el rendimiento de la red.</p>
+</li>
+<li>
+<p>Cambiar el algoritmo de hash utilizado de SHA1 a SHA256, dado que SHA1 ya no es considerado seguro y sus vulnerabilidades facilitan actividades maliciosas.</p>
+</li>
+<li>
+<p>Implementar un mecanismo de testing automático distribuido utilizando técnicas como "chaos testing" y "swarm testing".</p>
+</li>
 </ul>
 
 

@@ -27,6 +27,9 @@
     
       <link rel="stylesheet" href="../assets/stylesheets/main.26e3688c.min.css">
       
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ecc896b0.min.css">
+      
       
 
     
@@ -51,7 +54,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber">
   
     
     
@@ -63,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#09-cap-analysis" class="md-skip">
+        <a href="#cap-theorem-analysis" class="md-skip">
           Skip to content
         </a>
       
@@ -104,6 +114,32 @@
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
     
     
       <div class="md-header__option">
@@ -628,20 +664,20 @@
                   
 
 
-<h1 id="09-cap-analysis">09 - CAP Analysis</h1>
+<h1 id="cap-theorem-analysis">CAP Theorem Analysis</h1>
 <p>The CAP theorem, also known as Brewer's theorem, is a fundamental concept in distributed systems that states that it is impossible for a distributed data store to simultaneously provide consistency (C), availability (A), and partition tolerance (P).</p>
 <ul>
 <li>
-<p>Consistency (C): Consistency refers to the requirement that all nodes in a distributed system have the same view of the data at the same time. In this system, achieving strict consistency across all nodes is not a priority. Instead, eventual consistency is guaranteed, which means that over time, all nodes will converge to the same state. Nodes periodically exchange information and update their routing tables to achieve this convergence.</p>
+<p>Consistency (C): Consistency refers to all nodes in a distributed system having the same view of the data at the same time. In this system, achieving strict consistency across all nodes is not a priority. Instead, eventual consistency is guaranteed, which means that over time, all nodes will converge to the same state. Nodes periodically exchange information and update their routing tables to achieve this convergence.</p>
 </li>
 <li>
-<p>Availability (A): Availability implies that the system remains responsive and accessible to users even in the presence of node failures or network partitions. The system prioritizes availability by ensuring that nodes can continue to operate and provide services even when some nodes are unavailable or unreachable. This is achieved through redundancy and data replication, where multiple copies of data are stored on different nodes.</p>
+<p>Availability (A): Availability implies that the system remains responsive and accessible to users even in the presence of node failures or network partitions. The system prioritizes availability by ensuring that nodes can continue to operate and provide services even when some nodes are unavailable or unreachable. This is achieved through data redundancy and replication, where multiple copies of data are stored on different nodes.</p>
 </li>
 <li>
-<p>Partition Tolerance (P): Partition tolerance refers to the system's ability to continue functioning and providing services despite network partitions or failures. The system is designed to be partition-tolerant, allowing the network to operate and maintain its functionality even when nodes are temporarily disconnected or isolated due to network issues.</p>
+<p>Partition Tolerance (P): Partition tolerance refers to the system's ability to continue functioning and providing services despite network partitions or failures. The system is designed to be partition-tolerant, allowing the network to continue operating and maintaining its functionality even when nodes are temporarily disconnected or isolated due to network issues.</p>
 </li>
 </ul>
-<p>All these points are analyzed assuming that the system's recovery capacity is not exceeded. If that threshold were to be surpassed, the system's availability would be affected. However, this would only occur in the case of simultaneous failures, as the system is capable of recovering from occasional failures without any issues.</p>
+<p>All these points are analyzed assuming that the system's recovery capacity is not exceeded. If this point were exceeded, the system's availability would start to be affected. However, this would only happen in the case of a certain number of simultaneous failures since the system can recover from eventual failures without any problems.</p>
 
 
 

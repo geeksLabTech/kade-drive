@@ -27,6 +27,9 @@
     
       <link rel="stylesheet" href="../../assets/stylesheets/main.26e3688c.min.css">
       
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ecc896b0.min.css">
+      
       
 
     
@@ -51,7 +54,14 @@
   </head>
   
   
-    <body dir="ltr">
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber">
   
     
     
@@ -104,6 +114,32 @@
         </div>
       </div>
     </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+            
+              <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Z"/></svg>
+              </label>
+            
+          
+            
+            
+            
+            <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="amber"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+            
+              <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7M9 21v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1m3-17a5 5 0 0 0-5 5c0 2.05 1.23 3.81 3 4.58V16h4v-2.42c1.77-.77 3-2.53 3-4.58a5 5 0 0 0-5-5Z"/></svg>
+              </label>
+            
+          
+        </form>
+      
     
     
       <div class="md-header__option">
@@ -496,7 +532,7 @@
       
         <li class="md-nav__item">
   <a href="#ejemplos-reales-del-uso-de-kademlia" class="md-nav__link">
-    Ejemplos reales del uso de kademlia
+    Ejemplos reales del uso de Kademlia
   </a>
   
 </li>
@@ -656,7 +692,7 @@
       
         <li class="md-nav__item">
   <a href="#ejemplos-reales-del-uso-de-kademlia" class="md-nav__link">
-    Ejemplos reales del uso de kademlia
+    Ejemplos reales del uso de Kademlia
   </a>
   
 </li>
@@ -677,32 +713,17 @@
 
 
 <h1 id="por-que-kademlia">¿Por qué Kademlia?</h1>
-<p>Una de las ventajas de Kademlia es la eficiencia de su algoritmo de enrutamiento, lo que permite una comunicaci´on eficiente entre los nodos de la red. El
-prefijo binario de los ID de kademlia hace que se env´ıe la informaci´on hacia el
-nodo m´as cercano, minimizando la cantidad de saltos entre nodos y la latencia
-de la red en general.
-Otra de las ventajas de este protocolo es la capacidad de manejar fallos de
-nodos y particionado de la red. El mecanismo de republicaci´on de Kademlia garantiza que se mantengan actualizadas las tablas de ruta de los nodos, manteniendo
-as´ı la conectividad en la red y evitando la p´erdida de datos dentro de lo posible.
-Los datos pueden estar dispersos en m´ultiples nodos de la red. Kademlia
-utiliza una tabla hash distribuida para mantener un registro de la ubicaci´on de
-los datos en la red. Esto permite que los nodos encuentren de manera eficiente la
-ubicaci´on de los datos que necesitan procesar o analizar. Adem´as, la arquitectura
-de Kademlia garantiza la tolerancia a fallos, lo que significa que si un nodo se
-desconecta o falla, los datos todav´ıa estar´an disponibles en otros nodos de la
-red. Esta capacidad de almacenamiento y recuperaci´on distribuida de datos de
-Kademlia es especialmente ´util para los sistemas que suelen manejar grandes
-vol´umenes de datos que necesitan ser procesados en paralelo. Al distribuir los
-datos entre varios nodos, se puede lograr un procesamiento y an´alisis m´as r´apido
-y eficiente. En comparacion con alternativas como Chord, kademlia es una mejor opcion para aplicaciones que requieran un enrutamiento eficiente y frecuentes actualizaciones de informacion el cual se cree que sera el principal caso de uso de este sistema posterior a su integracion con <a href="https://github.com/autogoal/autogoal">Autogoal</a></p>
-<h2 id="ejemplos-reales-del-uso-de-kademlia">Ejemplos reales del uso de kademlia</h2>
-<p>Entre las compa˜n´ıas que utilizan este protocolo se encuentran:
-- Storj: Plataforma de almacenamiento en la nube que en su versi´on 3
-utiliz´o una versi´on modificada del protocolo para la implementaci´on de un
-sistema con capacidades similares a un DNS
-- Protocolo Ethereum: El protocolo Ethereum utiliza una versi´on ligeramente modificada de kademlia, manteniendo el m´etodo de identificaci´on con XOR y los K-buckets
-- The InterplanetaryFileSystem: En la implementaci´on de IPFS, el NodeID contiene un mapa directo hacia los hash de archivos de IPFS. Cada nodo tambi´en almacena informaci´on sobre d´onde obtener el archivo o
-recurso.</p>
+<p>Una de las ventajas de Kademlia es la eficiencia de su algoritmo de enrutamiento, lo que permite una comunicación eficiente entre los nodos de la red. El prefijo binario de los ID de Kademlia hace que se envíe la información hacia el nodo más cercano, minimizando la cantidad de saltos entre nodos y la latencia de la red en general.</p>
+<p>Otra de las ventajas de este protocolo es la capacidad de manejar fallos de nodos y particionado de la red. El mecanismo de republicación de Kademlia garantiza que se mantengan actualizadas las tablas de ruta de los nodos, manteniendo así la conectividad en la red y evitando la pérdida de datos dentro de lo posible.</p>
+<p>Los datos pueden estar dispersos en múltiples nodos de la red. Kademlia utiliza una tabla hash distribuida para mantener un registro de la ubicación de los datos en la red. Esto permite que los nodos encuentren de manera eficiente la ubicación de los datos que necesitan procesar o analizar. Además, la arquitectura de Kademlia garantiza la tolerancia a fallos, lo que significa que si un nodo se desconecta o falla, los datos todavía estarán disponibles en otros nodos de la red.</p>
+<p>Esta capacidad de almacenamiento y recuperación distribuida de datos de Kademlia es especialmente útil para los sistemas que suelen manejar grandes volúmenes de datos que necesitan ser procesados en paralelo. Al distribuir los datos entre varios nodos, se puede lograr un procesamiento y análisis más rápido y eficiente. En comparación con alternativas como Chord, Kademlia es una mejor opción para aplicaciones que requieran un enrutamiento eficiente y frecuentes actualizaciones de información, lo cual se cree que será el principal caso de uso de este sistema posterior a su integración con <a href="https://github.com/autogoal/autogoal">Autogoal</a>.</p>
+<h2 id="ejemplos-reales-del-uso-de-kademlia">Ejemplos reales del uso de Kademlia</h2>
+<p>Entre las compañías que utilizan este protocolo se encuentran:</p>
+<ul>
+<li>Storj: Plataforma de almacenamiento en la nube que en su versión 3 utilizó una versión modificada del protocolo para la implementación de un sistema con capacidades similares a un DNS.</li>
+<li>Protocolo Ethereum: El protocolo Ethereum utiliza una versión ligeramente modificada de Kademlia, manteniendo el método de identificación con XOR y los K-buckets.</li>
+<li>The Interplanetary FileSystem: En la implementación de IPFS, el NodeID contiene un mapa directo hacia los hash de archivos de IPFS. Cada nodo también almacena información sobre dónde obtener el archivo o recurso.</li>
+</ul>
 
 
 
