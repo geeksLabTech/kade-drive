@@ -1,12 +1,7 @@
 # Persistencia
-La informaci´on por defecto est´a configurada para perdurar en el sistema por
-1 semana si no se accede a ella, con fines demostrativos se utiliza 2 min para
-evaluar el correcto funcionamiento del sistema, en producci´on se deber´a analizar
-la ventana tiempo con la que eliminar los datos, es importante se˜nalar que este
-sistema de ficheros est´a dise˜nado para la interacci´on de los distintos nodos de la
-red y no como un sistema de persistencia de informaci´on, por lo que se decide
-eliminar la informaci´on que no se est´e utilizando para garantizar que nueva
-informaci´on puede ser almacenada por los algoritmos que se est´en entrenando.
-Este mecanismo se hace efectivo utilizando un thread cuyo ´unico fin es verificar
-los timestamps de los ficheros y eliminar los que queden fuera de la ventana de
-tiempo predefinida.
+
+La información por defecto está configurada para perdurar en el sistema por 1 semana si no se accede a ella. Sin embargo, con fines demostrativos, se utiliza un tiempo de 2 minutos para evaluar el correcto funcionamiento del sistema. En producción, se deberá analizar el intervalo de tiempo para eliminar los datos de acuerdo a los requisitos del sistema.
+
+Es importante tener en cuenta que este sistema de ficheros está diseñado para la interacción de los distintos nodos de la red y no como un sistema de persistencia de información a largo plazo. Por lo tanto, se decide eliminar la información que no se esté utilizando para garantizar que nuevos datos puedan ser almacenados por los algoritmos de entrenamiento.
+
+Este mecanismo de eliminación se hace efectivo mediante un hilo (thread) cuyo único propósito es verificar los timestamps de los ficheros y eliminar aquellos que queden fuera de la ventana de tiempo predefinida.

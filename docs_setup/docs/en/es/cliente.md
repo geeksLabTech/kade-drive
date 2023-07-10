@@ -2,15 +2,7 @@
 
 Se desarrolló un cliente que cuenta con las siguientes características:
 
-- Puede recibir puntos de entrada a la red, conocidos como bootstrap nodes
-para una conexi´on directa con el sistema de ficheros
-- Posee un mecanismo de auto-descubrimiento recibiendo broadcast por todas las NICs de la pc, si no recibe ning´un bootstrap node o no es capaz de
-conectar con ninguno puede usar esta funcionalidad para encontrar alg´un
-nodo autom´aticamente.
-- Tiene la capacidad de al conectar con alg´un nodo descubir otros nodos a
-partir de los vecinos de este de manera autom´atica.
-- Maneja errores relacionados con inestabilidad de la red o ca´ıdas inesperadas de un nodo, permitiendo que el usuario establezca el n´umero de
-reintentos que se debe hacer cuando se pierde la conexi´on con un nodo,
-posee un cola con los nodos conocidos que al agotarse el n´umero de reintentos de conexi´on con un nodo, este es removido de la cola y se pasa
-al siguiente, es posible especificar tambi´en si se quiere que se utilice el
-mecanismo de auto-descubribimiento al quedarse la cola vac´ıa.
+- Puede recibir puntos de entrada a la red, conocidos como **bootstrap nodes**, para establecer una conexión directa con el sistema de archivos.
+- Posee un mecanismo de autodescubrimiento que recibe mensajes de difusión (broadcast) en todas las NICs de la PC. Si no recibe ningún **bootstrap node** o no puede establecer conexión con ninguno, puede utilizar esta funcionalidad para encontrar automáticamente algún nodo.
+- Tiene la capacidad de descubrir otros nodos automáticamente al conectarse con un nodo existente y obtener información sobre sus vecinos.
+- Maneja errores relacionados con la inestabilidad de la red o caídas inesperadas de un nodo. Permite al usuario establecer el número de reintentos cuando se pierde la conexión con un nodo. Además, posee una cola con los nodos conocidos. Cuando se agotan los reintentos de conexión con un nodo, se elimina de la cola y se pasa al siguiente. También es posible especificar si se desea utilizar el mecanismo de autodescubrimiento cuando la cola está vacía.

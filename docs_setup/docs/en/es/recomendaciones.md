@@ -1,16 +1,9 @@
 # Recomendaciones
 
-- Dada la ca´ıda de un nodo de la red, mantener de alguna manera el id del
-nodo anterior para si su informaci´on se mantuviese a´un en disco y actualizada
-cargar con este id puede ser m´as eficiente que iniciar como un nodo nuevo y
-comanzar nuevamente el proceso de balanceo de la red.
-- En la implementaci´on original de kademlia, la comunicaci´on entre nodos
-se realiza mediante `UDP`. Dada la limitaci´on de `UDP` para manejar grandes
-cantidades de informaci´on se cambi´o a `TCP`, pero esta es menos eficiente para
-las tareas que no sean transferencia de datos de almacenamiento. Implementar
-un doble protocolo de comunicaci´on entre los nodos deber´ıa representar una
-mejor´ıa en el rendimiento de la red.
-- Cambiar el algoritmo de hash utilizado de sha1 a sha256 dado q sha1 ya no es considerado
-seguro y sus vulnerabilidades hacen mas facil a los atacantes realizar actividades maliciosas
-- Implementar un mecanismo de testing automatico distribuido utilizando tecnicas como `chaos testing`
-y `swarm testing`
+- Dada la caída de un nodo de la red, mantener de alguna manera el ID del nodo anterior. Si su información aún se mantiene en disco y actualizada, cargar con este ID puede ser más eficiente que iniciar como un nodo nuevo y comenzar nuevamente el proceso de balanceo de la red.
+
+- En la implementación original de Kademlia, la comunicación entre nodos se realiza mediante UDP. Sin embargo, debido a las limitaciones de UDP para manejar grandes cantidades de información, se cambió a TCP. No obstante, TCP es menos eficiente para tareas que no sean transferencia de datos de almacenamiento. Implementar un doble protocolo de comunicación entre los nodos debería representar una mejora en el rendimiento de la red.
+
+- Cambiar el algoritmo de hash utilizado de SHA1 a SHA256, dado que SHA1 ya no es considerado seguro y sus vulnerabilidades facilitan actividades maliciosas.
+
+- Implementar un mecanismo de testing automático distribuido utilizando técnicas como "chaos testing" y "swarm testing".

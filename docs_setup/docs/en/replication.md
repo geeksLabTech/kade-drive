@@ -1,7 +1,6 @@
-# 08 - Replication
+# Replication
 
-The implemented replication algorithm uses a Thread that runs at a specified time interval (i) and performs the following steps:
+For the implemented replication algorithm, a thread is used to execute the following steps at a given time interval (i):
 
-1. Iterate through all the keys in the storage whose timestamp is greater than a given time (t). Republish the keys that have the "republish" flag set to True.
-
-2. Iterate through all the keys in the storage and check how many replicas of each key can be found in the network. If the number of replicas is below the specified replication factor, the node republishes those keys.
+- Iterate through all keys in the storage whose timestamp is greater than a specified time (t). If the keys have the `republish` property set to True, the node republishes them.
+- Iterate through all keys in the storage and check how many replicas can be found in the network for each key. If the number of replicas is below the specified replication factor, the node republishes them.

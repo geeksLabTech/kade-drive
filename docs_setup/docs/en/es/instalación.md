@@ -1,5 +1,7 @@
 # Instalación
 
+Para instalar la biblioteca `kade-drive`, puedes ejecutar el siguiente comando en la línea de comandos:
+
 ```console
 pip install kade-drive
 ```
