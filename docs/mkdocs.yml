@@ -1,0 +1,64 @@
+site_name: Kade Drive DHT
+site_dir: docs/site
+site_url: https://geekslabtech.github.io/kade-drive/
+theme:
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+
+  highlightjs: true
+  name: material
+docs_dir: docs/docs/en
+
+plugins:
+  - search
+
+extra:
+  alternate:
+    - name: English
+      link: index.html
+      lang: en
+    - name: Español
+      link: es/index.html
+      lang: es
+    # Add more languages as needed
+
+# General configuration
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+nav:
+  - Introduction: index.md
+  - Installation: installation-setup.md
+  - Examples: examples.md
+  - Why Kademlia?: why-kademlia.md
+  - Description: description.md
+  - Persistence: persistence.md
+  - Client: client.md
+  - Autodiscovery: autodiscovery.md
+  - Replication: replication.md
+  - Fault Tolerance: fault-tolerance.md
+  - CAP Theorem Analysis: cap-analysis.md
+  - Recommendations: recommendations.md
+  - ES: 
+    - introduccion: es/index.md
+    - instalación: es/instalación.md
+    - ejemplos: es/ejemplos.md
+    - por-que-kademlia: es/por-que-kademlia.md
+    - descripcion: es/descripcion.md
+    - persistencia: es/persistencia.md
+    - cliente: es/cliente.md
+    - autodescubrimiento: es/autodescubrimiento.md
+    - replicacion: es/replicacion.md
+    - tolerancia-fallas: es/tolerancia-fallas.md
+    - analisis-cap: es/analisis-cap.md
+    - recomendaciones: es/recomendaciones.md
+
+
