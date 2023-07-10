@@ -1,5 +1,5 @@
 site_name: Kade Drive DHT
-site_dir: docs/site
+site_dir: docs
 site_url: https://geekslabtech.github.io/kade-drive/
 theme:
   features:
@@ -8,7 +8,7 @@ theme:
 
   highlightjs: true
   name: material
-docs_dir: docs/docs/en
+docs_dir: docs_setup/docs/en
 
 plugins:
   - search
