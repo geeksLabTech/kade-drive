@@ -1,3 +1,5 @@
+# 09 - CAP Analysis
+
 The CAP theorem, also known as Brewer's theorem, is a fundamental concept in distributed systems that states that it is impossible for a distributed data store to simultaneously provide consistency (C), availability (A), and partition tolerance (P).
 
 - Consistency (C): Consistency refers to the requirement that all nodes in a distributed system have the same view of the data at the same time. In this system, achieving strict consistency across all nodes is not a priority. Instead, eventual consistency is guaranteed, which means that over time, all nodes will converge to the same state. Nodes periodically exchange information and update their routing tables to achieve this convergence.

@@ -1,0 +1,44 @@
+site_name: Kade Drive DHT
+docs_dir: ../../docs/en/es
+site_dir: ../../generated/es
+
+theme:
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+  highlightjs: true
+  hljs_languages:
+        - Python
+        - Console
+  language: es
+  custom_dir: ../../overrides
+  favicon: assets/images/favicon.ico
+  name: material
+
+extra:
+  alternate:
+    - name: English
+      link: docs/docs/en/index.md
+      lang: en
+    - name: Español
+      link: docs/docs/es/index.md
+      lang: es
+    # Add more lang
+plugins:
+  - search:                                         
+      lang: es
+
+
+nav:
+  - 1 - introduccion: index.md
+  - 1.1 - instalación: instalación.md
+  - 1.2 - ejemplos: ejemplos.md
+  - 2 - por-que-kademlia: por-que-kademlia.md
+  - 3 - descripcion: descripcion.md
+  - 4 - persistencia: persistencia.md
+  - 5 - cliente: cliente.md
+  - 6 - autodescubrimiento: autodescubrimiento.md
+  - 7 - replicacion: replicacion.md
+  - 8 - tolerancia-fallas: tolerancia-fallas.md
+  - 9 - analisis-cap: analisis-cap.md
+  - 10 - recomendaciones: recomendaciones.md

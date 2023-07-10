@@ -1,4 +1,4 @@
-# Why Kademlia?
+# 02 - Why Kademlia?
 
 One of the advantages of Kademlia is the efficiency of its routing algorithm, which allows for efficient communication between nodes in the network. The binary prefix of Kademlia IDs ensures that information is sent to the closest node, minimizing the number of hops and network latency overall.
 

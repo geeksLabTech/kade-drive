@@ -1,4 +1,4 @@
-# Recommendations
+# 10 - Recommendations
 
 - In the event of a node failure, it is recommended to keep track of the ID of the previous node. If its information is still available on disk and up to date, loading it with this ID can be more efficient than starting as a new node and going through the network rebalancing process again.
 

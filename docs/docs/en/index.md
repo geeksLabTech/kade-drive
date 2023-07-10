@@ -1,4 +1,4 @@
-# Introduction
+# 01 - Introduction
 
 This project builds upon the foundation of Kademlia. Kademlia is a distributed hash table that enables millions of computers to self-organize into a network, communicate with each other, and share resources.
 

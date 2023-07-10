@@ -1,3 +1,3 @@
-# Persistence
+# 04 - Persistence
 
 By default, the information in the system is configured to persist for 1 week if it is not accessed. For demonstration purposes, a 2-minute window is used to evaluate the correct functioning of the system. In a production environment, the time window for data deletion should be carefully analyzed. It is important to note that this file system is designed for interaction among the different nodes in the network and not as a persistent storage system. Therefore, information that is not being used is periodically deleted to ensure that new information can be stored for training algorithms. This mechanism is implemented through a dedicated thread that checks the timestamps of the files and deletes those that fall outside the predefined time window.

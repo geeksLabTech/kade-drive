@@ -1,4 +1,4 @@
-# Replication
+# 08 - Replication
 
 The implemented replication algorithm uses a Thread that runs at a specified time interval (i) and performs the following steps:
 

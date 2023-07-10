@@ -1,3 +1,5 @@
+# 03 - Description
+
 The system follows the approach of many distributed hash table systems, where keys are stored as 160-bit values. Each participating computer in the network has an ID, and the (key, value) pairs are stored on nodes with "close" IDs, using the XOR metric proposed by Kademlia as the distance metric.
 
 Similar to Kademlia, nodes are treated as leaves in a binary tree, where the position of each node is determined by the "shortest unique prefix" of its ID. These nodes store contact information for each other to route query messages.

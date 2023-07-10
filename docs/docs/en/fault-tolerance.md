@@ -1,4 +1,4 @@
-# Fault Tolerance
+# 08 - Fault Tolerance
 
 Nodes maintain information about other nodes in the network by storing them in their routing table. Each node has a list of "k-buckets" that contain the contact details of other nodes in the network, classified based on their proximity in the ID space.
 
