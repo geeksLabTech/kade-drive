@@ -37,4 +37,4 @@ COPY poetry.lock /home/app/
 
 RUN poetry install --no-interaction
 
-CMD ["poetry", "run", "server"]
+# CMD ["poetry", "run", "server"]

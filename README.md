@@ -24,6 +24,12 @@ Distributed file system based on <https://github.com/bmuller/kademlia> for the f
 - Run `poetry run server` in one pc or several pc in a local network
 - Run `poetry run cli` in any pc of the network and start playing with the system
 
+### Usage with docker
+
+- Build the image with `make docker`
+- Run `make shell` to start the Docker container with an interactive Bash shell
+- Now you can run `poetry run server` to start a server or `poetry run cli`
+
 ## Installation
 
 ```console
@@ -47,8 +53,10 @@ from kade_drive.cli import ClientSession
 
 client = ClientSession()
 client.connect()
-client.put(4, 5)
-value = client.get(4)
+response, _ = client.put(4, 5)
+# If true, it means that the value was setted correctly, false otherwise
+assert response is True
+value, _ = client.get(4)
 assert value == 5
 ```
 

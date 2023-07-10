@@ -36,7 +36,7 @@ class ClientSession:
         use_broadcast_if_needed: bool = False,
         update_boostrap_nodes: bool = True,
         attempts_to_reconnect=2,
-    ):
+    ) -> bool:
         self.connection, self.bootstrap_nodes = self._ensure_connection(
             self.bootstrap_nodes,
             self.connection,
@@ -126,7 +126,7 @@ class ClientSession:
 
         return nodes_to_try, remaining_attempts_to_reconnect
 
-    def get(self, key, apply_hash_to_key=True):
+    def get(self, key, apply_hash_to_key=True) -> tuple:
         if not self.connection:
             logger.error("No connection stablished to do get")
             return None, None
@@ -196,7 +196,7 @@ class ClientSession:
             logger.error(e)
             return None, self.connection
 
-    def put(self, key, value: bytes, apply_hash_to_key=True):
+    def put(self, key, value: bytes, apply_hash_to_key=True) -> tuple:
         if self.connection:
             try:
                 self.connection.root.upload_file(
