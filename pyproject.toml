@@ -13,10 +13,15 @@ rpyc="5.3.1"
 typer="0.9.0"
 message-system = "^0.1.2"
 
+[tool.poetry.group.tests.dependencies]
+pytest="^7.2.0"
+pandas="^1.5.3"
+scikit-learn="^1.0"
 
 [tool.poetry.scripts]
 server = 'kade_drive.server:start'
 cli = 'kade_drive.cli:start_cli'
+test_store ='kade_drive.test_store_file:test_store_df'
 
 [build-system]
 requires = ["poetry-core"]

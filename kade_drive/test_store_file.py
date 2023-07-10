@@ -24,10 +24,10 @@ def test_store_df():
     print()
     print()
     sleep(5)
-    value_getted = client_session.get("dataset_diabetes")
+    value_getted, conn = client_session.get("dataset_diabetes")
 
     print("value getted ", value_getted)
+    print('original value', X)
+    assert value_getted is not None
     assert X.equals(value_getted)
 
-
-test_store_df()
