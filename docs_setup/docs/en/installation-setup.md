@@ -4,6 +4,7 @@ To install the `kade-drive` library, you can execute the following command in th
 
 ```console
 pip install kade-drive
+```
 
 ## Server
 
@@ -12,4 +13,3 @@ from kade_drive.server import start_server
 
 start_server()
 ```
-

@@ -1,14 +1,28 @@
 site_name: Kade Drive DHT
-site_dir: ./
+site_dir: docs
 site_url: https://geekslabtech.github.io/kade-drive/
 theme:
   features:
     - navigation.instant
     - navigation.instant.prefetch
-
+  palette:
+  - media: '(prefers-color-scheme: light)'
+    scheme: default
+    primary: teal
+    accent: amber
+    toggle:
+      icon: material/lightbulb
+      name: Switch to dark mode
+  - media: '(prefers-color-scheme: dark)'
+    scheme: slate
+    primary: teal
+    accent: amber
+    toggle:
+      icon: material/lightbulb-outline
+      name: Switch to light mode
   highlightjs: true
   name: material
-docs_dir: ../docs_setup/docs/en
+docs_dir: docs_setup/docs/en
 
 plugins:
   - search
