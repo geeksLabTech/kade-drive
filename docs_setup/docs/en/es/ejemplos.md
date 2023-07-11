@@ -9,8 +9,8 @@ from kade_drive.cli import ClientSession
 
 client = ClientSession()
 client.connect()
-client.put(4, 5)
-value = client.get(4)
+response, _ = client.put(4, 5)
+value, _ = client.get(4)
 assert value == 5
 ```
 
@@ -34,10 +34,10 @@ assert value == 5
 
     client_session.connect(use_broadcast_if_needed=True)
 
-    client_session.put("dataset_diabetes", X_pickle)
+    response, _ = client_session.put("dataset_diabetes", X_pickle)
 
     sleep(5)
-    value_getted = client_session.get("dataset_diabetes")
+    value_getted, _ = client_session.get("dataset_diabetes")
 
     assert X.equals(value_getted)
 
