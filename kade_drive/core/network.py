@@ -156,7 +156,7 @@ class Server:
         return chunks
 
     @staticmethod
-    def handle_empty_neighbors():
+    def _handle_empty_neighbors(dkey, metadata, value, exclude_current):
         logger.debug("There are no known neighbors to set key %s", dkey.hex())
 
         if not exclude_current:
@@ -183,13 +183,13 @@ class Server:
         logger.info(f"nearest in set_digest is {nearest}")
 
         if not nearest or len(nearest) == 0:
-            return Server.handle_empty_neighbors()
+            return Server._handle_empty_neighbors(dkey, metadata, value, exclude_current)
         spider = NodeSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         nodes = spider.find()
         logger.debug("setting '%s' on %s", dkey, list(map(str, nodes)))
 
         if not nodes or len(nodes) == 0:
-            return Server.handle_empty_neighbors()
+            return Server._handle_empty_neighbors(dkey, metadata, value, exclude_current)
         
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
