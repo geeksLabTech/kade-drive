@@ -114,7 +114,7 @@ class TableTraverser:
         self.current_nodes = table.buckets[index].get_nodes()
         logger.debug("current nodes %s", self.current_nodes)
         self.left_buckets = table.buckets[:index]
-        self.right_buckets = table.buckets[(index + 1) :]
+        self.right_buckets = table.buckets[(index + 1):]
         self.left = True
 
     def __iter__(self):
@@ -190,7 +190,8 @@ class RoutingTable:
         index = self.get_bucket_for(node)
         bucket = self.buckets[index]
 
-        logger.debug(f"previous nodes in bucket of index {index}, {bucket.get_nodes()}")
+        logger.debug(
+            f"previous nodes in bucket of index {index}, {bucket.get_nodes()}")
         # this will succeed unless the bucket is full
         if bucket.add_node(node):
             logger.debug(f"Bucket nodes:  {bucket.get_nodes()}")
@@ -204,6 +205,7 @@ class RoutingTable:
         else:
             node_to_ask = bucket.head()
             addr = (node_to_ask.ip, node_to_ask.port)
+            logger.critical(f"node_to_ask {node_to_ask}, addr {addr}")
             with ServerSession(addr[0], addr[1]) as conn:
                 FileSystemProtocol.call_ping(conn, node_to_ask)
 
@@ -242,7 +244,8 @@ class RoutingTable:
                 logger.debug(
                     f"Comparing {neighbor.ip} {neighbor.port} and {exclude.ip} {exclude.port}"
                 )
-            not_excluded = exclude is None or not neighbor.same_home_as(exclude)
+            not_excluded = exclude is None or not neighbor.same_home_as(
+                exclude)
             logger.debug(f"not excluded {not_excluded}")
             if neighbor.id != node.id and not_excluded:
                 heapq.heappush(nodes, (node.distance_to(neighbor), neighbor))

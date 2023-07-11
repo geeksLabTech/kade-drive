@@ -135,6 +135,7 @@ class FileSystemProtocol:
         """
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
+        logge.info(f"calling ping {address}")
         response = None
 
         if conn:
@@ -165,9 +166,9 @@ class FileSystemProtocol:
             return
 
         # TODO uncomment this
-        if node == FileSystemProtocol.source_node:
+        if (node.ip, node.port) == (FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port):
             logger.critical("called wellcome if new in self")
-            # return
+            return
         # add node to table
 
         logger.debug("Adding new node to contacts")
@@ -175,6 +176,9 @@ class FileSystemProtocol:
 
         logger.info(f"never seen {node} before, adding to router")
         # iterate over storage
+
+        logger.info(f"Adding new Node to contacts {FileSystemProtocol.source_node}")
+
         for key, value, is_metadata in FileSystemProtocol.storage:
             logger.debug("entry for")
             # Create fictional node to calculate distance
