@@ -156,7 +156,7 @@ class Server:
         return chunks
 
     @staticmethod
-    def set_digest(dkey: bytes, value, metadata=True, exclude_current=False, local_last_write = None):
+    def set_digest(dkey: bytes, value, metadata=True, exclude_current=False, local_last_write=None):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
@@ -196,7 +196,7 @@ class Server:
             with ServerSession(address[0], address[1]) as conn:
                 response = FileSystemProtocol.call_check_if_new_value_exists(
                     conn, n, dkey)
-                contains, date = None, None 
+                contains, date = None, None
                 if response is not None:
                     contains, date = response
                 if local_last_write is None or date is None or date < local_last_write:
@@ -381,7 +381,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            FileSystemProtocol.welcome_if_new(conn, source)
+            FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         if Server.storage.contains(key, False):
             return {"value": (Server.node.ip, Server.node.port)}
@@ -417,7 +417,7 @@ class ServerService(Service):
 
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            FileSystemProtocol.welcome_if_new(conn, source)
+            FileSystemProtocol.wellcome_if_new(conn, source)
 
         logger.debug(
             f"got a store request from %s, storing '%s'='%s' {sender}, {key}, {value}"
@@ -438,7 +438,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            FileSystemProtocol.welcome_if_new(conn, source)
+            FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         if not FileSystemProtocol.storage.contains(key, metadata):
             logger.debug(
@@ -467,7 +467,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            FileSystemProtocol.welcome_if_new(conn, source)
+            FileSystemProtocol.wellcome_if_new(conn, source)
         logger.debug("return ping")
         return FileSystemProtocol.source_node.id
 
@@ -482,7 +482,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            FileSystemProtocol.welcome_if_new(conn, source)
+            FileSystemProtocol.wellcome_if_new(conn, source)
         # create a fictional node to perform the search
         logger.debug(f"fictional key {key}")
         logger.debug(f"SEnder [0] Sender [1] {source.ip}, {source.port}")
@@ -499,7 +499,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            FileSystemProtocol.welcome_if_new(conn, source)
+            FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         return FileSystemProtocol.storage.contains(key, is_metadata)
 
@@ -509,7 +509,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            FileSystemProtocol.welcome_if_new(conn, source)
+            FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         return FileSystemProtocol.storage.check_if_new_value_exists(key)
 

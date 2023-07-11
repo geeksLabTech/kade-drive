@@ -65,7 +65,7 @@ class FileSystemProtocol:
             )
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
-    
+
     @staticmethod
     def call_check_if_new_value_exists(conn, node_to_ask, key: bytes, is_metadata=True):
         response = None
@@ -138,14 +138,15 @@ class FileSystemProtocol:
         response = None
 
         if conn:
-            response = conn.rpc_ping(address, FileSystemProtocol.source_node.id)
+            response = conn.rpc_ping(
+                address, FileSystemProtocol.source_node.id)
 
         logger.debug(f"Got Response {response}")
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def welcome_if_new(conn, node: Node):
+    def wellcome_if_new(conn, node: Node):
         """
         Given a new node, send it all the keys/values it should be storing,
         then add it to the routing table.
@@ -190,9 +191,10 @@ class FileSystemProtocol:
             # if not neighbors, store data in the node
             logger.debug(f"neighbors in for {neighbors}")
             if not neighbors or (new_node_close and this_closest):
-                logger.debug("calling call_store in welcome_if_new")
+                logger.debug("calling call_store in wellcome_if_new")
                 with ServerSession(node.ip, node.port) as conn:
-                    FileSystemProtocol.call_store(conn, node, key, value, is_metadata)
+                    FileSystemProtocol.call_store(
+                        conn, node, key, value, is_metadata)
 
     @staticmethod
     def process_response(conn, response, node: Node):
@@ -207,7 +209,7 @@ class FileSystemProtocol:
             FileSystemProtocol.router.remove_contact(node)
             return response
 
-        FileSystemProtocol.welcome_if_new(conn, node)
+        FileSystemProtocol.wellcome_if_new(conn, node)
         logger.debug(f"got successful response from {node}")
         logger.debug(response)
         return response
