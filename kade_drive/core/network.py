@@ -90,7 +90,8 @@ class Server:
                     ServerService,
                     port=port,
                     hostname=interface,
-                    protocol_config={"allow_public_attrs": True, "allow_pickle": True},
+                    protocol_config={
+                        "allow_public_attrs": True, "allow_pickle": True},
                 )
                 t.start()
             except Exception as e:
@@ -106,10 +107,12 @@ class Server:
                    addresses are acceptable - hostnames will cause an error.
         """
 
-        logger.debug(f"Attempting to bootstrap node with {len(addrs)} initial contacts")
+        logger.debug(
+            f"Attempting to bootstrap node with {len(addrs)} initial contacts")
         cos = list(map(Server.bootstrap_node, addrs))
         nodes = [node for node in cos if node is not None]
-        spider = NodeSpiderCrawl(Server.node, nodes, Server.ksize, Server.alpha)
+        spider = NodeSpiderCrawl(
+            Server.node, nodes, Server.ksize, Server.alpha)
         res = spider.find()
         logger.debug("results of spider find: %s", res)
 
@@ -124,7 +127,8 @@ class Server:
                     (Server.node.ip, Server.node.port), Server.node.id
                 )
                 node = Node(response, addr[0], addr[1]) if response else None
-                response = FileSystemProtocol.process_response(conn, response, node)
+                response = FileSystemProtocol.process_response(
+                    conn, response, node)
 
                 return node
 
@@ -146,10 +150,23 @@ class Server:
                 chunks.append(data[0:chunk_size])
                 last_position = chunk_size
             else:
-                chunks.append(data[last_position : last_position + chunk_size])
+                chunks.append(data[last_position: last_position + chunk_size])
                 last_position = last_position + chunk_size
             count += 1
         return chunks
+
+    @staticmethod
+    def handle_empty_neighbors():
+        logger.debug("There are no known neighbors to set key %s", dkey.hex())
+
+        if not exclude_current:
+            logger.info("storing in current server")
+            if metadata:
+                Server.storage.set_metadata(dkey, value, False)
+            else:
+                Server.storage.set_value(dkey, value, False)
+
+        return True
 
     @staticmethod
     def set_digest(
@@ -163,23 +180,17 @@ class Server:
         node = Node(dkey)
         assert node is not None
         nearest = FileSystemProtocol.router.find_neighbors(node)
-        logger.debug(f"nearest in set_digest is {nearest}")
+        logger.info(f"nearest in set_digest is {nearest}")
+
         if not nearest or len(nearest) == 0:
-            logger.debug("There are no known neighbors to set key %s", dkey.hex())
-
-            if not exclude_current:
-                logger.info("storing in current server")
-                if metadata:
-                    Server.storage.set_metadata(dkey, value, False)
-                else:
-                    Server.storage.set_value(dkey, value, False)
-
-            return True
-
+            return Server.handle_empty_neighbors()
         spider = NodeSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         nodes = spider.find()
         logger.debug("setting '%s' on %s", dkey, list(map(str, nodes)))
 
+        if not nodes or len(nodes) == 0:
+            return Server.handle_empty_neighbors()
+        
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest and not exclude_current:
@@ -216,7 +227,8 @@ class Server:
         nearest = FileSystemProtocol.router.find_neighbors(
             Server.node, Server.alpha, exclude=Server.node
         )
-        spider = NodeSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
+        spider = NodeSpiderCrawl(Server.node, nearest,
+                                 Server.ksize, Server.alpha)
 
         nodes = spider.find()
 
@@ -225,7 +237,8 @@ class Server:
         for n in nodes:
             with ServerSession(n.ip, n.port) as conn:
                 for k, is_metadata in keys_to_find:
-                    contains = FileSystemProtocol.call_contains(conn, n, k, is_metadata)
+                    contains = FileSystemProtocol.call_contains(
+                        conn, n, k, is_metadata)
                     if contains:
                         if (k, is_metadata) not in keys_dict:
                             keys_dict[(k, is_metadata)] = 0
@@ -251,7 +264,8 @@ class Server:
                     nearest = FileSystemProtocol.router.find_neighbors(
                         node, Server.alpha
                     )
-                    spider = NodeSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
+                    spider = NodeSpiderCrawl(
+                        node, nearest, Server.ksize, Server.alpha)
 
                     results.append(spider.find())
 
@@ -264,7 +278,8 @@ class Server:
                     is_metadata,
                     last_write,
                 ) in Server.storage.iter_older_than(5):
-                    Server.set_digest(key, value, is_metadata, exclude_current=True)
+                    Server.set_digest(key, value, is_metadata,
+                                      exclude_current=True)
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 
@@ -365,7 +380,8 @@ class ServerService(Service):
             return None
 
         logger.debug("Initiating ChunkLocationSpiderCrawl")
-        spider = ChunkLocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
+        spider = ChunkLocationSpiderCrawl(
+            node, nearest, Server.ksize, Server.alpha)
         results = spider.find()
         logger.debug(f"results of ChunkLocationSpider {results}")
         return results
@@ -424,7 +440,8 @@ class ServerService(Service):
         )
         # store values and report success
         if metadata:
-            FileSystemProtocol.storage.set_metadata(key, value, republish_data=False)
+            FileSystemProtocol.storage.set_metadata(
+                key, value, republish_data=False)
         else:
             FileSystemProtocol.storage.set_value(key, value, metadata=False)
         return True
@@ -441,7 +458,8 @@ class ServerService(Service):
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         if not FileSystemProtocol.storage.contains(key, metadata):
-            logger.debug(f"Value with key {key} not found, calling rpc_find_node")
+            logger.debug(
+                f"Value with key {key} not found, calling rpc_find_node")
             logger.debug(f"type of key is {type(key)}")
 
             return self.rpc_find_node(sender, nodeid, key)
@@ -461,7 +479,8 @@ class ServerService(Service):
         Returns:
             bytes: node id if alive, None if not
         """
-        logger.debug(f"rpc ping called from {nodeid}, {sender[0]}, {sender[1]}")
+        logger.debug(
+            f"rpc ping called from {nodeid}, {sender[0]}, {sender[1]}")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
@@ -473,7 +492,8 @@ class ServerService(Service):
 
     @rpyc.exposed
     def rpc_find_node(self, sender, nodeid: bytes, key: bytes):
-        logger.debug(f"finding neighbors of {int(nodeid.hex(), 16)} in local table")
+        logger.debug(
+            f"finding neighbors of {int(nodeid.hex(), 16)} in local table")
 
         source = Node(nodeid, sender[0], sender[1])
 
@@ -488,7 +508,8 @@ class ServerService(Service):
         logger.debug(f"SEnder [0] Sender [1] {source.ip}, {source.port}")
         node = Node(key)
         # ask for the neighbors of the node
-        neighbors = FileSystemProtocol.router.find_neighbors(node, exclude=source)
+        neighbors = FileSystemProtocol.router.find_neighbors(
+            node, exclude=source)
         logger.debug(f"neighbors of find_node: { neighbors}")
         return list(map(tuple, neighbors))
 
