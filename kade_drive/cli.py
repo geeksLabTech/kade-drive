@@ -31,7 +31,7 @@ exit - * - close the client
             continue
         args = command[1:] if len(command) >= 1 else []
         func = getattr(ClientSession, command[0], None)
-        if func is None or not callable(func) or not func in ['get', 'put'] :
+        if func is None or not callable(func) :
             print(
                 f'command {command[0]} not found, use "help" to see supported commands'
             )
