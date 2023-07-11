@@ -8,20 +8,20 @@
       
       
       
-        <link rel="canonical" href="https://geekslabtech.github.io/kade-drive/recommendations/">
+        <link rel="canonical" href="https://geekslabtech.github.io/kade-drive/other-dependencies/">
       
       
-        <link rel="prev" href="../other-dependencies/">
+        <link rel="prev" href="../cap-analysis/">
       
       
-        <link rel="next" href="../es/">
+        <link rel="next" href="../recommendations/">
       
       <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
-        <title>Recommendations - Kade Drive DHT</title>
+        <title>Other Dependencies - Kade Drive DHT</title>
       
     
     
@@ -73,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#recommendations" class="md-skip">
+        <a href="#messagesystem-dependency" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Recommendations
+              Other Dependencies
             
           </span>
         </div>
@@ -409,11 +409,55 @@
 
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../other-dependencies/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Other Dependencies
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Other Dependencies
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#messagesystem-dependency" class="md-nav__link">
+    MessageSystem Dependency
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -424,21 +468,11 @@
 
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../recommendations/" class="md-nav__link">
         Recommendations
       </a>
-      
     </li>
   
 
@@ -677,8 +711,28 @@
   
   
   
-    
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#messagesystem-dependency" class="md-nav__link">
+    MessageSystem Dependency
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    Usage
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -693,21 +747,16 @@
                   
 
 
-<h1 id="recommendations">Recommendations</h1>
-<ul>
-<li>
-<p>In the event of a node failure in the network, it is recommended to somehow keep the ID of the previous node. If its information is still stored and updated on disk, loading with this ID can be more efficient than starting as a new node and going through the network rebalancing process again.</p>
-</li>
-<li>
-<p>In the original implementation of Kademlia, node communication was done using UDP. However, due to UDP's limitations in handling large amounts of information, it was changed to TCP. Nevertheless, TCP is less efficient for tasks other than storage data transfer. Implementing a dual communication protocol between nodes should improve network performance.</p>
-</li>
-<li>
-<p>Consider changing the hash algorithm used from SHA1 to SHA256, as SHA1 is no longer considered secure and its vulnerabilities facilitate malicious activities.</p>
-</li>
-<li>
-<p>Implement a distributed automatic testing mechanism using techniques like "chaos testing" and "swarm testing".</p>
-</li>
-</ul>
+  <h1>Other Dependencies</h1>
+
+<h2 id="messagesystem-dependency">MessageSystem Dependency</h2>
+<p><code>kade_drive</code> relies on the <code>MessageSystem</code> package as a side dependency for communication between new nodes and the network. <code>MessageSystem</code> provides a messaging system using multicast and broadcast, allowing for efficient message exchange.</p>
+<p>The <code>MessageSystem</code> package is a separate Python package that needs to be installed as a prerequisite for using <code>kade_drive</code>. It handles the low-level communication aspects required for the functioning of <code>kade_drive</code>.</p>
+<p>To install <code>MessageSystem</code>, you can use pip. Run the following command in your terminal:</p>
+<div class="language-console highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="go">pip install message-system</span>
+</span></code></pre></div>
+<h2 id="usage">Usage</h2>
+<p>Once MessageSystem is installed, you can use kade_drive as described in this doc. It will automatically utilize the <code>MessageSystem</code> package for autodiscovery.</p>
 
 
 

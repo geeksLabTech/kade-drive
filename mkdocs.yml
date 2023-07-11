@@ -60,6 +60,7 @@ nav:
   - Replication: replication.md
   - Fault Tolerance: fault-tolerance.md
   - CAP Theorem Analysis: cap-analysis.md
+  - Other Dependencies: other-dependencies.md
   - Recommendations: recommendations.md
   - ES: 
     - introduccion: es/index.md
@@ -73,6 +74,7 @@ nav:
     - replicacion: es/replicacion.md
     - tolerancia-fallas: es/tolerancia-fallas.md
     - analisis-cap: es/analisis-cap.md
+    - otras-dependencias: es/otras-dependencias.md
     - recomendaciones: es/recomendaciones.md
 
 

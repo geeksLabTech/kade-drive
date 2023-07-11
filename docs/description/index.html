@@ -73,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#client" class="md-skip">
+        <a href="#system-description" class="md-skip">
           Skip to content
         </a>
       
@@ -421,6 +421,21 @@
   
   
     <li class="md-nav__item">
+      <a href="../other-dependencies/" class="md-nav__link">
+        Other Dependencies
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../recommendations/" class="md-nav__link">
         Recommendations
       </a>
@@ -441,17 +456,17 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
       
       
       
-        <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
           ES
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_13">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_14">
           <span class="md-nav__icon md-icon"></span>
           ES
         </label>
@@ -617,6 +632,20 @@
   
   
     <li class="md-nav__item">
+      <a href="../es/otras-dependencias/" class="md-nav__link">
+        otras-dependencias
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../es/recomendaciones/" class="md-nav__link">
         recomendaciones
       </a>
@@ -664,14 +693,22 @@
                   
 
 
-<h1 id="client">Client</h1>
-<p>A client has been developed with the following features:</p>
+<h1 id="system-description">System Description</h1>
+<p>The system utilizes a similar approach to Kademlia, where keys are stored as 160-bit values. Each node in the network has a unique ID, and the (key, value) pairs are stored on nodes with "close" IDs using the XOR metric proposed by Kademlia.</p>
+<p>The system treats nodes as leaves of a binary tree, where the position of each node is determined by the shortest unique prefix of its ID. These nodes store contact information to route query messages.</p>
+<p>The Kademlia protocol is used, which includes the PING, STORE, FINDNODE, and FIND-VALUE Remote Procedure Calls (RPCs). Additionally, other RPCs are implemented, such as CONTAINS, BOOTSTRAPPABLE-NEIGHBOR, GET, GET-FILE-CHUNKS, UPLOAD-FILE, SET-KEY, CHECK-IF-NEW-VALUE-EXIST, GET-FILE-CHUNK-VALUE, GET-FILE-CHUNK-LOCATION, FIND-CHUNK-LOCATION, and FIND-NEIGHBORS.</p>
+<p>The system also includes a persistence module called <code>PersistentStorage</code>, which handles data read and write operations. It uses the following paths:</p>
 <ul>
-<li>It can receive entry points to the network, known as <strong>bootstrap nodes</strong>, to establish a direct connection with the file system.</li>
-<li>It has a self-discovery mechanism that listens for broadcast messages on all NICs of the PC. If it doesn't receive any <strong>bootstrap node</strong> or can't establish a connection with any, it can use this functionality to automatically find a node.</li>
-<li>It has the ability to automatically discover other nodes by connecting to an existing node and obtaining information about its neighbors.</li>
-<li>It handles errors related to network instability or unexpected node failures. The user can set the number of connection retries when the connection to a node is lost. It also maintains a queue of known nodes. When the connection retries with a node are exhausted, it is removed from the queue and the next one is tried. It is also possible to specify whether to use the self-discovery mechanism when the queue is empty.</li>
+<li><code>static/metadata</code>: stores the filenames representing the hashes of the data divided into chunks of up to 1000kb. These files contain Python lists saved with pickle, which contain the hashes of each chunk obtained by splitting the data.</li>
+<li><code>static/keys</code>: stores the filenames representing the hashes of the stored data, either complete data or chunks. These files contain the corresponding hashes in bytes.</li>
+<li><code>static/values</code>: stores the filenames representing the hashes of the stored chunks, excluding the hashes of undivided data.</li>
+<li><code>timestamps</code>: stores the filenames representing the hashes of the stored data, similar to the <code>keys</code> path, but containing a Python dictionary saved with pickle. This dictionary has keys such as <code>date</code> with the value <code>datetime.now()</code>, <code>republish</code> with a boolean value, and <code>last_write</code>, which is a datetime representing the last time the file was overwritten. This information is used to keep track of the last time a key was accessed and to determine whether it is necessary to republish the information in case of frequent accesses or network partition to maintain eventual consistency.</li>
 </ul>
+<p>When a <code>(key, value)</code> pair is received as bytes, the <code>PersistentStorage</code> module encodes the key using <code>base64.urlsafe_b64encode</code> to obtain a string that can be used as a filename. Then, a file is written with that name in the <code>keys</code> and <code>values</code> paths, where the key is saved as bytes in the keys file and the value is saved as bytes in the values file. In the case of storing metadata, the value as bytes is written in the metadata path. In both cases, a corresponding file is also created in the timestamps path.</p>
+<p>Routing in the system utilizes a routing table structure similar to Kademlia. The routing table is a binary tree composed of k-buckets. Each k-bucket contains nodes with a common prefix in their IDs, and the prefix determines the position of the k-bucket in the binary tree. The k-buckets cover different parts of the ID space and together cover the entire 160-bit ID space without overlap. Nodes are dynamically assigned to k-buckets as needed.</p>
+<p>To ensure data replication, nodes must periodically republish keys. This is because some of the k nodes that initially obtain a key-value pair may leave the network, and new nodes with IDs closer to the key may join the network. Therefore, nodes that store the key-value pair must republish it to ensure it is available on the k nodes closest to the key.</p>
+<p>When a client requests a certain value from the system, they are returned a list of locations of the different data chunks, which may be on different PCs. The client then establishes a connection with the PC closest to the information to retrieve the data and unify it. Once a node sends information, it marks the file as pending republishing and updates its timestamp, informing neighbors that they should also replicate the information.</p>
+<p>For each key in storage, the system retrieves the k closest nodes. If the new node is closer than the furthest node in that list, and the node for this server is closer than the closest node in that list, then the key/value pair is stored on the new node.</p>
 
 
 
