@@ -33,7 +33,7 @@ extra:
       link: index.html
       lang: en
     - name: Español
-      link: es/index.html
+      link: es/
       lang: es
     # Add more languages as needed
 

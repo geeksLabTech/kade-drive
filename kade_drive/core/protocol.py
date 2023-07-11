@@ -3,7 +3,7 @@ import logging
 import rpyc
 
 from kade_drive.core.node import Node
-from kade_drive.core.storage import PersistentStorage
+from kade_drive.core.storage import logger, PersistentStorage
 from kade_drive.core.utils import digest
 
 
@@ -164,6 +164,10 @@ class FileSystemProtocol:
         if not FileSystemProtocol.router.is_new_node(node):
             return
 
+        # TODO uncomment this
+        if node == FileSystemProtocol.source_node:
+            logger.critical("called wellcome if new in self")
+            # return
         # add node to table
 
         logger.debug("Adding new node to contacts")
@@ -181,7 +185,10 @@ class FileSystemProtocol:
             this_closest = False
             # if the node is closer tan the furtherst neighbor
             # the values should be then stored in that node
-            if len(neighbors) > 2:
+            # if len(neighbors) > 2:
+            logger.info(f"neighbors in for {neighbors}")
+
+            if neighbors or len(neighbors) > 0:
                 last = neighbors[-1].distance_to(keynode)
                 new_node_close = node.distance_to(keynode) < last
                 first = neighbors[0].distance_to(keynode)
@@ -189,7 +196,6 @@ class FileSystemProtocol:
                     FileSystemProtocol.source_node.distance_to(keynode) < first
                 )
             # if not neighbors, store data in the node
-            logger.debug(f"neighbors in for {neighbors}")
             if not neighbors or (new_node_close and this_closest):
                 logger.debug("calling call_store in wellcome_if_new")
                 with ServerSession(node.ip, node.port) as conn:

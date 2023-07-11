@@ -2,7 +2,7 @@ from typer import Typer, Option
 import socket
 from kade_drive.core.network import Server
 import threading
-from message_system.message_system import MessageSystem
+from message_system.message_system import logger, MessageSystem
 from kade_drive.core.config import Config
 import logging
 
@@ -28,6 +28,7 @@ def start_server(host_ip=None, config: Config | None = None):
 
     if host_ip is None:
         ip_br = MessageSystem.get_ips()[0]
+        logger.debug(ip_br)
         broadcast = ip_br["broadcast"]
         host_ip = ip_br["addr"]
     logger.info(host_ip)
@@ -68,7 +69,7 @@ app = Typer()
 
 
 @app.command()
-def start(host_ip=Option(default=None), log_level=Option(default="INFO")):
+def start(host_ip=Option(default=None), log_level=Option(default="DEBUG")):
     match log_level:
         case 'INFO':
             log_level = logging.INFO
@@ -80,7 +81,7 @@ def start(host_ip=Option(default=None), log_level=Option(default="INFO")):
             log_level = logging.INFO
 
     logging.basicConfig(
-        level=log_level, format="%(asctime)s  - %(name)s - %(levelname)s - %(message)s"
+        level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     logging.getLogger("SERVER").setLevel(logging.CRITICAL+1)

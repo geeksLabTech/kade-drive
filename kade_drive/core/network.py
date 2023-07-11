@@ -165,7 +165,8 @@ class Server:
         node = Node(dkey)
         assert node is not None
         nearest = FileSystemProtocol.router.find_neighbors(node)
-        if not nearest:
+        logger.debug(f"Nearest {nearest}")
+        if not nearest or len(nearest) == 0:
             logger.debug(
                 "There are no known neighbors to set key %s", dkey.hex())
 
@@ -496,7 +497,7 @@ class ServerService(Service):
     @rpyc.exposed
     def rpc_contains(self, sender, nodeid: bytes, key: bytes, is_metadata=True):
         source = Node(nodeid, sender[0], sender[1])
-        # if a new node is sending the request, give all data it should contain
+        # if a new node is sending the request, givemsg all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
             FileSystemProtocol.wellcome_if_new(conn, source)
