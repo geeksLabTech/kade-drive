@@ -8,20 +8,20 @@
       
       
       
-        <link rel="canonical" href="https://geekslabtech.github.io/kade-drive/es/tolerancia-fallas/">
+        <link rel="canonical" href="https://geekslabtech.github.io/kade-drive/es/autodiscovery/">
       
       
-        <link rel="prev" href="../replicacion/">
+        <link rel="prev" href="../client/">
       
       
-        <link rel="next" href="../analisis-cap/">
+        <link rel="next" href="../replication/">
       
       <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
-        <title>tolerancia-fallas - Kade Drive DHT</title>
+        <title>autodescubrimiento - Kade Drive DHT</title>
       
     
     
@@ -73,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#tolerancia-a-fallas" class="md-skip">
+        <a href="#autodescubrimiento" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              tolerancia-fallas
+              autodescubrimiento
             
           </span>
         </div>
@@ -484,7 +484,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../instalaci%C3%B3n/" class="md-nav__link">
+      <a href="../installation-setup/" class="md-nav__link">
         instalación
       </a>
     </li>
@@ -498,7 +498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ejemplos/" class="md-nav__link">
+      <a href="../examples/" class="md-nav__link">
         ejemplos
       </a>
     </li>
@@ -512,7 +512,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../por-que-kademlia/" class="md-nav__link">
+      <a href="../why-kademlia/" class="md-nav__link">
         por-que-kademlia
       </a>
     </li>
@@ -526,7 +526,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../descripcion/" class="md-nav__link">
+      <a href="../description/" class="md-nav__link">
         descripcion
       </a>
     </li>
@@ -540,7 +540,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../persistencia/" class="md-nav__link">
+      <a href="../persistence/" class="md-nav__link">
         persistencia
       </a>
     </li>
@@ -554,36 +554,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../cliente/" class="md-nav__link">
+      <a href="../client/" class="md-nav__link">
         cliente
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../autodescubrimiento/" class="md-nav__link">
-        autodescubrimiento
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../replicacion/" class="md-nav__link">
-        replicacion
       </a>
     </li>
   
@@ -605,9 +577,40 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          autodescubrimiento
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
-        tolerancia-fallas
+        autodescubrimiento
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#desventajas-de-este-enfoque" class="md-nav__link">
+    Desventajas de este enfoque
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -620,7 +623,35 @@
   
   
     <li class="md-nav__item">
-      <a href="../analisis-cap/" class="md-nav__link">
+      <a href="../replication/" class="md-nav__link">
+        replicacion
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fault-tolerance/" class="md-nav__link">
+        tolerancia-fallas
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cap-analysis/" class="md-nav__link">
         analisis-cap
       </a>
     </li>
@@ -634,7 +665,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../otras-dependencias/" class="md-nav__link">
+      <a href="../other-dependencies/" class="md-nav__link">
         otras-dependencias
       </a>
     </li>
@@ -648,7 +679,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recomendaciones/" class="md-nav__link">
+      <a href="../recomendations/" class="md-nav__link">
         recomendaciones
       </a>
     </li>
@@ -682,6 +713,21 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#desventajas-de-este-enfoque" class="md-nav__link">
+    Desventajas de este enfoque
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -695,21 +741,10 @@
                   
 
 
-<h1 id="tolerancia-a-fallas">Tolerancia a Fallas</h1>
-<p>Los nodos mantienen información sobre otros nodos cercanos en la red, almacenando estos nodos en su tabla de enrutamiento. Cada nodo tiene una lista de <code>k-buckets</code> que contienen los detalles de contacto de otros nodos en la red, clasificados según su proximidad en el espacio de identificación.</p>
-<p>Cuando un nodo deja de responder o se desconecta, los otros nodos de la red detectan la falta de respuesta después de un período de tiempo determinado. En ese momento, se considera que el nodo fallido está inactivo.</p>
-<p>Cuando un nodo detecta la inactividad de otro nodo, actualiza su tabla de enrutamiento eliminando la entrada del nodo fallido. Además, el nodo realiza una serie de acciones para mantener la conectividad y la redundancia en la red.</p>
-<ul>
-<li>
-<p>Replicación de datos: Si el nodo fallido almacenaba datos, otros nodos de la red pueden asumir la responsabilidad de mantener réplicas de esos datos. De esta manera, los datos permanecen disponibles incluso si el nodo original se desconecta. Los nodos que asumirán esta responsabilidad serán aquellos que estén más cercanos utilizando la misma métrica de XOR con los IDs para mantener la red lo más optimizada posible.</p>
-</li>
-<li>
-<p>Actualización de información de enrutamiento: Los nodos que tenían al nodo fallido en su tabla de enrutamiento actualizan esa entrada eliminándola. De esta manera, los nodos evitan enviar mensajes o realizar acciones hacia un nodo que ya no está disponible.</p>
-</li>
-<li>
-<p>La expiración de contacto garantiza que la información almacenada en la red permanezca accesible incluso cuando los nodos individuales fallan. Al eliminar los nodos inactivos de los buckets, se asegura de que las rutas de enrutamiento se actualicen y se mantengan eficientes.</p>
-</li>
-</ul>
+<h1 id="autodescubrimiento">Autodescubrimiento</h1>
+<p>Para el mecanismo de autodescubrimiento, también se crea un hilo (Thread) que emite un latido en las direcciones de broadcast de cada una de las NICs del host, con un identificador de la fuente del broadcast, la IP y el puerto "dfs ip puerto". Cada vez que un nuevo nodo se une a la red, escucha los mensajes de difusión (broadcast) para encontrar vecinos. Este mecanismo es accesible desde el cliente, lo que hace que la conexión sea transparente para el usuario.</p>
+<h2 id="desventajas-de-este-enfoque">Desventajas de este enfoque</h2>
+<p>Una desventaja de este enfoque es que se utiliza el broadcast para el autodescubrimiento, lo que solo es posible en una red local o mediante el uso de una (o varias) PC como puentes entre diferentes subredes. Esto significa que si no existe una forma de conectar las computadoras localmente, no podrán descubrirse entre sí. Sin embargo, dado que el sistema está diseñado para la conexión de diferentes estaciones de trabajo, se asume que estarán en la misma red local, lo que hace factible este enfoque.</p>
 
 
 

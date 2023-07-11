@@ -64,17 +64,17 @@ nav:
   - Recommendations: recommendations.md
   - ES: 
     - introduccion: es/index.md
-    - instalación: es/instalación.md
-    - ejemplos: es/ejemplos.md
-    - por-que-kademlia: es/por-que-kademlia.md
-    - descripcion: es/descripcion.md
-    - persistencia: es/persistencia.md
-    - cliente: es/cliente.md
-    - autodescubrimiento: es/autodescubrimiento.md
-    - replicacion: es/replicacion.md
-    - tolerancia-fallas: es/tolerancia-fallas.md
-    - analisis-cap: es/analisis-cap.md
-    - otras-dependencias: es/otras-dependencias.md
-    - recomendaciones: es/recomendaciones.md
+    - instalación: es/installation-setup.md
+    - ejemplos: es/examples.md
+    - por-que-kademlia: es/why-kademlia.md
+    - descripcion: es/description.md
+    - persistencia: es/persistence.md
+    - cliente: es/client.md
+    - autodescubrimiento: es/autodiscovery.md
+    - replicacion: es/replication.md
+    - tolerancia-fallas: es/fault-tolerance.md
+    - analisis-cap: es/cap-analysis.md
+    - otras-dependencias: es/other-dependencies.md
+    - recomendaciones: es/recomendations.md
 
 

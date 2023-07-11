@@ -8,20 +8,20 @@
       
       
       
-        <link rel="canonical" href="https://geekslabtech.github.io/kade-drive/es/descripcion/">
+        <link rel="canonical" href="https://geekslabtech.github.io/kade-drive/es/client/">
       
       
-        <link rel="prev" href="../por-que-kademlia/">
+        <link rel="prev" href="../persistence/">
       
       
-        <link rel="next" href="../persistencia/">
+        <link rel="next" href="../autodiscovery/">
       
       <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
     
     
       
-        <title>descripcion - Kade Drive DHT</title>
+        <title>cliente - Kade Drive DHT</title>
       
     
     
@@ -73,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#descripcion-del-sistema" class="md-skip">
+        <a href="#cliente" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              descripcion
+              cliente
             
           </span>
         </div>
@@ -484,7 +484,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../instalaci%C3%B3n/" class="md-nav__link">
+      <a href="../installation-setup/" class="md-nav__link">
         instalación
       </a>
     </li>
@@ -498,7 +498,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ejemplos/" class="md-nav__link">
+      <a href="../examples/" class="md-nav__link">
         ejemplos
       </a>
     </li>
@@ -512,8 +512,36 @@
   
   
     <li class="md-nav__item">
-      <a href="../por-que-kademlia/" class="md-nav__link">
+      <a href="../why-kademlia/" class="md-nav__link">
         por-que-kademlia
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../description/" class="md-nav__link">
+        descripcion
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../persistence/" class="md-nav__link">
+        persistencia
       </a>
     </li>
   
@@ -536,7 +564,7 @@
       
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        descripcion
+        cliente
       </a>
       
     </li>
@@ -550,35 +578,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../persistencia/" class="md-nav__link">
-        persistencia
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../cliente/" class="md-nav__link">
-        cliente
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../autodescubrimiento/" class="md-nav__link">
+      <a href="../autodiscovery/" class="md-nav__link">
         autodescubrimiento
       </a>
     </li>
@@ -592,7 +592,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../replicacion/" class="md-nav__link">
+      <a href="../replication/" class="md-nav__link">
         replicacion
       </a>
     </li>
@@ -606,7 +606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../tolerancia-fallas/" class="md-nav__link">
+      <a href="../fault-tolerance/" class="md-nav__link">
         tolerancia-fallas
       </a>
     </li>
@@ -620,7 +620,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../analisis-cap/" class="md-nav__link">
+      <a href="../cap-analysis/" class="md-nav__link">
         analisis-cap
       </a>
     </li>
@@ -634,7 +634,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../otras-dependencias/" class="md-nav__link">
+      <a href="../other-dependencies/" class="md-nav__link">
         otras-dependencias
       </a>
     </li>
@@ -648,7 +648,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../recomendaciones/" class="md-nav__link">
+      <a href="../recomendations/" class="md-nav__link">
         recomendaciones
       </a>
     </li>
@@ -695,21 +695,14 @@
                   
 
 
-<h1 id="descripcion-del-sistema">Descripción del sistema</h1>
-<p>El sistema utiliza un enfoque similar a Kademlia, donde las claves se almacenan como valores de 160 bits. Cada nodo en la red tiene un ID único y los pares (clave, valor) se almacenan en nodos con ID "cercanos" utilizando la métrica XOR propuesta por Kademlia.</p>
-<p>El sistema trata los nodos como hojas de un árbol binario, donde la posición de cada nodo se determina por el prefijo único más corto de su ID. Estos nodos almacenan información de contacto para enrutar los mensajes de consulta.</p>
-<p>Se utiliza el protocolo de Kademlia, que incluye los RPCs (Remote Procedure Calls) PING, STORE, FINDNODE y FIND-VALUE. Además, se implementan otros RPCs como CONTAINS, BOOTSTRAPPABLE-NEIGHBOR, GET, GET-FILE-CHUNKS, UPLOAD-FILE, SET-KEY, CHECK-IF-NEW-VALUE-EXIST, GET-FILE-CHUNK-VALUE, GET-FILE-CHUNK-LOCATION, FIND-CHUNK-LOCATION y FIND-NEIGHBORS.</p>
-<p>El sistema también cuenta con un módulo de persistencia llamado <code>PersistentStorage</code>, que maneja la escritura y lectura de datos. Utiliza las siguientes rutas:</p>
+<h1 id="cliente">Cliente</h1>
+<p>Se desarrolló un cliente que cuenta con las siguientes características:</p>
 <ul>
-<li><code>static/metadata</code>: se almacenan los nombres de los archivos que representan los hash de los datos divididos en chunks de máximo 1000kb. Estos archivos contienen listas de Python guardadas con pickle, que contienen los hashes de cada chunk obtenido al dividir los datos.</li>
-<li><code>static/keys</code>: se almacenan los nombres de los archivos que representan los hashes de los datos almacenados, ya sea de datos completos o de chunks. Estos archivos contienen los hashes correspondientes en bytes.</li>
-<li><code>static/values</code>: se almacenan los nombres de los archivos que representan los hashes de los chunks almacenados, excluyendo los hashes de datos sin dividir.</li>
-<li><code>timestamps</code>: se almacenan los nombres de los archivos que representan los hashes de los datos almacenados, al igual que en la ruta de <code>keys</code>, pero contienen un diccionario de Python guardado con pickle. Este diccionario tiene como claves <code>date</code> con el valor <code>datetime.now()</code>, <code>republish</code> con un valor booleano y <code>last_write</code>, que es un datetime que representa la última vez que se sobrescribió el archivo. Esta información se utiliza para llevar un registro de la última vez que se accedió a una llave y para determinar si es necesario republicar la información en caso de frecuentes accesos o en caso de partición de la red para mantener la consistencia eventual.</li>
+<li>Puede recibir puntos de entrada a la red, conocidos como <strong>bootstrap nodes</strong>, para establecer una conexión directa con el sistema de archivos.</li>
+<li>Posee un mecanismo de autodescubrimiento que recibe mensajes de difusión (broadcast) en todas las NICs de la PC. Si no recibe ningún <strong>bootstrap node</strong> o no puede establecer conexión con ninguno, puede utilizar esta funcionalidad para encontrar automáticamente algún nodo.</li>
+<li>Tiene la capacidad de descubrir otros nodos automáticamente al conectarse con un nodo existente y obtener información sobre sus vecinos.</li>
+<li>Maneja errores relacionados con la inestabilidad de la red o caídas inesperadas de un nodo. Permite al usuario establecer el número de reintentos cuando se pierde la conexión con un nodo. Además, posee una cola con los nodos conocidos. Cuando se agotan los reintentos de conexión con un nodo, se elimina de la cola y se pasa al siguiente. También es posible especificar si se desea utilizar el mecanismo de autodescubrimiento cuando la cola está vacía.</li>
 </ul>
-<p>Cuando se recibe un par <code>(clave, valor)</code> en formato bytes, el módulo <code>PersistentStorage</code> codifica la clave utilizando <code>base64.urlsafe_b64encode</code> para obtener un string que se puede utilizar como nombre de archivo. Luego, se escribe un archivo con ese nombre en las rutas de <code>keys</code> y <code>values</code>, donde se guarda la clave en bytes en el archivo de keys y el valor en bytes en el archivo de values. En el caso de que el par a almacenar sea metadata, el valor en bytes se escribe en la ruta de metadata. En ambos casos, también se crea un archivo en la ruta de timestamps con el nombre correspondiente.</p>
-<p>El enrutamiento en el sistema utiliza una estructura de tablas de enrutamiento similar a Kademlia. La tabla de enrutamiento es un árbol binario compuesto por k-buckets. Cada k-bucket contiene nodos con un prefijo común en sus ID, y el prefijo determina la posición del k-bucket en el árbol binario. Los k-buckets cubren diferentes partes del espacio de ID y, juntos, cubren todo el espacio de ID de 160 bits sin solaparse. Los nodos se asignan dinámicamente según sea necesario.</p>
-<p>Para garantizar la replicación de datos, los nodos deben republicar periódicamente las claves. Esto se debe a que algunos de los k nodos que inicialmente obtienen un par clave-valor pueden abandonar la red, y nuevos nodos con IDs más cercanos a la clave pueden unirse a la red. Por lo tanto, los nodos que almacenan el par clave-valor deben republicarlo para asegurarse de que esté disponible en los k nodos más cercanos a la clave.</p>
-<p>Cuando un cliente solicita un determinado valor al sistema, se le devuelve una lista de las ubicaciones de los distintos chunks de datos, que pueden estar en diferentes PCs. Luego, el cliente establece una conexión con la PC más cercana a la información para obtener los datos y unificarlos. Una vez que un nodo envía información, marca el archivo como pendiente de republicar y actualiza su timestamp, informando a los vecinos que también deben replicar la información.</p>
 
 
 
