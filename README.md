@@ -25,7 +25,7 @@ Distributed file system based on <https://github.com/bmuller/kademlia> for the f
 
 ### Usage with docker
 
-- Build the image with `make docker`
+- Build the image with `make docker` or pull it from docker.hub `docker pull joramas/kade-drive:latest`
 - Run `make shell` to start the Docker container with an interactive Bash shell
 - Now you can run `poetry run server` to start a server or `poetry run cli`
 
