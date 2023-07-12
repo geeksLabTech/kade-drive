@@ -55,7 +55,8 @@ class SpiderCrawl:
           4. repeat, unless nearest list has all been queried, then ur done
         """
 
-        logger.debug("crawling network with nearest: %s", str(tuple(self.nearest)))
+        logger.debug("crawling network with nearest: %s",
+                     str(tuple(self.nearest)))
         # define the alpha based on the latest crawled nodes
         count = self.alpha
         if self.nearest.get_ids() == self.last_ids_crawled:
@@ -74,8 +75,9 @@ class SpiderCrawl:
             try:
                 session = rpyc.connect(host=peer.ip, port=peer.port)
                 conn = session.root
-            except ConnectionError as e:
-                logger.warning(f"Failed to connect to {peer.id} {peer.ip}, e: {e}")
+            except (ConnectionError, OSError) as e:
+                logger.warning(
+                    f"Failed to connect to {peer.id} {peer.ip}, e: {e}")
                 session = None
                 conn = None
 
@@ -156,7 +158,8 @@ class ValueSpiderCrawl(SpiderCrawl):
         # if more than one value is found for a key raise a warning
         if len(value_counts) != 1:
             logger.debug(
-                "Got multiple values for key %i: %s", self.node.long_id, str(values)
+                "Got multiple values for key %i: %s", self.node.long_id, str(
+                    values)
             )
         # get the most common item in the network
         # this is, if there were more than one value

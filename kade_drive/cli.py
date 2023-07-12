@@ -15,7 +15,7 @@ def start_cli(ip=None, port=8086):
 
     print("Wellcome to CLI interface for distributed Filesystem")
     while True:
-        command = input("cli > ").split(" ")
+        command = input("cli > ").strip().split(" ")
         if command[0] == "exit":
             break
 
@@ -31,7 +31,7 @@ exit - * - close the client
             continue
         args = command[1:] if len(command) >= 1 else []
         func = getattr(ClientSession, command[0], None)
-        if func is None or not callable(func) :
+        if func is None or not callable(func):
             print(
                 f'command {command[0]} not found, use "help" to see supported commands'
             )

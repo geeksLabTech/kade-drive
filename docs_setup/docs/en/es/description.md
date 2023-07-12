@@ -34,3 +34,5 @@ Para garantizar la replicación de datos, los nodos deben republicar periódicam
 Cuando un cliente solicita un determinado valor al sistema, se le devuelve una lista de las ubicaciones de los distintos chunks de datos, que pueden estar en diferentes PCs. Luego, el cliente establece una conexión con la PC más cercana a la información para obtener los datos y unificarlos. Una vez que un nodo envía información, marca el archivo como pendiente de republicar y actualiza su timestamp, informando a los vecinos que también deben replicar la información.
 
 Cuando un servidor descubre un nuevo nodo, para cada clave almacenada, el sistema recupera los k nodos más cercanos. Si el nuevo nodo está más cerca que el nodo más alejado de esa lista, y el nodo para este servidor está más cerca que el nodo más cercano de esa lista, entonces el par clave/valor se almacena en el nuevo nodo.
+
+Cuando un servidor inicia una conexión nueva con un cliente, inicia un Thread nuevo para manejar dicha conexión.

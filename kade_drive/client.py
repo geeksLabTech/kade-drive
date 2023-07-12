@@ -158,9 +158,13 @@ class ClientSession:
                     f"Connection lost in get when doing get_file_chunk_location, exception: {e}"
                 )
                 return None, None
+            
+            if locations is None:
+                continue
+            
             logger.debug(
                 f"locations for chunk_key {chunk_key} are {locations}")
-            if self.bootstrap_nodes[0] in locations:
+            if not locations is None and len(locations) > 0 and self.bootstrap_nodes[0] in locations:
                 logger.debug("Using primary connection to get chunk")
                 try:
                     data_received.append(

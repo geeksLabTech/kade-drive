@@ -18,7 +18,7 @@ from kade_drive.core.node import Node
 from kade_drive.core.crawling import ChunkLocationSpiderCrawl, ValueSpiderCrawl
 from kade_drive.core.crawling import NodeSpiderCrawl
 from kade_drive.core.utils import is_port_in_use
-
+import datetime
 # from models.file import File
 
 # Create a file handler
@@ -209,7 +209,12 @@ class Server:
                 contains, date = None, None
                 if response is not None:
                     contains, date = response
-                if local_last_write is None or date is None or date < local_last_write:
+                # patch to make sure no invalid data is compared
+                valid_data = True
+                if not type(date) == type(datetime.datetime.now()):
+                    valid_data = False
+                    
+                if local_last_write is None or date is None or (valid_data and date < local_last_write):
                     result = FileSystemProtocol.call_store(
                         conn, n, dkey, value, metadata
                     )
