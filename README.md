@@ -2,7 +2,6 @@
 ![Code Style](https://img.shields.io/badge/Code%20Style-Black-black)
 ![Poetry Version](https://img.shields.io/badge/Poetry-1.3.1-blue)
 ![Docker Support](https://img.shields.io/badge/Docker-Supported-brightgreen?logo=docker)
-![Docker Build Status](https://img.shields.io/docker/build/geekslabtech/kade-drive)
 ![Visits](https://badges.pufler.dev/visits/geeksLabTech/kade-drive)
 ![Contributors](https://img.shields.io/github/contributors/geeksLabTech/kade-drive)
 ![Release Version](https://img.shields.io/github/v/release/geeksLabTech/kade-drive)
