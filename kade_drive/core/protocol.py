@@ -167,7 +167,7 @@ class FileSystemProtocol:
 
         # TODO uncomment this
         if (node.ip, node.port) == (FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port):
-            logger.critical("called wellcome if new in self")
+            logger.debug("called wellcome if new in self")
             return
         # add node to table
 

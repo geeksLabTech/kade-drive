@@ -70,10 +70,9 @@ class PersistentStorage:
         data["republish"] = republish_data
 
         if is_write:
-            data['last_write'] = datetime.now()
+            data["last_write"] = datetime.now()
 
-        logger.debug(
-            f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
+        logger.debug(f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             pickle.dump(data, f)
 
@@ -105,19 +104,15 @@ class PersistentStorage:
                                 f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes"
                             )
                             if Path(os.path.join(self.values_path, str(file))).exists():
-                                os.remove(os.path.join(
-                                    self.values_path, str(file)))
+                                os.remove(os.path.join(self.values_path, str(file)))
                             if Path(
                                 os.path.join(self.metadata_path, str(file))
                             ).exists():
-                                os.remove(os.path.join(
-                                    self.metadata_path, str(file)))
+                                os.remove(os.path.join(self.metadata_path, str(file)))
                             if Path(os.path.join(self.keys_path, str(file))).exists():
-                                os.remove(os.path.join(
-                                    self.keys_path, str(file)))
+                                os.remove(os.path.join(self.keys_path, str(file)))
 
-                            os.remove(os.path.join(
-                                self.timestamp_path, str(file)))
+                            os.remove(os.path.join(self.timestamp_path, str(file)))
             sleep(self.ttl)
 
     def get_value(self, str_key: str, update_timestamp=True, metadata=True):
@@ -126,15 +121,18 @@ class PersistentStorage:
             path = os.path.join(self.metadata_path, str_key)
         else:
             path = os.path.join(self.values_path, str_key)
-        with open(path, "rb") as f:
-            result = f.read()
+
+        result = None
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                result = f.read()
 
         if result is not None:
             if update_timestamp:
                 self.update_timestamp(str_key, republish_data=True)
         if not result:
-            logger.error(f"tried to get non existing data with key {str_key}")
-            print("Tried to get data that is not in db")
+            logger.warning(f"tried to get non existing data with key {str_key}")
+
         return result
 
     def set_value(self, key: bytes, value, metadata=True, republish_data=False):
@@ -206,7 +204,7 @@ class PersistentStorage:
         with open(os.path.join(self.timestamp_path, str_key), "rb") as f:
             data = pickle.load(f)
 
-        return True, data['last_write']
+        return True, data["last_write"]
 
     def __getitem__(self, key: bytes):
         self.cull()
@@ -234,7 +232,7 @@ class PersistentStorage:
                             str(file), update_timestamp=False, metadata=is_metadata
                         )
                         assert value is not None
-                        yield key, value, is_metadata, data['last_write']
+                        yield key, value, is_metadata, data["last_write"]
 
     def keys(self):
         ikeys_files = os.listdir(os.path.join(self.keys_path))
@@ -262,6 +260,5 @@ class PersistentStorage:
         ivalues: list[bytes] = []
 
         for i, ik in enumerate(ikeys):
-            ivalues.append(
-                self.get(ik, update_timestamp=False, metadata=imetadata[i]))
+            ivalues.append(self.get(ik, update_timestamp=False, metadata=imetadata[i]))
         return zip(ikeys, ivalues, imetadata)
