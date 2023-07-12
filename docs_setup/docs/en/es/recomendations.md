@@ -7,3 +7,5 @@
 - Cambiar el algoritmo de hash utilizado de SHA1 a SHA256, dado que SHA1 ya no es considerado seguro y sus vulnerabilidades facilitan actividades maliciosas.
 
 - Implementar un mecanismo de testing automático distribuido utilizando técnicas como "chaos testing" y "swarm testing".
+
+- Implementar un sistema de autenticación para que a los servidores solo se puedan conectar clientes autorizados y estos solamente tengan acceso a los RPC necesarios

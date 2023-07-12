@@ -21,4 +21,4 @@ To ensure data replication, nodes must periodically republish keys. This is beca
 
 When a client requests a certain value from the system, they are returned a list of locations of the different data chunks, which may be on different PCs. The client then establishes a connection with the PC closest to the information to retrieve the data and unify it. Once a node sends information, it marks the file as pending republishing and updates its timestamp, informing neighbors that they should also replicate the information.
 
-For each key in storage, the system retrieves the k closest nodes. If the new node is closer than the furthest node in that list, and the node for this server is closer than the closest node in that list, then the key/value pair is stored on the new node.
+When a server discovers a new node, for each key in storage, the system retrieves the k closest nodes. If the new node is closer than the furthest node in that list, and the node for this server is closer than the closest node in that list, then the key/value pair is stored on the new node.

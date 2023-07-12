@@ -4,9 +4,21 @@ El sistema utiliza un enfoque similar a Kademlia, donde las claves se almacenan 
 
 El sistema trata los nodos como hojas de un árbol binario, donde la posición de cada nodo se determina por el prefijo único más corto de su ID. Estos nodos almacenan información de contacto para enrutar los mensajes de consulta.
 
-Se utiliza el protocolo de Kademlia, que incluye los RPCs (Remote Procedure Calls) PING, STORE, FINDNODE y FIND-VALUE. Además, se implementan otros RPCs como CONTAINS, BOOTSTRAPPABLE-NEIGHBOR, GET, GET-FILE-CHUNKS, UPLOAD-FILE, SET-KEY, CHECK-IF-NEW-VALUE-EXIST, GET-FILE-CHUNK-VALUE, GET-FILE-CHUNK-LOCATION, FIND-CHUNK-LOCATION y FIND-NEIGHBORS.
+Se utiliza el protocolo de Kademlia, que incluye los RPCs (Remote Procedure Calls) PING, STORE, FINDNODE y FIND-VALUE. Además, se implementan otros RPCs como CONTAINS, BOOTSTRAPPABLE-NEIGHBOR, GET, GET-FILE-CHUNKS, UPLOAD-FILE, SET-KEY, CHECK-IF-NEW-VALUE-EXIST, GET-FILE-CHUNK-VALUE, GET-FILE-CHUNK-LOCATION, FIND-CHUNK-LOCATION y FIND-NEIGHBORS. A continuación se explica el funcionamiento de los mismos.
+
+- `GET` : Obtiene la información identificada con la llave de un archivo, devuelve una lista con las llaves de cada chunk.
+- `UPLOAD-FILE` : Sube el archivo al sistema de ficheros, lo divide en chunks
+y guarda la metadata del archivo con la forma de unificar todos los chunks.
+- `GET-FIND-CHUNK-VALUE` : Devuelve el valor asociado al chunk.
+- `GET-FIND-CHUNK-LOCATION` : Recibe la llave de un chunk y devuelvemuna tupla (ip, puerto) donde se encuentra.
+- `FIND-NEIGHBORS` : Devuelve los vecinos al nodo acorde a la cercanía según la métrica XOR.
+Además, los servidores utilizan los siguientes RPCs:
+- `CONTAINS` : Detecta si una llave está en un nodo, esto se utiliza tanto para la replicación de la información como para encontrar si un nodo tiene la información que se desea.
+- `GET-FILE-CHUNKS` : Obtiene la lista de ubicaciones de los chunks de la información.
+- `SET-KEY `: Guarda un par (llave, valor) en el sistema
 
 El sistema también cuenta con un módulo de persistencia llamado `PersistentStorage`, que maneja la escritura y lectura de datos. Utiliza las siguientes rutas:
+
 
 - `static/metadata`: se almacenan los nombres de los archivos que representan los hash de los datos divididos en chunks de máximo 1000kb. Estos archivos contienen listas de Python guardadas con pickle, que contienen los hashes de cada chunk obtenido al dividir los datos.
 - `static/keys`: se almacenan los nombres de los archivos que representan los hashes de los datos almacenados, ya sea de datos completos o de chunks. Estos archivos contienen los hashes correspondientes en bytes.
@@ -20,3 +32,5 @@ El enrutamiento en el sistema utiliza una estructura de tablas de enrutamiento s
 Para garantizar la replicación de datos, los nodos deben republicar periódicamente las claves. Esto se debe a que algunos de los k nodos que inicialmente obtienen un par clave-valor pueden abandonar la red, y nuevos nodos con IDs más cercanos a la clave pueden unirse a la red. Por lo tanto, los nodos que almacenan el par clave-valor deben republicarlo para asegurarse de que esté disponible en los k nodos más cercanos a la clave.
 
 Cuando un cliente solicita un determinado valor al sistema, se le devuelve una lista de las ubicaciones de los distintos chunks de datos, que pueden estar en diferentes PCs. Luego, el cliente establece una conexión con la PC más cercana a la información para obtener los datos y unificarlos. Una vez que un nodo envía información, marca el archivo como pendiente de republicar y actualiza su timestamp, informando a los vecinos que también deben replicar la información.
+
+Cuando un servidor descubre un nuevo nodo, para cada clave almacenada, el sistema recupera los k nodos más cercanos. Si el nuevo nodo está más cerca que el nodo más alejado de esa lista, y el nodo para este servidor está más cerca que el nodo más cercano de esa lista, entonces el par clave/valor se almacena en el nuevo nodo.

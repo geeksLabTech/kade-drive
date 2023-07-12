@@ -7,3 +7,5 @@
 - Consider changing the hash algorithm used from SHA1 to SHA256, as SHA1 is no longer considered secure and its vulnerabilities facilitate malicious activities.
 
 - Implement a distributed automatic testing mechanism using techniques like "chaos testing" and "swarm testing".
+
+- Implement an authentication system so that only authorized clients can connect to the servers and these only have access to the necessary RPCs.
