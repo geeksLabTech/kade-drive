@@ -15,10 +15,9 @@ y guarda la metadata del archivo con la forma de unificar todos los chunks.
 Además, los servidores utilizan los siguientes RPCs:
 - `CONTAINS` : Detecta si una llave está en un nodo, esto se utiliza tanto para la replicación de la información como para encontrar si un nodo tiene la información que se desea.
 - `GET-FILE-CHUNKS` : Obtiene la lista de ubicaciones de los chunks de la información.
-- `SET-KEY `: Guarda un par (llave, valor) en el sistema
+- `SET-KEY`: Guarda un par (llave, valor) en el sistema
 
 El sistema también cuenta con un módulo de persistencia llamado `PersistentStorage`, que maneja la escritura y lectura de datos. Utiliza las siguientes rutas:
-
 
 - `static/metadata`: se almacenan los nombres de los archivos que representan los hash de los datos divididos en chunks de máximo 1000kb. Estos archivos contienen listas de Python guardadas con pickle, que contienen los hashes de cada chunk obtenido al dividir los datos.
 - `static/keys`: se almacenan los nombres de los archivos que representan los hashes de los datos almacenados, ya sea de datos completos o de chunks. Estos archivos contienen los hashes correspondientes en bytes.
