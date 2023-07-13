@@ -35,9 +35,13 @@ def start_server(host_ip=None, config: Config | None = None):
 
     ms = MessageSystem(host_ip, broadcast)
     hosts = []
+    msg = None
+    try:
+        msg = ms.receive(service_name="dfs")
+        logger.debug(msg)
 
-    msg = ms.receive(service_name="dfs")
-    logger.debug(msg)
+    except OSError:
+        pass
     if msg:
         hosts.append(msg)
         logger.debug(f"Found {msg}")
@@ -81,7 +85,7 @@ def start(host_ip=Option(default=None), log_level=Option(default="DEBUG")):
             log_level = logging.INFO
 
     logging.basicConfig(
-        level=log_level, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        level=log_level, format="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s"
     )
 
     logging.getLogger("SERVER").setLevel(logging.CRITICAL+1)

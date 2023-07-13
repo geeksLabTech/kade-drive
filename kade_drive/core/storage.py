@@ -72,7 +72,8 @@ class PersistentStorage:
         if is_write:
             data["last_write"] = datetime.now()
 
-        logger.debug(f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
+        logger.debug(
+            f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             pickle.dump(data, f)
 
@@ -85,6 +86,9 @@ class PersistentStorage:
             pickle.dump(data, f)
 
     def delete_old(self):
+        # dont auto delete
+        return
+
         self.ensure_dir_paths()
 
         while True:
@@ -104,15 +108,19 @@ class PersistentStorage:
                                 f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes"
                             )
                             if Path(os.path.join(self.values_path, str(file))).exists():
-                                os.remove(os.path.join(self.values_path, str(file)))
+                                os.remove(os.path.join(
+                                    self.values_path, str(file)))
                             if Path(
                                 os.path.join(self.metadata_path, str(file))
                             ).exists():
-                                os.remove(os.path.join(self.metadata_path, str(file)))
+                                os.remove(os.path.join(
+                                    self.metadata_path, str(file)))
                             if Path(os.path.join(self.keys_path, str(file))).exists():
-                                os.remove(os.path.join(self.keys_path, str(file)))
+                                os.remove(os.path.join(
+                                    self.keys_path, str(file)))
 
-                            os.remove(os.path.join(self.timestamp_path, str(file)))
+                            os.remove(os.path.join(
+                                self.timestamp_path, str(file)))
             sleep(self.ttl)
 
     def get_value(self, str_key: str, update_timestamp=True, metadata=True):
@@ -131,7 +139,8 @@ class PersistentStorage:
             if update_timestamp:
                 self.update_timestamp(str_key, republish_data=True)
         if not result:
-            logger.warning(f"tried to get non existing data with key {str_key}")
+            logger.warning(
+                f"tried to get non existing data with key {str_key}")
 
         return result
 
@@ -260,5 +269,6 @@ class PersistentStorage:
         ivalues: list[bytes] = []
 
         for i, ik in enumerate(ikeys):
-            ivalues.append(self.get(ik, update_timestamp=False, metadata=imetadata[i]))
+            ivalues.append(
+                self.get(ik, update_timestamp=False, metadata=imetadata[i]))
         return zip(ikeys, ivalues, imetadata)
