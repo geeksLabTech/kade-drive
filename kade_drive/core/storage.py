@@ -1,9 +1,11 @@
 import os
 import pickle
 from datetime import datetime
-from time import sleep
+
+# from time import sleep
 from pathlib import Path
-import threading
+
+# import threading
 import base64
 import logging
 
@@ -37,16 +39,16 @@ class PersistentStorage:
         self.timestamp_path = "timestamps"
         self.db = []
         self.ttl = ttl
-        self.stop_del_thread = False
+        # self.stop_del_thread = False
 
-        self.del_thread = threading.Thread(target=self.delete_old)
-        self.del_thread.start()
+        # self.del_thread = threading.Thread(target=self.delete_old)
+        # self.del_thread.start()
 
         self.ensure_dir_paths()
 
-    def stop_thread(self):
-        self.stop_del_thread = True
-        self.del_thread.join()
+    # def stop_thread(self):
+    #     self.stop_del_thread = True
+    #     self.del_thread.join()
 
     def ensure_dir_paths(self):
         os.makedirs(self.db_path, exist_ok=True)
@@ -72,8 +74,7 @@ class PersistentStorage:
         if is_write:
             data["last_write"] = datetime.now()
 
-        logger.debug(
-            f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
+        logger.debug(f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
             pickle.dump(data, f)
 
@@ -85,43 +86,53 @@ class PersistentStorage:
             data["republish"] = False
             pickle.dump(data, f)
 
-    def delete_old(self):
-        # dont auto delete
-        return
+    def delete(self, key: bytes, is_metadata: bool):
+        str_key = str(base64.urlsafe_b64encode(key))
+        self._delete_data(str_key, is_metadata)
 
+    def _delete_data(self, str_key: str, is_metadata: bool):
+        key_path = Path(os.path.join(self.keys_path, str_key))
+        if is_metadata:
+            value_path = Path(os.path.join(self.metadata_path), str_key)
+        else:
+            value_path = Path(os.path.join(self.values_path), str_key)
+        timestamp_path = Path(os.path.join(self.timestamp_path, str_key))
+        if key_path.exists():
+            os.remove(value_path)
+        if value_path.exists():
+            os.remove(value_path)
+        if timestamp_path.exists():
+            os.remove(timestamp_path)
+
+    def delete_corrupted_data(self):
         self.ensure_dir_paths()
 
-        while True:
-            logger.debug("checking")
-            if self.stop_del_thread:
-                return
-            for path, dir, files in os.walk(self.timestamp_path):
-                for file in files:
-                    if Path(os.path.join(self.timestamp_path, str(file))).exists():
-                        with open(
-                            os.path.join(self.timestamp_path, str(file)), "rb"
-                        ) as f:
-                            data = pickle.load(f)
+        # while True:
+        logger.debug("checking corrupted data")
+        # if self.stop_del_thread:
+        #     return
+        for path, dir, files in os.walk(self.keys_path):
+            for file in files:
+                file_key_path = Path(os.path.join(self.keys_path), str(file))
+                if file_key_path.exists():
+                    try:
+                        value = pickle.loads(self.get_value(str(file), metadata=False))
+                        is_metadata = False
+                    except FileNotFoundError:
+                        value = pickle.loads(self.get_value(str(file), metadata=True))
+                        is_metadata = True
+                    if (
+                        not value["integrity"]
+                        and (datetime.now() - value["integrity_date"]).seconds
+                        > self.ttl
+                    ):
+                        logger.info(
+                            f"Removing file {file}, beacuse it has not been checked his integrity in {self.ttl/60} minutes"
+                        )
 
-                        if (datetime.now() - data["date"]).seconds > self.ttl:
-                            logger.info(
-                                f"Removing file {file}, beacuse it has not been accessed in {self.ttl/60} minutes"
-                            )
-                            if Path(os.path.join(self.values_path, str(file))).exists():
-                                os.remove(os.path.join(
-                                    self.values_path, str(file)))
-                            if Path(
-                                os.path.join(self.metadata_path, str(file))
-                            ).exists():
-                                os.remove(os.path.join(
-                                    self.metadata_path, str(file)))
-                            if Path(os.path.join(self.keys_path, str(file))).exists():
-                                os.remove(os.path.join(
-                                    self.keys_path, str(file)))
+                        self._delete_data(str(file), is_metadata=is_metadata)
 
-                            os.remove(os.path.join(
-                                self.timestamp_path, str(file)))
-            sleep(self.ttl)
+            # sleep(self.ttl)
 
     def get_value(self, str_key: str, update_timestamp=True, metadata=True):
         self.ensure_dir_paths()
@@ -136,11 +147,13 @@ class PersistentStorage:
                 result = f.read()
 
         if result is not None:
+            data = pickle.loads(result)
+            if not data['integrity']:
+                return None
             if update_timestamp:
                 self.update_timestamp(str_key, republish_data=True)
         if not result:
-            logger.warning(
-                f"tried to get non existing data with key {str_key}")
+            logger.warning(f"tried to get non existing data with key {str_key}")
 
         return result
 
@@ -148,20 +161,41 @@ class PersistentStorage:
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
         self.update_timestamp(str_key, republish_data, is_write=True)
+        value_to_set = pickle.dumps(
+            {"integrity": False, "value": value, "integrity_date": datetime.now()}
+        )
+
         if metadata:
             path = os.path.join(self.metadata_path, str_key)
         else:
             path = os.path.join(self.values_path, str_key)
         with open(path, "wb") as f:
-            try:
-                logger.debug("writting data  to file")
-                f.write(value)
-            except TypeError:
-                logger.warning("writting with unicode_escape")
-                f.write(value.encode("unicode_escape"))
+            # try
+            logger.debug("writting data  to file")
+            f.write(value_to_set)
+            # except TypeError:
+            #     logger.warning("writting with unicode_escape")
+            #     f.write(value_to_set.encode("unicode_escape"))
 
         with open(os.path.join(self.keys_path, str_key), "wb") as f:
             f.write(key)
+
+    def confirm_integrity(self, key: bytes, metadata=True):
+        str_key = str(base64.urlsafe_b64encode(key))
+        self.ensure_dir_paths()
+        if metadata:
+            path = Path(os.path.join(self.metadata_path, str_key))
+        else:
+            path = Path(os.path.join(self.values_path, str_key))
+
+        if path.exists():
+            with open(path, "rb") as f:
+                value = pickle.load(f)
+            with open(path, "wb") as f:
+                value["integrity"] = True
+                f.write(pickle.dumps(value))
+        else:
+            logger.info("Tried to confirm integrity of non existing file")
 
     def set_metadata(self, key, value, republish_data: bool):
         self.ensure_dir_paths()
@@ -200,6 +234,10 @@ class PersistentStorage:
         else:
             path = Path(os.path.join(self.values_path, str_key))
             if not path.exists():
+                return False
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+            if not data['integrity']:
                 return False
 
         return True
@@ -269,6 +307,5 @@ class PersistentStorage:
         ivalues: list[bytes] = []
 
         for i, ik in enumerate(ikeys):
-            ivalues.append(
-                self.get(ik, update_timestamp=False, metadata=imetadata[i]))
+            ivalues.append(self.get(ik, update_timestamp=False, metadata=imetadata[i]))
         return zip(ikeys, ivalues, imetadata)
