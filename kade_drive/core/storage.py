@@ -157,6 +157,30 @@ class PersistentStorage:
 
         return result
 
+     def set_value(self, key: bytes, value, metadata=True, republish_data=False):
+        str_key = str(base64.urlsafe_b64encode(key))
+        self.ensure_dir_paths()
+        self.update_timestamp(str_key, republish_data, is_write=True)
+        value_to_set = pickle.dumps(
+            {"integrity": False, "value": value, "integrity_date": datetime.now()}
+        )
+
+        if metadata:
+            path = os.path.join(self.metadata_path, str_key)
+        else:
+            path = os.path.join(self.values_path, str_key)
+        with open(path, "wb") as f:
+            # try
+            logger.debug("writting data  to file")
+            f.write(value_to_set)
+            # except TypeError:
+            #     logger.warning("writting with unicode_escape")
+            #     f.write(value_to_set.encode("unicode_escape"))
+
+        with open(os.path.join(self.keys_path, str_key), "wb") as f:
+            f.write(key)
+
+    
     def set_value(self, key: bytes, value, metadata=True, republish_data=False):
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
@@ -180,6 +204,26 @@ class PersistentStorage:
         with open(os.path.join(self.keys_path, str_key), "wb") as f:
             f.write(key)
 
+    def delete_value(self, key: bytes):
+        str_key = str(base64.urlsafe_b64encode(key))
+        self.ensure_dir_paths()
+        self.delete_timestamp(str_key, republish_data, is_write=True)
+
+        path = os.path.join(self.metadata_path, str_key)
+            
+        if os.path.exists(path):
+            os.remove(path)    
+        path = os.path.join(self.values_path, str_key)
+            
+        if os.path.exists(path):
+            os.remove(path)    
+        
+        key_path = os.path.join(self.keys_path, str_key)
+        
+        if os.path.exists(key_path):
+            os.remove(key_path)
+
+
     def confirm_integrity(self, key: bytes, metadata=True):
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
@@ -200,6 +244,11 @@ class PersistentStorage:
     def set_metadata(self, key, value, republish_data: bool):
         self.ensure_dir_paths()
         self.set_value(key, value, True, republish_data)
+        self.cull()
+    
+    def delete_metadata(self, key):
+        self.ensure_dir_paths()
+        self.delete_value(key, True, )
         self.cull()
 
     def cull(self):
