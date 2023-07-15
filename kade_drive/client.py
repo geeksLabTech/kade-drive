@@ -223,8 +223,22 @@ class ClientSession:
         return False, None
 
     def delete(self, key, apply_hash_to_key=True):
-        # TODO
-        pass
+        if self.connection:
+            try:
+                response = self.connection.root.delete(
+                    key=key, apply_hash_to_key=apply_hash_to_key
+                )
+                sleep(1)
+                message = "Delete > Success" if response else "Delete failed"
+                logger.info(message)
+                return response, self.connection
+            except EOFError as e:
+                logger.error(f"Connection lost in delete, exception: {e}")
+
+        else:
+            logger.error("No connection stablished to do Delete")
+
+        return False, None
 
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
         try:
