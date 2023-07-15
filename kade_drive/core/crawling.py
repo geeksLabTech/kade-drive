@@ -92,9 +92,9 @@ class SpiderCrawl:
             self.nearest.mark_contacted(peer)
             logger.debug("mark contacted successful")
         logger.debug("response %s", response_dict)
-        return self._nodes_found(response_dict)
+        return self._nodes_found(response_dict, is_metadata)
 
-    def _nodes_found(self, response_dict):
+    def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
         raise NotImplementedError
 
     def _handle_contacts(self):
@@ -114,7 +114,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         return self._find(FileSystemProtocol.call_find_value, is_metadata)
 
-    def _nodes_found(self, response_dict: dict):
+    def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
         """
         Handle the result of an iteration in _find.
         """
@@ -181,7 +181,7 @@ class NodeSpiderCrawl(SpiderCrawl):
         """
         return self._find(FileSystemProtocol.call_find_node, None)
 
-    def _nodes_found(self, response_dict: dict):
+    def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
         """
         Handle the result of an iteration in _find.
         """
@@ -211,7 +211,7 @@ class ChunkLocationSpiderCrawl(SpiderCrawl):
     def find(self):
         return self._find(FileSystemProtocol.call_find_chunk_location, None)
 
-    def _nodes_found(self, response_dict: dict):
+    def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
         """
         Handle the result of an iteration in _find.
         """
@@ -242,10 +242,10 @@ class DeleteSpiderCrawl(SpiderCrawl):
         SpiderCrawl.__init__(self, node, peers, ksize, alpha)
         self.nearest_without_value = NodeHeap(self.node, 1)
 
-    def find(self):
-        return self._find(FileSystemProtocol.call_delete, True)
+    def find(self, is_metadata: bool):
+        return self._find(FileSystemProtocol.call_delete, is_metadata)
 
-    def _nodes_found(self, response_dict: dict):
+    def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
         logger.debug("Entry in _nodes_found DeleteSpiderCrawl")
         toremove = []
         found_values = []
@@ -267,7 +267,44 @@ class DeleteSpiderCrawl(SpiderCrawl):
         if self.nearest.have_contacted_all():
             # not found!
             return None
-        return self.find()
+        return self.find(is_metadata)
+
+    def _handle_found_values(self, values):
+        values = list(values)
+        return all(values)
+
+
+class ConfirmIntegritySpiderCrawl(SpiderCrawl):
+    def __init__(self, node, peers, ksize, alpha):
+        SpiderCrawl.__init__(self, node, peers, ksize, alpha)
+        self.nearest_without_value = NodeHeap(self.node, 1)
+
+    def find(self, is_metadata: bool):
+        return self._find(FileSystemProtocol.call_confirm_integrity, is_metadata)
+
+    def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
+        logger.debug("Entry in _nodes_found DeleteSpiderCrawl")
+        toremove = []
+        found_values = []
+        for peer_id, response in response_dict.items():
+            response = RPCFindResponse(response)
+            if not response.happened():
+                toremove.append(peer_id)
+                found_values.append(None)
+            elif response.has_value():
+                found_values.append(response.get_value())
+            else:
+                peer = self.nearest.get_node(peer_id)
+                self.nearest_without_value.push(peer)
+                self.nearest.push(response.get_node_list())
+        self.nearest.remove(toremove)
+        logger.debug(f"found values in _nodes_found {found_values}")
+        if len(found_values) > 0:
+            return self._handle_found_values(found_values)
+        if self.nearest.have_contacted_all():
+            # not found!
+            return None
+        return self.find(is_metadata)
 
     def _handle_found_values(self, values):
         values = list(values)

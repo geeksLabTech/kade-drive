@@ -55,14 +55,30 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def call_delete(conn, node_to_ask: Node, key: bytes, value, is_metadata=True):
+    def call_delete(conn, node_to_ask: Node, key: bytes, is_metadata=True):
         """
         async function to call the find store rpc method
         """
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
         if conn:
-            response = conn.rpc_delete(address, FileSystemProtocol.source_node.id, key)
+            response = conn.rpc_delete(
+                address, FileSystemProtocol.source_node.id, key, is_metadata
+            )
+
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
+
+    @staticmethod
+    def call_confirm_integrity(conn, node_to_ask: Node, key: bytes, is_metadata=True):
+        """
+        async function to call the find store rpc method
+        """
+        address = (node_to_ask.ip, node_to_ask.port)
+        response = None
+        if conn:
+            response = conn.rpc_confirm_integrity(
+                address, FileSystemProtocol.source_node.id, key, is_metadata
+            )
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 

@@ -17,6 +17,7 @@ from kade_drive.core.storage import PersistentStorage
 from kade_drive.core.node import Node
 from kade_drive.core.crawling import (
     ChunkLocationSpiderCrawl,
+    ConfirmIntegritySpiderCrawl,
     DeleteSpiderCrawl,
     ValueSpiderCrawl,
 )
@@ -158,19 +159,6 @@ class Server:
         return chunks
 
     @staticmethod
-    def _handle_empty_neighbors(dkey, metadata, value, exclude_current):
-        logger.debug("There are no known neighbors to set key %s", dkey.hex())
-
-        if not exclude_current:
-            logger.info("storing in current server")
-            if metadata:
-                Server.storage.set_metadata(dkey, value, False)
-            else:
-                Server.storage.set_value(dkey, value, False)
-
-        return True
-
-    @staticmethod
     def set_digest(
         dkey: bytes, value, metadata=True, exclude_current=False, local_last_write=None
     ):
@@ -205,7 +193,7 @@ class Server:
             else:
                 Server.storage.set_value(dkey, value, False)
 
-        any_result = False
+        responses = []
         for n in nodes:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
@@ -229,13 +217,56 @@ class Server:
                         conn, n, dkey, value, metadata
                     )
                     if result:
-                        any_result = True
-
-                if contains:
-                    any_result = True
+                        responses.append(True)
+                    else:
+                        responses.append(False)
+                    continue
+                if contains is not None:
+                    responses.append(True)
+                else:
+                    responses.append(False)
 
         # return true only if at least one store call succeeded
-        return any_result
+        return all(responses)
+
+    @staticmethod
+    def _handle_empty_neighbors(dkey, metadata, value, exclude_current):
+        logger.debug("There are no known neighbors to set key %s", dkey.hex())
+
+        if not exclude_current:
+            logger.info("storing in current server")
+            if metadata:
+                Server.storage.set_metadata(dkey, value, False)
+            else:
+                Server.storage.set_value(dkey, value, False)
+
+        return True
+
+    @staticmethod
+    def delete_data_from_network(key: bytes, is_metadata=True):
+        node = Node(key)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
+        if not nearest:
+            logger.debug(f"There are no known neighbors to get key {key}")
+            if Server.storage.contains(key):
+                logger.debug("Getting key from this same node")
+                return Server.storage.delete(key, True)
+            return True
+
+        spider = DeleteSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
+        result = spider.find(is_metadata)
+        logger.info(f"result of spider in delete was {result}")
+        if result is not True:
+            logger.warning("value was not deleted correctly")
+        return result
+
+    @staticmethod
+    def confirm_integrity_of_data(key: bytes, is_metadata=True):
+        node = Node(key)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
+        spider = ConfirmIntegritySpiderCrawl(node, nearest, Server.ksize, Server.alpha)
+        result = spider.find(is_metadata)
+        return result
 
     @staticmethod
     def find_replicas():
@@ -409,26 +440,11 @@ class ServerService(Service):
         return metadata_list
 
     @rpyc.exposed
-    def delete(self, key: bytes, apply_hash_to_key=True):
-        logger.debug(f"Deleting key {key}")
+    def delete(self, key: bytes, apply_hash_to_key=True, is_metadata=True):
         if apply_hash_to_key:
             key = digest(key)
 
-        node = Node(key)
-        nearest = FileSystemProtocol.router.find_neighbors(node)
-        if not nearest:
-            logger.debug(f"There are no known neighbors to get key {key}")
-            if Server.storage.contains(key):
-                logger.debug("Getting key from this same node")
-                return Server.storage.delete(key, True)
-            return True
-
-        spider = DeleteSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
-        result = spider.find()
-        logger.info(f"result of spider in delete was {result}")
-        if result is not True:
-            logger.warning("value was not deleted correctly")
-        return result
+        return Server.delete_data_from_network(key, is_metadata)
 
     @rpyc.exposed
     def upload_file(self, key, data: bytes, apply_hash_to_key=True) -> bool:
@@ -438,29 +454,53 @@ class ServerService(Service):
         metadata_list = pickle.dumps(digested_chunks)
         processed_chunks = ((digest(c), c) for c in chunks)
 
-        try:
+        chunks_responses = []
+        for c in processed_chunks:
+            chunks_responses.append(Server.set_digest(c[0], c[1], metadata=False))
+        if not all(chunks_responses):
+            logger.info("Failed to set chunks, rolling back changes")
+            responses = []
             for c in processed_chunks:
-                Server.set_digest(c[0], c[1], metadata=False)
-        except Exception as e:
-            logger.info(f"exception throwed in set_digest of chunck value: {e}")
-            logger.info("Rolling back changes")
-            for c in processed_chunks:
-                Server.storage.delete(key=c[0], is_metadata=False)
+                responses.append(
+                    Server.delete_data_from_network(key=c[0], is_metadata=False)
+                )
+            if not all(responses):
+                logger.warning("Rolling back changes of chuncks was not completed")
             return False
         logger.debug("Writting key metadata")
-        try:
-            if apply_hash_to_key:
-                dkey = digest(key)
-                Server.set_digest(dkey, metadata_list)
-            else:
-                Server.set_digest(key, metadata_list)
-            return True
-        except Exception as e:
-            logger.warning(f"exception throwed in set_digest of metadata: {e}")
-            logger.info("Rolling back changes")
+        if apply_hash_to_key:
+            key = digest(key)
+
+        set_metadata_response = Server.set_digest(key, metadata_list)
+
+        if not set_metadata_response:
+            logger.warning("Failed set_digest of metadata, rolling back changes")
+            responses = []
             for c in processed_chunks:
-                Server.storage.delete(key=c[0], is_metadata=False)
+                responses.append(
+                    Server.delete_data_from_network(key=c[0], is_metadata=False)
+                )
+            if not all(responses):
+                logger.warning(
+                    "Rolling back changes of chuncks with failed metadata was not completed"
+                )
             return False
+
+        results = []
+        for c in processed_chunks:
+            results.append(Server.confirm_integrity_of_data(c[0], False))
+
+        if not all(results):
+            logger.warning("It was not possible to confirm integrity of all chunks")
+            return False
+
+        result = Server.confirm_integrity_of_data(key, True)
+        if not result:
+            logger.warning("It was not possible to confirm integrity of metadata")
+            return False
+
+        logger.info("File uploaded successfully")
+        return True
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
@@ -507,9 +547,10 @@ class ServerService(Service):
         )
         return [(i.ip, i.port) for i in nearest]
 
-    #
-    # RPCs only accessed by servers
-    #
+    ############################################################################
+    #                   RPCs only accessed by servers                          #
+    ############################################################################
+
     @rpyc.exposed
     def rpc_store(self, sender, nodeid: bytes, key: bytes, value, metadata=True):
         """Instructs a node to store a value
@@ -630,14 +671,32 @@ class ServerService(Service):
         # get value from storage
         return FileSystemProtocol.storage.check_if_new_value_exists(key)
 
-    def rpc_delete(self, sender, node_id: bytes, key: bytes):
+    @rpyc.exposed
+    def rpc_delete(self, sender, node_id: bytes, key: bytes, is_metadata: bool):
         source = Node(node_id, sender[0], sender[1])
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
             logger.info(f"wellcome_If_new in rpc_delete {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
 
-        return FileSystemProtocol.storage.delete(key, True)
+        return FileSystemProtocol.storage.delete(key, is_metadata)
+
+    @rpyc.exposed
+    def rpc_confirm_integrity(
+        self, sender, node_id: bytes, key: bytes, is_metadata: bool
+    ):
+        source = Node(node_id, sender[0], sender[1])
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            logger.info(f"wellcome_If_new in rpc_confirm_integrity {address}")
+            FileSystemProtocol.wellcome_if_new(conn, source)
+
+        try:
+            FileSystemProtocol.storage.confirm_integrity(key, is_metadata)
+            return {"value": True}
+        except Exception as e:
+            logger.error(f"Error when doing rpc_confirm_integrity, {e}")
+            return {"value": False}
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
