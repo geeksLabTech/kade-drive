@@ -19,6 +19,7 @@ from kade_drive.core.crawling import (
     ChunkLocationSpiderCrawl,
     ConfirmIntegritySpiderCrawl,
     DeleteSpiderCrawl,
+    LsSpiderCrawl,
     ValueSpiderCrawl,
 )
 from kade_drive.core.crawling import NodeSpiderCrawl
@@ -503,6 +504,14 @@ class ServerService(Service):
         return True
 
     @rpyc.exposed
+    def get_all_file_names(self):
+        logging.info("Getting all file names")
+        nearest = FileSystemProtocol.router.find_neighbors(Server.node)
+        spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
+        metadata_list = spider.find()
+        return metadata_list
+
+    @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
         logger.debug("looking file chunk location")
         node = Node(chunk_key)
@@ -697,6 +706,16 @@ class ServerService(Service):
         except Exception as e:
             logger.error(f"Error when doing rpc_confirm_integrity, {e}")
             return {"value": False}
+
+    @rpyc.exposed
+    def rpc_get_metadata_list(self, sender, node_id: bytes):
+        source = Node(node_id, sender[0], sender[1])
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            logger.info(f"wellcome_If_new in rpc_confirm_integrity {address}")
+            FileSystemProtocol.wellcome_if_new(conn, source)
+
+        return Server.storage.get_all_metadata_keys()
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):

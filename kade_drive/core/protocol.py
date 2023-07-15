@@ -83,6 +83,20 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
+    def call_get_metadata_list(conn, node_to_ask: Node, key: bytes, is_metadata=True):
+        """
+        async function to call the find store rpc method
+        """
+        address = (node_to_ask.ip, node_to_ask.port)
+        response = None
+        if conn:
+            response = conn.rpc_get_metadata_list(
+                address, FileSystemProtocol.source_node.id
+            )
+
+        return FileSystemProtocol.process_response(conn, response, node_to_ask)
+
+    @staticmethod
     def call_contains(conn, node_to_ask, key: bytes, is_metadata=True):
         response = None
         if conn:

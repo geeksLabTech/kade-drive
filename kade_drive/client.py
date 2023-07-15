@@ -240,6 +240,22 @@ class ClientSession:
 
         return False, None
 
+    def ls(self):
+        if self.connection:
+            try:
+                response = self.connection.root.get_all_file_names()
+                sleep(1)
+                message = "ls > Success" if response else "ls failed"
+                logger.info(message)
+                return response, self.connection
+            except EOFError as e:
+                logger.error(f"Connection lost in ls, exception: {e}")
+
+        else:
+            logger.error("No connection stablished to do Delete")
+
+        return False, None
+
     def _update_bootstrap_nodes(self, connection: rpyc.Connection):
         try:
             nodes_to_add = [

@@ -277,7 +277,6 @@ class DeleteSpiderCrawl(SpiderCrawl):
 class ConfirmIntegritySpiderCrawl(SpiderCrawl):
     def __init__(self, node, peers, ksize, alpha):
         SpiderCrawl.__init__(self, node, peers, ksize, alpha)
-        self.nearest_without_value = NodeHeap(self.node, 1)
 
     def find(self, is_metadata: bool):
         return self._find(FileSystemProtocol.call_confirm_integrity, is_metadata)
@@ -295,7 +294,6 @@ class ConfirmIntegritySpiderCrawl(SpiderCrawl):
                 found_values.append(response.get_value())
             else:
                 peer = self.nearest.get_node(peer_id)
-                self.nearest_without_value.push(peer)
                 self.nearest.push(response.get_node_list())
         self.nearest.remove(toremove)
         logger.debug(f"found values in _nodes_found {found_values}")
@@ -309,6 +307,39 @@ class ConfirmIntegritySpiderCrawl(SpiderCrawl):
     def _handle_found_values(self, values):
         values = list(values)
         return all(values)
+
+
+class LsSpiderCrawl(SpiderCrawl):
+    def __init__(self, node, peers, ksize, alpha):
+        SpiderCrawl.__init__(self, node, peers, ksize, alpha)
+
+    def find(self, is_metadata: bool = True):
+        return self._find(FileSystemProtocol.call_get_metadata_list, True)
+
+    def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
+        logger.debug("Entry in _nodes_found DeleteSpiderCrawl")
+        toremove = []
+        found_values = set()
+        for peer_id, response in response_dict.items():
+            response = RPCFindResponse(response)
+            if not response.happened():
+                toremove.append(peer_id)
+            elif response.has_value():
+                found_values.add(response.get_value())
+            else:
+                peer = self.nearest.get_node(peer_id)
+                self.nearest.push(response.get_node_list())
+        self.nearest.remove(toremove)
+        logger.debug(f"found values in _nodes_found {found_values}")
+        if len(found_values) > 0:
+            return self._handle_found_values(found_values)
+        if self.nearest.have_contacted_all():
+            # not found!
+            return None
+        return self.find(is_metadata)
+
+    def _handle_found_values(self, values):
+        return list(values)
 
 
 class RPCFindResponse:
