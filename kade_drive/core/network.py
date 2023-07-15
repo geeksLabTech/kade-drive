@@ -15,7 +15,11 @@ from kade_drive.core.routing import RoutingTable
 from kade_drive.core.utils import digest
 from kade_drive.core.storage import PersistentStorage
 from kade_drive.core.node import Node
-from kade_drive.core.crawling import ChunkLocationSpiderCrawl, ValueSpiderCrawl
+from kade_drive.core.crawling import (
+    ChunkLocationSpiderCrawl,
+    DeleteSpiderCrawl,
+    ValueSpiderCrawl,
+)
 from kade_drive.core.crawling import NodeSpiderCrawl
 from kade_drive.core.utils import is_port_in_use
 import datetime
@@ -90,8 +94,7 @@ class Server:
                     ServerService,
                     port=port,
                     hostname=interface,
-                    protocol_config={
-                        "allow_public_attrs": True, "allow_pickle": True},
+                    protocol_config={"allow_public_attrs": True, "allow_pickle": True},
                 )
                 t.start()
             except Exception as e:
@@ -109,12 +112,10 @@ class Server:
                    addresses are acceptable - hostnames will cause an error.
         """
 
-        logger.debug(
-            f"Attempting to bootstrap node with {len(addrs)} initial contacts")
+        logger.debug(f"Attempting to bootstrap node with {len(addrs)} initial contacts")
         cos = list(map(Server.bootstrap_node, addrs))
         nodes = [node for node in cos if node is not None]
-        spider = NodeSpiderCrawl(
-            Server.node, nodes, Server.ksize, Server.alpha)
+        spider = NodeSpiderCrawl(Server.node, nodes, Server.ksize, Server.alpha)
         res = spider.find()
         logger.debug("results of spider find: %s", res)
 
@@ -129,8 +130,7 @@ class Server:
                     (Server.node.ip, Server.node.port), Server.node.id
                 )
                 node = Node(response, addr[0], addr[1]) if response else None
-                response = FileSystemProtocol.process_response(
-                    conn, response, node)
+                response = FileSystemProtocol.process_response(conn, response, node)
 
                 return node
 
@@ -152,7 +152,7 @@ class Server:
                 chunks.append(data[0:chunk_size])
                 last_position = chunk_size
             else:
-                chunks.append(data[last_position: last_position + chunk_size])
+                chunks.append(data[last_position : last_position + chunk_size])
                 last_position = last_position + chunk_size
             count += 1
         return chunks
@@ -237,35 +237,20 @@ class Server:
         # return true only if at least one store call succeeded
         return any_result
 
-    @static_method
-    def delete_file(dkey: bytes, is_metadata=True, exclude_current=False, local_last_write=None):
-
-        replicas = Server.find_replicas(filename)
-        logger.info(f"Replicas {replicas}")
-        
-        for n in repicas:
-            with ServerSession(address[0], address[1]) as conn:
-                response = FileSystemProtocol.call_delete(conn, n, filename, is_metadata)
-        
-        return True
-
     @staticmethod
-    def find_replicas(keys_to_find: list = Server.storage.keys):
-
+    def find_replicas():
         nearest = FileSystemProtocol.router.find_neighbors(
             Server.node, Server.alpha, exclude=Server.node
         )
-        spider = NodeSpiderCrawl(Server.node, nearest,
-                                 Server.ksize, Server.alpha)
+        spider = NodeSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
 
         nodes = spider.find()
-
+        keys_to_find = Server.storage.keys()
         keys_dict = {}
         for n in nodes:
             with ServerSession(n.ip, n.port) as conn:
                 for k, is_metadata in keys_to_find:
-                    contains = FileSystemProtocol.call_contains(
-                        conn, n, k, is_metadata)
+                    contains = FileSystemProtocol.call_contains(conn, n, k, is_metadata)
                     if contains:
                         if (k, is_metadata) not in keys_dict:
                             keys_dict[(k, is_metadata)] = 0
@@ -305,8 +290,7 @@ class Server:
                         msg = ms.receive(service_name="dfs")
                     except OSError as e:
                         msg = None
-                        logger.debug(
-                            f"Error in broadcasting new neighbors: {e}")
+                        logger.debug(f"Error in broadcasting new neighbors: {e}")
                     logger.info(f"Message")
                     if (
                         msg is None
@@ -329,7 +313,8 @@ class Server:
             try:
                 sleep(refresh_sleep)
                 logger.info("Refreshing Table")
-
+                while not Server.storage.is_deleting:
+                    sleep(5)
                 Server.storage.delete_corrupted_data()
                 results = []
                 for node_id in FileSystemProtocol.get_refresh_ids():
@@ -337,8 +322,7 @@ class Server:
                     nearest = FileSystemProtocol.router.find_neighbors(
                         node, Server.alpha
                     )
-                    spider = NodeSpiderCrawl(
-                        node, nearest, Server.ksize, Server.alpha)
+                    spider = NodeSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
 
                     results.append(spider.find())
 
@@ -351,8 +335,7 @@ class Server:
                     is_metadata,
                     last_write,
                 ) in Server.storage.iter_older_than(5):
-                    Server.set_digest(key, value, is_metadata,
-                                      exclude_current=True)
+                    Server.set_digest(key, value, is_metadata, exclude_current=True)
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 
@@ -426,15 +409,26 @@ class ServerService(Service):
         return metadata_list
 
     @rpyc.exposed
-    def delete(self, key, apply_hash_to_key=True):
-            
+    def delete(self, key: bytes, apply_hash_to_key=True):
+        logger.debug(f"Deleting key {key}")
         if apply_hash_to_key:
             key = digest(key)
-            
-        FileSystemProtocol.storage.delete_metadata(key, value)
-        FileSystemProtocol.storage.set_value(key, value, metadata=False)
-        
-        return True
+
+        node = Node(key)
+        nearest = FileSystemProtocol.router.find_neighbors(node)
+        if not nearest:
+            logger.debug(f"There are no known neighbors to get key {key}")
+            if Server.storage.contains(key):
+                logger.debug("Getting key from this same node")
+                return Server.storage.delete(key, True)
+            return True
+
+        spider = DeleteSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
+        result = spider.find()
+        logger.info(f"result of spider in delete was {result}")
+        if result is not True:
+            logger.warning("value was not deleted correctly")
+        return result
 
     @rpyc.exposed
     def upload_file(self, key, data: bytes, apply_hash_to_key=True) -> bool:
@@ -448,8 +442,7 @@ class ServerService(Service):
             for c in processed_chunks:
                 Server.set_digest(c[0], c[1], metadata=False)
         except Exception as e:
-            logger.info(
-                f"exception throwed in set_digest of chunck value: {e}")
+            logger.info(f"exception throwed in set_digest of chunck value: {e}")
             logger.info("Rolling back changes")
             for c in processed_chunks:
                 Server.storage.delete(key=c[0], is_metadata=False)
@@ -486,8 +479,7 @@ class ServerService(Service):
             return None
 
         logger.debug("Initiating ChunkLocationSpiderCrawl")
-        spider = ChunkLocationSpiderCrawl(
-            node, nearest, Server.ksize, Server.alpha)
+        spider = ChunkLocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         results = spider.find()
         logger.debug(f"results of ChunkLocationSpider {results}")
         return results
@@ -546,8 +538,7 @@ class ServerService(Service):
         )
         # store values and report success
         if metadata:
-            FileSystemProtocol.storage.set_metadata(
-                key, value, republish_data=False)
+            FileSystemProtocol.storage.set_metadata(key, value, republish_data=False)
         else:
             FileSystemProtocol.storage.set_value(key, value, metadata=False)
         return True
@@ -564,8 +555,7 @@ class ServerService(Service):
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         if not FileSystemProtocol.storage.contains(key, metadata):
-            logger.debug(
-                f"Value with key {key} not found, calling rpc_find_node")
+            logger.debug(f"Value with key {key} not found, calling rpc_find_node")
             logger.debug(f"type of key is {type(key)}")
 
             return self.rpc_find_node(sender, nodeid, key)
@@ -585,8 +575,7 @@ class ServerService(Service):
         Returns:
             bytes: node id if alive, None if not
         """
-        logger.debug(
-            f"rpc ping called from {nodeid}, {sender[0]}, {sender[1]}")
+        logger.debug(f"rpc ping called from {nodeid}, {sender[0]}, {sender[1]}")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
@@ -598,8 +587,7 @@ class ServerService(Service):
 
     @rpyc.exposed
     def rpc_find_node(self, sender, nodeid: bytes, key: bytes):
-        logger.debug(
-            f"finding neighbors of {int(nodeid.hex(), 16)} in local table")
+        logger.debug(f"finding neighbors of {int(nodeid.hex(), 16)} in local table")
 
         source = Node(nodeid, sender[0], sender[1])
 
@@ -614,8 +602,7 @@ class ServerService(Service):
         logger.debug(f"SEnder [0] Sender [1] {source.ip}, {source.port}")
         node = Node(key)
         # ask for the neighbors of the node
-        neighbors = FileSystemProtocol.router.find_neighbors(
-            node, exclude=source)
+        neighbors = FileSystemProtocol.router.find_neighbors(node, exclude=source)
         logger.debug(f"neighbors of find_node: { neighbors}")
         return list(map(tuple, neighbors))
 
@@ -628,7 +615,7 @@ class ServerService(Service):
             logger.info(f"wellcome_If_new in contains {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
-        return FileSystemProtocol.storage.contains(key, is_metadata)
+        return {"value": FileSystemProtocol.storage.contains(key, is_metadata)}
 
     @rpyc.exposed
     def rpc_check_if_new_value_exists(
@@ -642,6 +629,15 @@ class ServerService(Service):
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         return FileSystemProtocol.storage.check_if_new_value_exists(key)
+
+    def rpc_delete(self, sender, node_id: bytes, key: bytes):
+        source = Node(node_id, sender[0], sender[1])
+        address = (source.ip, source.port)
+        with ServerSession(address[0], address[1]) as conn:
+            logger.info(f"wellcome_If_new in rpc_delete {address}")
+            FileSystemProtocol.wellcome_if_new(conn, source)
+
+        return FileSystemProtocol.storage.delete(key, True)
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):

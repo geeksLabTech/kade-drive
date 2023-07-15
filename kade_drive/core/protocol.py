@@ -45,7 +45,6 @@ class FileSystemProtocol:
         """
         async function to call the find store rpc method
         """
-        response = None
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
         if conn:
@@ -60,16 +59,12 @@ class FileSystemProtocol:
         """
         async function to call the find store rpc method
         """
-        response = None
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
         if conn:
-            response = conn.delete(
-                address, FileSystemProtocol.source_node.id, key, is_metadata
-            )
+            response = conn.rpc_delete(address, FileSystemProtocol.source_node.id, key)
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
-
 
     @staticmethod
     def call_contains(conn, node_to_ask, key: bytes, is_metadata=True):
@@ -88,7 +83,8 @@ class FileSystemProtocol:
         if conn:
             address = (node_to_ask.ip, node_to_ask.port)
             response = conn.rpc_check_if_new_value_exists(
-                address, FileSystemProtocol.source_node.id, key)
+                address, FileSystemProtocol.source_node.id, key
+            )
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
@@ -151,12 +147,11 @@ class FileSystemProtocol:
         """
         response = None
         address = (node_to_ask.ip, node_to_ask.port)
-        logge.info(f"calling ping {address}")
+        logger.info(f"calling ping {address}")
         response = None
 
         if conn:
-            response = conn.rpc_ping(
-                address, FileSystemProtocol.source_node.id)
+            response = conn.rpc_ping(address, FileSystemProtocol.source_node.id)
 
         logger.debug(f"Got Response {response}")
 
@@ -182,7 +177,10 @@ class FileSystemProtocol:
             return
 
         # TODO uncomment this
-        if (node.ip, node.port) == (FileSystemProtocol.source_node.ip, FileSystemProtocol.source_node.port):
+        if (node.ip, node.port) == (
+            FileSystemProtocol.source_node.ip,
+            FileSystemProtocol.source_node.port,
+        ):
             logger.debug("called wellcome if new in self")
             return
         # add node to table
@@ -219,8 +217,7 @@ class FileSystemProtocol:
             if not neighbors or (new_node_close and this_closest):
                 logger.debug("calling call_store in wellcome_if_new")
                 with ServerSession(node.ip, node.port) as conn:
-                    FileSystemProtocol.call_store(
-                        conn, node, key, value, is_metadata)
+                    FileSystemProtocol.call_store(conn, node, key, value, is_metadata)
 
     @staticmethod
     def process_response(conn, response, node: Node):

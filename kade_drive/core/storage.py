@@ -39,6 +39,7 @@ class PersistentStorage:
         self.timestamp_path = "timestamps"
         self.db = []
         self.ttl = ttl
+        self.is_deleting = False
         # self.stop_del_thread = False
 
         # self.del_thread = threading.Thread(target=self.delete_old)
@@ -86,14 +87,28 @@ class PersistentStorage:
             data["republish"] = False
             pickle.dump(data, f)
 
-    def delete(self, key: bytes, is_metadata: bool):
-        str_key = str(base64.urlsafe_b64encode(key))
-        self._delete_data(str_key, is_metadata)
+    def delete(self, key: bytes, is_metadata: bool) -> bool:
+        try:
+            str_key = str(base64.urlsafe_b64encode(key))
+            self._delete_data(str_key, is_metadata)
+            return True
+        except Exception as e:
+            logger.error(f"error when running delete {e}")
+            return False
 
     def _delete_data(self, str_key: str, is_metadata: bool):
         key_path = Path(os.path.join(self.keys_path, str_key))
         if is_metadata:
             value_path = Path(os.path.join(self.metadata_path), str_key)
+            if value_path.exists():
+                with open(value_path, "wb") as f:
+                    chunks_data = pickle.load(f)
+                    chunks_data["integrity"] = False
+                    pickle.dump(chunks_data, f)
+                    chunks_value = chunks_data["value"]
+                for v in chunks_value:
+                    self._delete_data(v, False)
+
         else:
             value_path = Path(os.path.join(self.values_path), str_key)
         timestamp_path = Path(os.path.join(self.timestamp_path, str_key))
@@ -105,10 +120,12 @@ class PersistentStorage:
             os.remove(timestamp_path)
 
     def delete_corrupted_data(self):
+        self.is_deleting = True
         self.ensure_dir_paths()
 
         # while True:
         logger.debug("checking corrupted data")
+
         # if self.stop_del_thread:
         #     return
         for path, dir, files in os.walk(self.keys_path):
@@ -132,6 +149,7 @@ class PersistentStorage:
 
                         self._delete_data(str(file), is_metadata=is_metadata)
 
+            self.is_deleting = False
             # sleep(self.ttl)
 
     def get_value(self, str_key: str, update_timestamp=True, metadata=True):
@@ -148,7 +166,7 @@ class PersistentStorage:
 
         if result is not None:
             data = pickle.loads(result)
-            if not data['integrity']:
+            if not data["integrity"]:
                 return None
             if update_timestamp:
                 self.update_timestamp(str_key, republish_data=True)
@@ -157,30 +175,6 @@ class PersistentStorage:
 
         return result
 
-     def set_value(self, key: bytes, value, metadata=True, republish_data=False):
-        str_key = str(base64.urlsafe_b64encode(key))
-        self.ensure_dir_paths()
-        self.update_timestamp(str_key, republish_data, is_write=True)
-        value_to_set = pickle.dumps(
-            {"integrity": False, "value": value, "integrity_date": datetime.now()}
-        )
-
-        if metadata:
-            path = os.path.join(self.metadata_path, str_key)
-        else:
-            path = os.path.join(self.values_path, str_key)
-        with open(path, "wb") as f:
-            # try
-            logger.debug("writting data  to file")
-            f.write(value_to_set)
-            # except TypeError:
-            #     logger.warning("writting with unicode_escape")
-            #     f.write(value_to_set.encode("unicode_escape"))
-
-        with open(os.path.join(self.keys_path, str_key), "wb") as f:
-            f.write(key)
-
-    
     def set_value(self, key: bytes, value, metadata=True, republish_data=False):
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
@@ -204,25 +198,24 @@ class PersistentStorage:
         with open(os.path.join(self.keys_path, str_key), "wb") as f:
             f.write(key)
 
-    def delete_value(self, key: bytes):
-        str_key = str(base64.urlsafe_b64encode(key))
-        self.ensure_dir_paths()
-        self.delete_timestamp(str_key, republish_data, is_write=True)
+    # def delete_value(self, key: bytes):
+    #     str_key = str(base64.urlsafe_b64encode(key))
+    #     self.ensure_dir_paths()
+    #     self.delete_timestamp(str_key, republish_data, is_write=True)
 
-        path = os.path.join(self.metadata_path, str_key)
-            
-        if os.path.exists(path):
-            os.remove(path)    
-        path = os.path.join(self.values_path, str_key)
-            
-        if os.path.exists(path):
-            os.remove(path)    
-        
-        key_path = os.path.join(self.keys_path, str_key)
-        
-        if os.path.exists(key_path):
-            os.remove(key_path)
+    #     path = os.path.join(self.metadata_path, str_key)
 
+    #     if os.path.exists(path):
+    #         os.remove(path)
+    #     path = os.path.join(self.values_path, str_key)
+
+    #     if os.path.exists(path):
+    #         os.remove(path)
+
+    #     key_path = os.path.join(self.keys_path, str_key)
+
+    #     if os.path.exists(key_path):
+    #         os.remove(key_path)
 
     def confirm_integrity(self, key: bytes, metadata=True):
         str_key = str(base64.urlsafe_b64encode(key))
@@ -245,11 +238,11 @@ class PersistentStorage:
         self.ensure_dir_paths()
         self.set_value(key, value, True, republish_data)
         self.cull()
-    
-    def delete_metadata(self, key):
-        self.ensure_dir_paths()
-        self.delete_value(key, True, )
-        self.cull()
+
+    # def delete_metadata(self, key):
+    #     self.ensure_dir_paths()
+    #     self.delete_value(key, True, )
+    #     self.cull()
 
     def cull(self):
         """
@@ -284,9 +277,9 @@ class PersistentStorage:
             path = Path(os.path.join(self.values_path, str_key))
             if not path.exists():
                 return False
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             data = pickle.load(f)
-            if not data['integrity']:
+            if not data["integrity"]:
                 return False
 
         return True

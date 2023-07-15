@@ -55,8 +55,7 @@ class SpiderCrawl:
           4. repeat, unless nearest list has all been queried, then ur done
         """
 
-        logger.debug("crawling network with nearest: %s",
-                     str(tuple(self.nearest)))
+        logger.debug("crawling network with nearest: %s", str(tuple(self.nearest)))
         # define the alpha based on the latest crawled nodes
         count = self.alpha
         if self.nearest.get_ids() == self.last_ids_crawled:
@@ -70,14 +69,14 @@ class SpiderCrawl:
         # return the info from those nodes
         for peer in self.nearest.get_uncontacted()[:count]:
             logger.debug("Peer %s %s", type(peer), peer)
+            # TODO check this
             if peer.ip == "192.168.133.1":
                 continue
             try:
                 session = rpyc.connect(host=peer.ip, port=peer.port)
                 conn = session.root
             except (ConnectionError, OSError) as e:
-                logger.warning(
-                    f"Failed to connect to {peer.id} {peer.ip}, e: {e}")
+                logger.warning(f"Failed to connect to {peer.id} {peer.ip}, e: {e}")
                 session = None
                 conn = None
 
@@ -158,8 +157,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         # if more than one value is found for a key raise a warning
         if len(value_counts) != 1:
             logger.debug(
-                "Got multiple values for key %i: %s", self.node.long_id, str(
-                    values)
+                "Got multiple values for key %i: %s", self.node.long_id, str(values)
             )
         # get the most common item in the network
         # this is, if there were more than one value
@@ -237,6 +235,43 @@ class ChunkLocationSpiderCrawl(SpiderCrawl):
             # not found!
             return None
         return self.find()
+
+
+class DeleteSpiderCrawl(SpiderCrawl):
+    def __init__(self, node, peers, ksize, alpha):
+        SpiderCrawl.__init__(self, node, peers, ksize, alpha)
+        self.nearest_without_value = NodeHeap(self.node, 1)
+
+    def find(self):
+        return self._find(FileSystemProtocol.call_delete, True)
+
+    def _nodes_found(self, response_dict: dict):
+        logger.debug("Entry in _nodes_found DeleteSpiderCrawl")
+        toremove = []
+        found_values = []
+        for peer_id, response in response_dict.items():
+            response = RPCFindResponse(response)
+            if not response.happened():
+                toremove.append(peer_id)
+                found_values.append(None)
+            elif response.has_value():
+                found_values.append(response.get_value())
+            else:
+                peer = self.nearest.get_node(peer_id)
+                self.nearest_without_value.push(peer)
+                self.nearest.push(response.get_node_list())
+        self.nearest.remove(toremove)
+        logger.debug(f"found values in _nodes_found {found_values}")
+        if len(found_values) > 0:
+            return self._handle_found_values(found_values)
+        if self.nearest.have_contacted_all():
+            # not found!
+            return None
+        return self.find()
+
+    def _handle_found_values(self, values):
+        values = list(values)
+        return all(values)
 
 
 class RPCFindResponse:
