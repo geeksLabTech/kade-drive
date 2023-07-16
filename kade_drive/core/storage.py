@@ -226,10 +226,11 @@ class PersistentStorage:
 
         return result
 
-    def set_value(self, key: bytes, value, metadata=True, republish_data=False):
+    def set_value(self, key: bytes, value: bytes, metadata=True, republish_data=False):
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
         self.update_timestamp(str_key, republish_data, is_write=True)
+        logger.warning(f"VAlue to set is {value}")
         value_to_set = pickle.dumps(
             {"integrity": False, "value": value, "integrity_date": datetime.now()}
         )
@@ -249,7 +250,7 @@ class PersistentStorage:
         with open(os.path.join(self.keys_path, str_key), "wb") as f:
             f.write(key)
 
-        self.confirm_integrity(key, metadata=metadata)
+        # self.confirm_integrity(key, metadata=metadata)
 
     # def delete_value(self, key: bytes):
     #     str_key = str(base64.urlsafe_b64encode(key))
@@ -287,7 +288,7 @@ class PersistentStorage:
         else:
             logger.info("Tried to confirm integrity of non existing file")
 
-    def set_metadata(self, key, value, republish_data: bool):
+    def set_metadata(self, key: bytes, value: bytes, republish_data: bool):
         self.ensure_dir_paths()
         self.set_value(key, value, True, republish_data)
         self.cull()
@@ -312,14 +313,14 @@ class PersistentStorage:
         Check if there exist data older that {self.ttl} and remove it.
         """
 
-    def get(self, key: bytes, default=None, update_timestamp=True, metadata=True):
+    def get(self, key: bytes, update_timestamp=True, metadata=True):
         str_key = str(base64.urlsafe_b64encode(key))
         result = self.get_value(
             str_key, update_timestamp=update_timestamp, metadata=metadata
         )
         if result is not None and result["integrity"]:
-            result = result["value"]
-            return result
+            logger.info(f"checkeo antes de return {result}")
+            return result["value"]
         return None
 
     def get_key_in_bytes(self, key: str):
@@ -386,8 +387,11 @@ class PersistentStorage:
                         value = self.get_value(
                             str(file), update_timestamp=False, metadata=is_metadata
                         )
-                        assert value is not None
-                        yield key, value, is_metadata, data["last_write"]
+                        if value is None or not value["integrity"]:
+                            logger.info("ignoring bad value in iter older")
+                            continue
+
+                        yield key, value["value"], is_metadata, data["last_write"]
 
     def keys(self):
         ikeys_files = os.listdir(os.path.join(self.keys_path))

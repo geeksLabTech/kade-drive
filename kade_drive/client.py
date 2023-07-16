@@ -195,7 +195,7 @@ class ClientSession:
                 else:
                     logger.warning("No Servers to get chunk")
 
-        logger.debug(f"len data received {len(data_received)}")
+        logger.debug(f"len data received {len(data_received)} {type(data_received)}")
         data_received = b"".join(data_received)
         try:
             data_to_return = pickle.loads(data_received)

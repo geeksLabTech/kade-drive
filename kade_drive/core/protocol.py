@@ -41,7 +41,9 @@ class FileSystemProtocol:
         return ids
 
     @staticmethod
-    def call_store(conn, node_to_ask: Node, node_to_find: Node, value, is_metadata=True):
+    def call_store(
+        conn, node_to_ask: Node, node_to_find: Node, value, is_metadata=True
+    ):
         """
         async function to call the find store rpc method
         """
@@ -49,7 +51,11 @@ class FileSystemProtocol:
         response = None
         if conn:
             response = conn.rpc_store(
-                address, FileSystemProtocol.source_node.id, node_to_find.id, value, is_metadata
+                address,
+                FileSystemProtocol.source_node.id,
+                node_to_find.id,
+                value,
+                is_metadata,
             )
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -69,13 +75,15 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def call_confirm_integrity(conn, node_to_ask: Node, node_to_find: Node, is_metadata=True):
+    def call_confirm_integrity(
+        conn, node_to_ask: Node, node_to_find: Node, is_metadata=True
+    ):
         """
         async function to call the find store rpc method
         """
         address = (node_to_ask.ip, node_to_ask.port)
         response = None
-        
+
         if conn:
             response = conn.rpc_confirm_integrity(
                 address, FileSystemProtocol.source_node.id, node_to_find.id, is_metadata
@@ -84,7 +92,9 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def call_get_metadata_list(conn, node_to_ask: Node, node_to_find: Node, is_metadata=True):
+    def call_get_metadata_list(
+        conn, node_to_ask: Node, node_to_find: Node, is_metadata=True
+    ):
         """
         async function to call the find store rpc method
         """
@@ -109,7 +119,9 @@ class FileSystemProtocol:
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod
-    def call_check_if_new_value_exists(conn, node_to_ask, node_to_find: Node, is_metadata=True):
+    def call_check_if_new_value_exists(
+        conn, node_to_ask, node_to_find: Node, is_metadata=True
+    ):
         response = None
         if conn:
             address = (node_to_ask.ip, node_to_ask.port)
