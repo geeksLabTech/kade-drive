@@ -1,7 +1,8 @@
+
 import os
 import pickle
 from datetime import datetime
-
+from os import walk
 # from time import sleep
 from pathlib import Path
 
@@ -13,6 +14,7 @@ import logging
 # Create a file handler
 # file_handler = logging.FileHandler("log_file.log")
 formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+
 # file_handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 # logger.addHandler(file_handler)
@@ -61,6 +63,15 @@ class PersistentStorage:
         os.makedirs(self.keys_path, exist_ok=True)
 
         os.makedirs(self.timestamp_path, exist_ok=True)
+        
+    def get_local_filenames(self):
+        data = []
+        for path,dir,files in walk(self.metadata_path):
+            for file in files:
+                val = self.get_value(file,update_timestamp=False, metadata=True)
+                print(file, val)
+                data.append(val)
+        return data
 
     def update_timestamp(self, filename: str, republish_data=False, is_write=False):
         self.ensure_dir_paths()
@@ -96,7 +107,7 @@ class PersistentStorage:
             logger.error(f"error when running delete {e}")
             return False
 
-    def _delete_data(self, str_key: str, is_metadata: bool):
+    def _delete_data(self, str_key: str, is_metadata: bool=True):
         key_path = Path(os.path.join(self.keys_path, str_key))
         if is_metadata:
             value_path = Path(os.path.join(self.metadata_path), str_key)
@@ -166,6 +177,7 @@ class PersistentStorage:
 
         if result is not None:
             data = pickle.loads(result)
+            print("Data", data)
             if not data["integrity"]:
                 return None
             if update_timestamp:
@@ -198,6 +210,7 @@ class PersistentStorage:
         with open(os.path.join(self.keys_path, str_key), "wb") as f:
             f.write(key)
 
+        self.confirm_integrity(key, metadata=metadata)
     # def delete_value(self, key: bytes):
     #     str_key = str(base64.urlsafe_b64encode(key))
     #     self.ensure_dir_paths()
@@ -314,7 +327,7 @@ class PersistentStorage:
         return result
 
     def __repr__(self):
-        self.cull()
+        ...
 
     def iter_older_than(self, seconds_old):
         self.ensure_dir_paths()

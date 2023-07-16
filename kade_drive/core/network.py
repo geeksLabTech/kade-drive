@@ -8,6 +8,8 @@ import threading
 from time import sleep
 import rpyc
 import pickle
+import datetime
+
 from rpyc.utils.server import ThreadedServer
 from kade_drive.core.config import Config
 from kade_drive.core.protocol import FileSystemProtocol, ServerSession
@@ -15,6 +17,9 @@ from kade_drive.core.routing import RoutingTable
 from kade_drive.core.utils import digest
 from kade_drive.core.storage import PersistentStorage
 from kade_drive.core.node import Node
+
+from message_system.message_system import MessageSystem
+
 from kade_drive.core.crawling import (
     ChunkLocationSpiderCrawl,
     ConfirmIntegritySpiderCrawl,
@@ -22,10 +27,9 @@ from kade_drive.core.crawling import (
     LsSpiderCrawl,
     ValueSpiderCrawl,
 )
+
 from kade_drive.core.crawling import NodeSpiderCrawl
 from kade_drive.core.utils import is_port_in_use
-import datetime
-from message_system.message_system import MessageSystem
 
 # from models.file import File
 
@@ -247,7 +251,7 @@ class Server:
     def delete_data_from_network(key: bytes, is_metadata=True):
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
-        if not nearest:
+        if not nearest or len(nearest) == 0:
             logger.debug(f"There are no known neighbors to get key {key}")
             if Server.storage.contains(key):
                 logger.debug("Getting key from this same node")
@@ -265,8 +269,15 @@ class Server:
     def confirm_integrity_of_data(key: bytes, is_metadata=True):
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
+        
+        if isinstance(nearest, list) and len(nearest) == 0:
+            return True
+        
+        print("Nearest", nearest)
         spider = ConfirmIntegritySpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         result = spider.find(is_metadata)
+        print("None Result:", result is None)
+        print("result:", result)
         return result
 
     @staticmethod
@@ -418,7 +429,7 @@ class ServerService(Service):
 
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
-        if not nearest:
+        if not nearest or len(nearest) == 0:
             logger.debug(f"There are no known neighbors to get key {key}")
             if Server.storage.contains(key):
                 logger.debug("Getting key from this same node")
@@ -507,6 +518,8 @@ class ServerService(Service):
     def get_all_file_names(self):
         logging.info("Getting all file names")
         nearest = FileSystemProtocol.router.find_neighbors(Server.node)
+        if isinstance(nearest, list) and len(nearest) == 0:
+            return Server.storage.get_local_filenames()
         spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
         metadata_list = spider.find()
         return metadata_list
