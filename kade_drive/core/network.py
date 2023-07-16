@@ -271,6 +271,7 @@ class Server:
         nearest = FileSystemProtocol.router.find_neighbors(node)
         
         if isinstance(nearest, list) and len(nearest) == 0:
+            Server.storage.confirm_integrity(key, is_metadata)
             return True
         
         print("Nearest", nearest)
@@ -519,7 +520,7 @@ class ServerService(Service):
         logging.info("Getting all file names")
         nearest = FileSystemProtocol.router.find_neighbors(Server.node)
         if isinstance(nearest, list) and len(nearest) == 0:
-            return Server.storage.get_local_filenames()
+            return Server.storage.get_all_metadata_keys()
         spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
         metadata_list = spider.find()
         return metadata_list

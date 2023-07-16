@@ -64,14 +64,14 @@ class PersistentStorage:
 
         os.makedirs(self.timestamp_path, exist_ok=True)
         
-    def get_local_filenames(self):
-        data = []
-        for path,dir,files in walk(self.metadata_path):
-            for file in files:
-                val = self.get_value(file,update_timestamp=False, metadata=True)
-                print(file, val)
-                data.append(val)
-        return data
+    # def get_local_filenames(self):
+    #     data = []
+    #     for path,dir,files in walk(self.metadata_path):
+    #         for file in files:
+    #             val = self.get_value(file,update_timestamp=False, metadata=True)
+    #             print(file, val)
+    #             data.append(val)
+    #     return data
 
     def update_timestamp(self, filename: str, republish_data=False, is_write=False):
         self.ensure_dir_paths()
