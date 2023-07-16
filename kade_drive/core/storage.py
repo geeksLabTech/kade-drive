@@ -299,13 +299,13 @@ class PersistentStorage:
 
     def get_all_metadata_keys(self) -> set[str]:
         metadata = set(os.listdir(os.path.join(self.metadata_path)))
-        final_result = []
+        final_result = set()
         for x in metadata:
             result = self.get_value(str_key=x, metadata=True)
             # This is for handle case where exist metadata with integrity in false
             if result is None or not result["integrity"]:
                 continue
-            final_result.append(x)
+            final_result.add(x)
 
         return final_result
 
