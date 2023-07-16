@@ -35,7 +35,7 @@ class SpiderCrawl:
         self.node = node
         self.nearest = NodeHeap(self.node, self.ksize)
         self.last_ids_crawled = []
-        ("creating spider with peers: %s", peers)
+        logger.debug("creating spider with peers: %s", peers)
         self.nearest.push(peers)
 
     def _find(self, rpcmethod, is_metadata: None | bool):
@@ -69,21 +69,24 @@ class SpiderCrawl:
         # return the info from those nodes
         for peer in self.nearest.get_uncontacted()[:count]:
             logger.debug("Peer %s %s", type(peer), peer)
-            # TODO check this
-            if peer.ip == "192.168.133.1":
-                continue
+            
+            # if peer.ip == "192.168.133.1":
+            #     continue
+            
             try:
                 session = rpyc.connect(host=peer.ip, port=peer.port)
                 conn = session.root
-            except (ConnectionError, OSError) as e:
-                logger.warning(f"Failed to connect to {peer.id} {peer.ip}, e: {e}")
+            except (ConnectionError, OSError) as cu_ex:
+                logger.warning("Failed to connect to %d %s, e: %s", peer.id,peer.ip,cu_ex)
                 session = None
                 conn = None
 
             logger.debug(
-                f"Connection is {conn is not None} and self.node is {self.node is not None}"
-            )
-            logger.debug(f"Calling : {rpcmethod}")
+                "Connection is %s and self.node is %s"
+                , conn is not None, self.node is not None)
+            
+            logger.debug("Calling : %s",rpcmethod)
+            
             if is_metadata is None:
                 response = rpcmethod(conn, peer, self.node)
             else:
@@ -132,7 +135,7 @@ class ValueSpiderCrawl(SpiderCrawl):
                 self.nearest_without_value.push(peer)
                 self.nearest.push(response.get_node_list())
         self.nearest.remove(toremove)
-        logger.debug(f"found values in _nodes_found {found_values}")
+        logger.debug("found values in _nodes_found %s",found_values)
         if len(found_values) > 0:
             return self._handle_found_values(found_values)
         if self.nearest.have_contacted_all():
@@ -187,7 +190,7 @@ class NodeSpiderCrawl(SpiderCrawl):
         """
 
         logger.debug("entering nodes found Node Spider")
-        logger.debug(f"response dict is {response_dict}")
+        logger.debug("response dict is %s", response_dict)
 
         toremove = []
         for peer_id, response in response_dict.items():
