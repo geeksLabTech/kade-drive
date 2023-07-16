@@ -203,7 +203,7 @@ class Server:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
                 response = FileSystemProtocol.call_check_if_new_value_exists(
-                    conn, n, dkey
+                    conn, n, node
                 )
                 contains, date = None, None
                 if response is not None:
@@ -219,7 +219,7 @@ class Server:
                     or (valid_data and date < local_last_write)
                 ):
                     result = FileSystemProtocol.call_store(
-                        conn, n, dkey, value, metadata
+                        conn, n, node, value, metadata
                     )
                     if result:
                         responses.append(True)
@@ -294,7 +294,7 @@ class Server:
         for n in nodes:
             with ServerSession(n.ip, n.port) as conn:
                 for k, is_metadata in keys_to_find:
-                    contains = FileSystemProtocol.call_contains(conn, n, k, is_metadata)
+                    contains = FileSystemProtocol.call_contains(conn, n, Node(k), is_metadata)
                     if contains:
                         if (k, is_metadata) not in keys_dict:
                             keys_dict[(k, is_metadata)] = 0
@@ -382,7 +382,7 @@ class Server:
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 
-                # Republishing keys that have less replicas than the replication factor
+                logger.info("Republishing keys that have less replicas than the replication factor")
 
                 if len(keys_to_replicate):
                     for key, is_metadata in keys_to_replicate:
@@ -505,7 +505,7 @@ class ServerService(Service):
         if not all(results):
             logger.warning("It was not possible to confirm integrity of all chunks")
             return False
-        assert key is not None
+        logger.info(f'Here key of metadata is {key}')
         result = Server.confirm_integrity_of_data(key, True)
         if not result:
             logger.warning("It was not possible to confirm integrity of metadata")
@@ -714,7 +714,7 @@ class ServerService(Service):
             FileSystemProtocol.wellcome_if_new(conn, source)
 
         try:
-            logging.info('Trying to confirm integrity with key {key}')
+            logging.info(f'Trying to confirm integrity with key {key}')
             FileSystemProtocol.storage.confirm_integrity(key, is_metadata)
             return {"value": True}
         except Exception as e:
