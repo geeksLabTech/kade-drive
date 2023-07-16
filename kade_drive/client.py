@@ -69,7 +69,10 @@ class ClientSession:
                     connection.ping()
                     break
                 connection = rpyc.connect(
-                    ip, port, keepalive=True, config={"allow_pickle": True}
+                    ip,
+                    port,
+                    keepalive=True,
+                    config={"allow_pickle": True, "sync_request_timeout": None},
                 )
                 print(f"Connected to {ip}:{port}")
                 break

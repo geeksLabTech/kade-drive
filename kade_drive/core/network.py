@@ -100,7 +100,11 @@ class Server:
                     ServerService,
                     port=port,
                     hostname=interface,
-                    protocol_config={"allow_public_attrs": True, "allow_pickle": True},
+                    protocol_config={
+                        "allow_public_attrs": True,
+                        "allow_pickle": True,
+                        "sync_request_timeout": None,
+                    },
                 )
                 t.start()
             except Exception as e:
@@ -464,7 +468,9 @@ class ServerService(Service):
         if apply_hash_to_key:
             key = digest(key)
 
-        return Server.delete_data_from_network(key, is_metadata)
+        return Server.storage.delete(
+            key, is_metadata
+        ) and Server.delete_data_from_network(key, is_metadata)
 
     @rpyc.exposed
     def upload_file(self, key: bytes, data: bytes, apply_hash_to_key=True) -> bool:
@@ -529,10 +535,10 @@ class ServerService(Service):
         logging.info("Getting all file names")
         nearest = FileSystemProtocol.router.find_neighbors(Server.node)
         if isinstance(nearest, list) and len(nearest) == 0:
-            return Server.storage.get_all_metadata_keys()
+            return {"value": Server.storage.get_all_metadata_keys()}
         spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
         metadata_list = spider.find()
-        return metadata_list
+        return {"value": metadata_list}
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
@@ -712,7 +718,7 @@ class ServerService(Service):
             # logger.info(f"wellcome_If_new in rpc_delete {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
 
-        return FileSystemProtocol.storage.delete(key, is_metadata)
+        return {"value": FileSystemProtocol.storage.delete(key, is_metadata)}
 
     @rpyc.exposed
     def rpc_confirm_integrity(

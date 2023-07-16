@@ -334,7 +334,7 @@ class LsSpiderCrawl(SpiderCrawl):
                 found_values.add(response.get_value())
             else:
                 peer = self.nearest.get_node(peer_id)
-                self.nearest.push(response.get_node_list())
+                self.nearest.push(peer)
         self.nearest.remove(toremove)
         logger.debug(f"found values in _nodes_found {found_values}")
         if len(found_values) > 0:
@@ -380,4 +380,5 @@ class RPCFindResponse:
         be set.
         """
         nodelist = self.response or []
+        logger.critical(f"Node list is {nodelist}")
         return [Node(*nodeple) for nodeple in nodelist]
