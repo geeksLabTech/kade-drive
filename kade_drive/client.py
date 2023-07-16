@@ -159,7 +159,7 @@ class ClientSession:
             if locations is None:
                 continue
 
-            logger.debug(f"locations for chunk_key {chunk_key} are {locations}")
+            logger.info(f"locations for chunk_key {chunk_key} are {locations}")
             if (
                 not locations is None
                 and len(locations) > 0

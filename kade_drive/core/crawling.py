@@ -231,6 +231,7 @@ class ChunkLocationSpiderCrawl(SpiderCrawl):
         self.nearest.remove(toremove)
 
         if len(found_values) > 0:
+            logger.critical(f'values of chunkSPider {found_values}')
             return found_values
         if self.nearest.have_contacted_all():
             # not found!

@@ -79,10 +79,10 @@ class Server:
         threading.Thread(target=Server.listen, args=(port, ip)).start()
         threading.Thread(target=Server._detect_alone).start()
 
-        refresh_thread = threading.Thread(
-            target=Server._refresh_table, args=(config.refresh_sleep,)
-        )
-        refresh_thread.start()
+        # refresh_thread = threading.Thread(
+        #     target=Server._refresh_table, args=(config.refresh_sleep,)
+        # )
+        # refresh_thread.start()
 
     @staticmethod
     def listen(port, interface="0.0.0.0"):
@@ -534,24 +534,24 @@ class ServerService(Service):
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
-        logger.debug("looking file chunk location")
+        logger.info("looking file chunk location")
         node = Node(chunk_key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest:
-            logger.debug(
+            logger.info(
                 f"There are no known neighbors to get file chunk location {chunk_key}"
             )
             if Server.storage.contains(chunk_key, False) is not None:
-                logger.debug(
+                logger.info(
                     f"Found in this server, {Server.node.ip}, port, {Server.node.port}"
                 )
                 return [(Server.node.ip, Server.node.port)]
             return None
 
-        logger.debug("Initiating ChunkLocationSpiderCrawl")
+        logger.info("Initiating ChunkLocationSpiderCrawl")
         spider = ChunkLocationSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         results = spider.find()
-        logger.debug(f"results of ChunkLocationSpider {results}")
+        logger.info(f"results of ChunkLocationSpider {results}")
         return results
 
     @rpyc.exposed

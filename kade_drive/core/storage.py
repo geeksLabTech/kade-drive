@@ -281,14 +281,12 @@ class PersistentStorage:
             path = Path(os.path.join(self.values_path, str_key))
 
         if path.exists():
-            # with open(path, "rb") as f:
-            #     value = pickle.load(f)
-            # with open(path, "wb") as f:
-            #     value["integrity"] = True
-            #     f.write(pickle.dumps(value))
-            with open(path, "r+b") as f:
+            with open(path, "rb") as f:
                 original_value = pickle.load(f)
-                original_value["integrity"] = True
+
+            original_value["integrity"] = True
+            os.remove(path)
+            with open(path, "wb") as f:
                 pickle.dump(original_value, f)
             logger.info("integrity confirmed")
         else:
@@ -340,7 +338,7 @@ class PersistentStorage:
 
     def contains(self, key: bytes, is_metadata=True):
         str_key = str(base64.urlsafe_b64encode(key))
-        logger.debug(f"str_key in contains is {str_key}")
+        logger.critical(f"str_key in contains is {str_key}")
         self.cull()
         if is_metadata:
             path = Path(os.path.join(self.metadata_path, str_key))
