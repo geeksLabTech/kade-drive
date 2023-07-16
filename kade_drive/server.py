@@ -66,7 +66,7 @@ def start_server(host_ip=None, config: Config | None = None):
         target_host, target_port = bootstrap_nodes.split(" ")
         Server.bootstrap([(target_host, target_port)])
 
-    logger.info(f"Server started at {host_ip}")
+    logger.info("Server started at %s",host_ip)
 
 
 app = Typer()
