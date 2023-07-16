@@ -356,7 +356,7 @@ class Server:
         while True:
             try:
                 sleep(refresh_sleep)
-                logger.info("deleting corrupted_data")
+                logger.info("Checking corrupted data")
                 Server.storage.delete_corrupted_data()
                 logger.info("Refreshing table")
                 results = []

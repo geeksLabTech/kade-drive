@@ -319,7 +319,7 @@ class PersistentStorage:
         )
         if result is not None and result["integrity"]:
             result = result["value"]
-        return result
+        return None
 
     def get_key_in_bytes(self, key: str):
         path = Path(os.path.join(self.keys_path, key))

@@ -152,11 +152,12 @@ class ValueSpiderCrawl(SpiderCrawl):
         the value to store it.
         """
         # create a counter for each value found
-
+        logger.info(f'Entry in _handle_found_values of ValueSpiderCrawl with {values}')
         value_counts = Counter(values)
+        logger.info('Counter not failed')
         # if more than one value is found for a key raise a warning
         if len(value_counts) != 1:
-            logger.debug(
+            logger.warning(
                 "Got multiple values for key %i: %s", self.node.long_id, str(values)
             )
         # get the most common item in the network
@@ -170,7 +171,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         peer = self.nearest_without_value.popleft()
         if peer:
             with ServerSession(peer.ip, peer.port) as conn:
-                FileSystemProtocol.call_store(conn, peer, self.node.id, value)
+                FileSystemProtocol.call_store(conn, peer, self.node, value)
         return value
 
 
