@@ -12,6 +12,7 @@ python = ">=3.10,<3.12"
 rpyc="5.3.1"
 typer="0.9.0"
 message-system = "^0.1.2"
+filelock = "^3.12.2"
 
 [tool.poetry.group.tests.dependencies]
 pytest="^7.2.0"

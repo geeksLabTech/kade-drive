@@ -269,11 +269,11 @@ class Server:
     def confirm_integrity_of_data(key: bytes, is_metadata=True):
         node = Node(key)
         nearest = FileSystemProtocol.router.find_neighbors(node)
-        
+
         if isinstance(nearest, list) and len(nearest) == 0:
             Server.storage.confirm_integrity(key, is_metadata)
             return True
-        
+
         print("Nearest", nearest)
         spider = ConfirmIntegritySpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         result = spider.find(is_metadata)
@@ -356,10 +356,9 @@ class Server:
         while True:
             try:
                 sleep(refresh_sleep)
-                logger.info("Refreshing Table")
-                while not Server.storage.is_deleting:
-                    sleep(5)
+                logger.info("deleting corrupted_data")
                 Server.storage.delete_corrupted_data()
+                logger.info("Refreshing table")
                 results = []
                 for node_id in FileSystemProtocol.get_refresh_ids():
                     node = Node(node_id)

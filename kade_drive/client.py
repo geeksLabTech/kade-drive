@@ -22,9 +22,9 @@ class ClientSession:
     def __init__(
         self, bootstrap_nodes: list[tuple[str, int]], log_level=logging.DEBUG
     ) -> None:
-
         logging.basicConfig(
-        level=log_level, format="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s"
+            level=log_level,
+            format="%(asctime)s - %(name)s:%(lineno)d - %(levelname)s - %(message)s",
         )
         logging.getLogger(__name__)
         self.connection: rpyc.Connection | None = None

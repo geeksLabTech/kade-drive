@@ -1,15 +1,17 @@
-
 import os
 import pickle
 from datetime import datetime
 from os import walk
+
 # from time import sleep
 from pathlib import Path
 
 # import threading
 import base64
 import logging
-
+import random
+from time import sleep
+from filelock import Timeout, FileLock
 
 # Create a file handler
 # file_handler = logging.FileHandler("log_file.log")
@@ -41,7 +43,6 @@ class PersistentStorage:
         self.timestamp_path = "timestamps"
         self.db = []
         self.ttl = ttl
-        self.is_deleting = False
         # self.stop_del_thread = False
 
         # self.del_thread = threading.Thread(target=self.delete_old)
@@ -63,7 +64,7 @@ class PersistentStorage:
         os.makedirs(self.keys_path, exist_ok=True)
 
         os.makedirs(self.timestamp_path, exist_ok=True)
-        
+
     # def get_local_filenames(self):
     #     data = []
     #     for path,dir,files in walk(self.metadata_path):
@@ -107,31 +108,59 @@ class PersistentStorage:
             logger.error(f"error when running delete {e}")
             return False
 
-    def _delete_data(self, str_key: str, is_metadata: bool=True):
+    def _delete_data(self, str_key: str, is_metadata: bool = True):
         key_path = Path(os.path.join(self.keys_path, str_key))
         if is_metadata:
-            value_path = Path(os.path.join(self.metadata_path), str_key)
+            value_str_path = os.path.join(self.metadata_path, str_key)
+            value_path = Path(value_str_path)
             if value_path.exists():
-                with open(value_path, "wb") as f:
-                    chunks_data = pickle.load(f)
-                    chunks_data["integrity"] = False
-                    pickle.dump(chunks_data, f)
-                    chunks_value = chunks_data["value"]
+                chunks_value = self._prepare_metadata_for_removal_and_get_value(
+                    value_path, value_str_path
+                )
+                logger.info("Starting to delete chunks")
+                assert chunks_value is not None
+                chunks_value = pickle.loads(chunks_value)
                 for v in chunks_value:
-                    self._delete_data(v, False)
-
+                    chunk_str_key = str(base64.urlsafe_b64encode(v))
+                    self._delete_data(chunk_str_key, False)
+                logger.info("Chunks deleted")
         else:
             value_path = Path(os.path.join(self.values_path), str_key)
         timestamp_path = Path(os.path.join(self.timestamp_path, str_key))
         if key_path.exists():
-            os.remove(value_path)
+            os.remove(key_path)
         if value_path.exists():
             os.remove(value_path)
         if timestamp_path.exists():
             os.remove(timestamp_path)
 
+    def _prepare_metadata_for_removal_and_get_value(self, path: Path, str_path: str):
+        lock = FileLock(str_path + ".lock")
+        value = None
+        while True:
+            try:
+                with lock.acquire(timeout=10):
+                    with open(path, "rb") as f:
+                        chunks_data = f.read()
+                        chunks_data = pickle.loads(chunks_data)
+                    with open(path, "wb") as f:
+                        chunks_data["integrity"] = False
+                        pickle.dump(chunks_data, f)
+                    value = chunks_data["value"]
+            except Timeout:
+                logger.info(
+                    "Another instance of this application currently holds the lock."
+                )
+                sleep(random.randint(2, 10))
+            except Exception as e:
+                logger.error(f"error in prepare metadata {e}")
+            finally:
+                lock.release()
+                os.remove(str_path + ".lock")
+                break
+        return value
+
     def delete_corrupted_data(self):
-        self.is_deleting = True
         self.ensure_dir_paths()
 
         # while True:
@@ -144,11 +173,18 @@ class PersistentStorage:
                 file_key_path = Path(os.path.join(self.keys_path), str(file))
                 if file_key_path.exists():
                     try:
-                        value = pickle.loads(self.get_value(str(file), metadata=False))
+                        # logger.info("in Try delete_corrupted data")
+                        value = self.get_value(str(file), metadata=False)
                         is_metadata = False
-                    except FileNotFoundError:
-                        value = pickle.loads(self.get_value(str(file), metadata=True))
-                        is_metadata = True
+                        logger.info("PASS")
+                        if value is None:
+                            value = self.get_value(str(file), metadata=True)
+                            is_metadata = True
+                            logger.info("MMMM")
+                        assert value is not None
+                    except Exception as e:
+                        logger.error(f"Error in delete corrupted data {e}")
+                        continue
                     if (
                         not value["integrity"]
                         and (datetime.now() - value["integrity_date"]).seconds
@@ -160,7 +196,6 @@ class PersistentStorage:
 
                         self._delete_data(str(file), is_metadata=is_metadata)
 
-            self.is_deleting = False
             # sleep(self.ttl)
 
     def get_value(self, str_key: str, update_timestamp=True, metadata=True):
@@ -173,15 +208,19 @@ class PersistentStorage:
         result = None
         if os.path.exists(path):
             with open(path, "rb") as f:
+                # logger.warning('READING HERE')
                 result = f.read()
+                logger.warning("PASS READ")
 
         if result is not None:
             data = pickle.loads(result)
-            print("Data", data)
-            if not data["integrity"]:
-                return None
+            logger.warning("pass pickle")
+            # logger.info("Data", data)
+            # if not data["integrity"]:
+            #     return None
             if update_timestamp:
                 self.update_timestamp(str_key, republish_data=True)
+            return data
         if not result:
             logger.warning(f"tried to get non existing data with key {str_key}")
 
@@ -211,6 +250,7 @@ class PersistentStorage:
             f.write(key)
 
         self.confirm_integrity(key, metadata=metadata)
+
     # def delete_value(self, key: bytes):
     #     str_key = str(base64.urlsafe_b64encode(key))
     #     self.ensure_dir_paths()
@@ -257,7 +297,7 @@ class PersistentStorage:
         for x in metadata:
             result = self.get_value(str_key=x, metadata=True)
             # This is for handle case where exist metadata with integrity in false
-            if result is None:
+            if result is None or not result["integrity"]:
                 metadata.remove(x)
 
         return metadata
@@ -277,6 +317,8 @@ class PersistentStorage:
         result = self.get_value(
             str_key, update_timestamp=update_timestamp, metadata=metadata
         )
+        if result is not None and result["integrity"]:
+            result = result["value"]
         return result
 
     def get_key_in_bytes(self, key: str):
@@ -318,13 +360,13 @@ class PersistentStorage:
 
         return True, data["last_write"]
 
-    def __getitem__(self, key: bytes):
-        self.cull()
-        str_key = str(base64.urlsafe_b64encode(key))
-        result = self.get_value(str_key)
-        if result is None:
-            raise KeyError()
-        return result
+    # def __getitem__(self, key: bytes):
+    #     self.cull()
+    #     str_key = str(base64.urlsafe_b64encode(key))
+    #     result = self.get(str_key)
+    #     if result is None:
+    #         raise KeyError()
+    #     return result
 
     def __repr__(self):
         ...
