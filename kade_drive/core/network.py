@@ -593,7 +593,7 @@ class ServerService(Service):
 
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            logger.info(f"wellcome_If_new in rpc_store {address}")
+            # logger.info(f"wellcome_If_new in rpc_store {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
 
         logger.debug(
@@ -601,9 +601,9 @@ class ServerService(Service):
         )
         # store values and report success
         if metadata:
-            FileSystemProtocol.storage.set_metadata(key, value, republish_data=False)
+            Server.storage.set_metadata(key, value, republish_data=False)
         else:
-            FileSystemProtocol.storage.set_value(key, value, metadata=False)
+            Server.storage.set_value(key, value, metadata=False)
         return True
 
     @rpyc.exposed
@@ -614,7 +614,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            logger.info(f"wellcome_If_new in find_value {address}")
+            # logger.info(f"wellcome_If_new in find_value {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         if not FileSystemProtocol.storage.contains(key, metadata):
@@ -658,7 +658,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            logger.info(f"wellcome_If_new in find_node {address}")
+            # logger.info(f"wellcome_If_new in find_node {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
         # create a fictional node to perform the search
         logger.debug(f"fictional key {key}")
@@ -675,7 +675,7 @@ class ServerService(Service):
         # if a new node is sending the request, givemsg all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            logger.info(f"wellcome_If_new in contains {address}")
+            # logger.info(f"wellcome_If_new in contains {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         return {"value": FileSystemProtocol.storage.contains(key, is_metadata)}
@@ -688,7 +688,7 @@ class ServerService(Service):
         # if a new node is sending the request, give all data it should contain
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            logger.info(f"wellcome_If_new in check_if_new_value {address}")
+            # logger.info(f"wellcome_If_new in check_if_new_value {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         return FileSystemProtocol.storage.check_if_new_value_exists(key)
@@ -698,7 +698,7 @@ class ServerService(Service):
         source = Node(node_id, sender[0], sender[1])
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            logger.info(f"wellcome_If_new in rpc_delete {address}")
+            # logger.info(f"wellcome_If_new in rpc_delete {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
 
         return FileSystemProtocol.storage.delete(key, is_metadata)
@@ -710,7 +710,7 @@ class ServerService(Service):
         source = Node(node_id, sender[0], sender[1])
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            logger.info(f"wellcome_If_new in rpc_confirm_integrity {address}")
+            # logger.info(f"wellcome_If_new in rpc_confirm_integrity {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
 
         try:
@@ -725,7 +725,7 @@ class ServerService(Service):
         source = Node(node_id, sender[0], sender[1])
         address = (source.ip, source.port)
         with ServerSession(address[0], address[1]) as conn:
-            logger.info(f"wellcome_If_new in rpc_confirm_integrity {address}")
+            # logger.info(f"wellcome_If_new in rpc_confirm_integrity {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
 
         return Server.storage.get_all_metadata_keys()

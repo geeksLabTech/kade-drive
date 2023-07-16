@@ -278,7 +278,9 @@ class ServerSession:
 
     def __enter__(self):
         try:
-            self.server_session = rpyc.connect(self.server_ip, port=self.port)
+            self.server_session = rpyc.connect(
+                self.server_ip, port=self.port, config={"allow_pickle": True}
+            )
             return self.server_session.root
         except ConnectionRefusedError:
             return None
