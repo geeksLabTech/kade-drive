@@ -459,7 +459,7 @@ class ServerService(Service):
         return Server.delete_data_from_network(key, is_metadata)
 
     @rpyc.exposed
-    def upload_file(self, key, data: bytes, apply_hash_to_key=True) -> bool:
+    def upload_file(self, key: bytes, data: bytes, apply_hash_to_key=True) -> bool:
         chunks = Server.split_data(data, 1000)
         logger.debug(f"chunks {len(chunks)}, {chunks}")
         digested_chunks = [digest(c) for c in chunks]
@@ -479,7 +479,7 @@ class ServerService(Service):
             if not all(responses):
                 logger.warning("Rolling back changes of chuncks was not completed")
             return False
-        logger.debug("Writting key metadata")
+        logger.info("Writting key metadata")
         if apply_hash_to_key:
             key = digest(key)
 
@@ -505,7 +505,7 @@ class ServerService(Service):
         if not all(results):
             logger.warning("It was not possible to confirm integrity of all chunks")
             return False
-
+        assert key is not None
         result = Server.confirm_integrity_of_data(key, True)
         if not result:
             logger.warning("It was not possible to confirm integrity of metadata")
@@ -714,6 +714,7 @@ class ServerService(Service):
             FileSystemProtocol.wellcome_if_new(conn, source)
 
         try:
+            logging.info('Trying to confirm integrity with key {key}')
             FileSystemProtocol.storage.confirm_integrity(key, is_metadata)
             return {"value": True}
         except Exception as e:
