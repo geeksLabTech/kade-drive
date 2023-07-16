@@ -180,7 +180,7 @@ class FileSystemProtocol:
             response = conn.rpc_find_chunk_location(
                 address, FileSystemProtocol.source_node.id, node_to_find.id
             )
-        logger.debug(str(response))
+        logger.critical("call find chunk %s", str(response))
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
 
     @staticmethod

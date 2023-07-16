@@ -220,7 +220,7 @@ class ChunkLocationSpiderCrawl(SpiderCrawl):
         Handle the result of an iteration in _find.
         """
 
-        logger.debug("entry ChunkLocationSpiderCrawl")
+        logger.critical("entry ChunkLocationSpiderCrawl %s", response_dict)
         toremove = []
         found_values = []
         for peer_id, response in response_dict.items():

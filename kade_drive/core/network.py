@@ -472,7 +472,7 @@ class ServerService(Service):
         logger.debug(f"chunks {len(chunks)}, {chunks}")
         digested_chunks = [digest(c) for c in chunks]
         metadata_list = pickle.dumps(digested_chunks)
-        processed_chunks = ((digest(c), c) for c in chunks)
+        processed_chunks = list((digest(c), c) for c in chunks)
 
         chunks_responses = []
         for c in processed_chunks:
@@ -507,7 +507,9 @@ class ServerService(Service):
             return False
 
         results = []
-        for c in processed_chunks:
+        logger.critical("len pocessed chunks %d", len(list(processed_chunks)))
+        for c in list(processed_chunks):
+            logger.critical("confiming %s", c[0])
             results.append(Server.confirm_integrity_of_data(c[0], False))
 
         if not all(results):
@@ -567,6 +569,7 @@ class ServerService(Service):
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
         if Server.storage.contains(key, False):
+            logger.critical("find node contains 1")
             return {"value": (Server.node.ip, Server.node.port)}
         return self.rpc_find_node(sender, nodeid, key)
 

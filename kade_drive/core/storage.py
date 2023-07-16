@@ -348,9 +348,12 @@ class PersistentStorage:
             path = Path(os.path.join(self.values_path, str_key))
             if not path.exists():
                 return False
+        logger.critical("almost finish cotains")
         with open(path, "rb") as f:
             data = pickle.load(f)
+            logger.critical(data)
             if not data["integrity"]:
+                logger.critical(data)
                 return False
 
         return True
