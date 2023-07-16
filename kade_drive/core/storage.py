@@ -214,7 +214,8 @@ class PersistentStorage:
 
         if result is not None:
             data = pickle.loads(result)
-            logger.warning("pass pickle")
+            logger.warning(f"pass pickle with result {data}")
+            logger.warning(f'key was {str_key}')
             # logger.info("Data", data)
             # if not data["integrity"]:
             #     return None
@@ -222,14 +223,15 @@ class PersistentStorage:
                 self.update_timestamp(str_key, republish_data=True)
             return data
         if not result:
-            logger.warning(f"tried to get non existing data with key {str_key}")
+            logger.warning(f"tried to get non existing data with key {str_key} and metadata {metadata}")
 
         return result
 
-    def set_value(self, key: bytes, value, metadata=True, republish_data=False):
+    def set_value(self, key: bytes, value: bytes, metadata=True, republish_data=False):
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
         self.update_timestamp(str_key, republish_data, is_write=True)
+        logger.warning(f"VAlue to set is {value}")
         value_to_set = pickle.dumps(
             {"integrity": False, "value": value, "integrity_date": datetime.now()}
         )
@@ -249,7 +251,7 @@ class PersistentStorage:
         with open(os.path.join(self.keys_path, str_key), "wb") as f:
             f.write(key)
 
-        self.confirm_integrity(key, metadata=metadata)
+        # self.confirm_integrity(key, metadata=metadata)
 
     # def delete_value(self, key: bytes):
     #     str_key = str(base64.urlsafe_b64encode(key))
@@ -279,15 +281,20 @@ class PersistentStorage:
             path = Path(os.path.join(self.values_path, str_key))
 
         if path.exists():
-            with open(path, "rb") as f:
-                value = pickle.load(f)
-            with open(path, "wb") as f:
-                value["integrity"] = True
-                f.write(pickle.dumps(value))
+            # with open(path, "rb") as f:
+            #     value = pickle.load(f)
+            # with open(path, "wb") as f:
+            #     value["integrity"] = True
+            #     f.write(pickle.dumps(value))
+            with open(path, "r+b") as f:
+                original_value = pickle.load(f)
+                original_value["integrity"] = True
+                pickle.dump(original_value, f)
+            logger.info("integrity confirmed")
         else:
             logger.info("Tried to confirm integrity of non existing file")
 
-    def set_metadata(self, key, value, republish_data: bool):
+    def set_metadata(self, key: bytes, value: bytes, republish_data: bool):
         self.ensure_dir_paths()
         self.set_value(key, value, True, republish_data)
         self.cull()
@@ -312,14 +319,15 @@ class PersistentStorage:
         Check if there exist data older that {self.ttl} and remove it.
         """
 
-    def get(self, key: bytes, default=None, update_timestamp=True, metadata=True):
+    def get(self, key: bytes, update_timestamp=True, metadata=True):
         str_key = str(base64.urlsafe_b64encode(key))
         result = self.get_value(
             str_key, update_timestamp=update_timestamp, metadata=metadata
         )
         if result is not None and result["integrity"]:
-            result = result["value"]
-        return result
+            logger.info(f"checkeo antes de return {result}")
+            return result["value"]
+        return None
 
     def get_key_in_bytes(self, key: str):
         path = Path(os.path.join(self.keys_path, key))
@@ -385,8 +393,11 @@ class PersistentStorage:
                         value = self.get_value(
                             str(file), update_timestamp=False, metadata=is_metadata
                         )
-                        assert value is not None
-                        yield key, value, is_metadata, data["last_write"]
+                        if value is None or not value["integrity"]:
+                            logger.info("ignoring bad value in iter older")
+                            continue
+
+                        yield key, value["value"], is_metadata, data["last_write"]
 
     def keys(self):
         ikeys_files = os.listdir(os.path.join(self.keys_path))

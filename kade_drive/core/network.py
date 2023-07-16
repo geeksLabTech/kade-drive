@@ -165,13 +165,17 @@ class Server:
 
     @staticmethod
     def set_digest(
-        dkey: bytes, value, metadata=True, exclude_current=False, local_last_write=None
+        dkey: bytes,
+        value: bytes,
+        metadata=True,
+        exclude_current=False,
+        local_last_write=None,
     ):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
         """
-
+        logger.warning(f"Set diges with value {value}")
         node = Node(dkey)
         assert node is not None
         nearest = FileSystemProtocol.router.find_neighbors(node)
@@ -278,7 +282,7 @@ class Server:
         spider = ConfirmIntegritySpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         result = spider.find(is_metadata)
         print("None Result:", result is None)
-        print("result:", result)
+        print("result of IntegritySpider:", result)
         return result
 
     @staticmethod
@@ -294,7 +298,9 @@ class Server:
         for n in nodes:
             with ServerSession(n.ip, n.port) as conn:
                 for k, is_metadata in keys_to_find:
-                    contains = FileSystemProtocol.call_contains(conn, n, Node(k), is_metadata)
+                    contains = FileSystemProtocol.call_contains(
+                        conn, n, Node(k), is_metadata
+                    )
                     if contains:
                         if (k, is_metadata) not in keys_dict:
                             keys_dict[(k, is_metadata)] = 0
@@ -356,7 +362,7 @@ class Server:
         while True:
             try:
                 sleep(refresh_sleep)
-                logger.info("deleting corrupted_data")
+                logger.info("Checking corrupted data")
                 Server.storage.delete_corrupted_data()
                 logger.info("Refreshing table")
                 results = []
@@ -382,7 +388,9 @@ class Server:
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 
-                logger.info("Republishing keys that have less replicas than the replication factor")
+                logger.info(
+                    "Republishing keys that have less replicas than the replication factor"
+                )
 
                 if len(keys_to_replicate):
                     for key, is_metadata in keys_to_replicate:
@@ -505,7 +513,7 @@ class ServerService(Service):
         if not all(results):
             logger.warning("It was not possible to confirm integrity of all chunks")
             return False
-        logger.info(f'Here key of metadata is {key}')
+        logger.info(f"Here key of metadata is {key}")
         result = Server.confirm_integrity_of_data(key, True)
         if not result:
             logger.warning("It was not possible to confirm integrity of metadata")
@@ -623,7 +631,7 @@ class ServerService(Service):
 
             return self.rpc_find_node(sender, nodeid, key)
 
-        value = FileSystemProtocol.storage.get(key, None, metadata)
+        value = FileSystemProtocol.storage.get(key, metadata=metadata)
         logger.debug(f"returning value {value}")
         return {"value": value}
 
@@ -714,7 +722,7 @@ class ServerService(Service):
             FileSystemProtocol.wellcome_if_new(conn, source)
 
         try:
-            logging.info(f'Trying to confirm integrity with key {key}')
+            logging.info(f"Trying to confirm integrity with key {key}")
             FileSystemProtocol.storage.confirm_integrity(key, is_metadata)
             return {"value": True}
         except Exception as e:

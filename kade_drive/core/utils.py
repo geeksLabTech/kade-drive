@@ -36,7 +36,6 @@ def bytes_to_bit_string(bites):
     return "".join(bits)
 
 
-
 def is_port_in_use(host, port):
     try:
         # Create a socket object
