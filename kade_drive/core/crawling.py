@@ -306,6 +306,7 @@ class ConfirmIntegritySpiderCrawl(SpiderCrawl):
         return self.find(is_metadata)
 
     def _handle_found_values(self, values):
+        logger.info(f"_handle_found_values of integrity {values}")
         values = list(values)
         return all(values)
 

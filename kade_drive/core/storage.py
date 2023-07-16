@@ -214,7 +214,8 @@ class PersistentStorage:
 
         if result is not None:
             data = pickle.loads(result)
-            logger.warning("pass pickle")
+            logger.warning(f"pass pickle with result {data}")
+            logger.warning(f'key was {str_key}')
             # logger.info("Data", data)
             # if not data["integrity"]:
             #     return None
@@ -222,7 +223,7 @@ class PersistentStorage:
                 self.update_timestamp(str_key, republish_data=True)
             return data
         if not result:
-            logger.warning(f"tried to get non existing data with key {str_key}")
+            logger.warning(f"tried to get non existing data with key {str_key} and metadata {metadata}")
 
         return result
 
@@ -280,11 +281,16 @@ class PersistentStorage:
             path = Path(os.path.join(self.values_path, str_key))
 
         if path.exists():
-            with open(path, "rb") as f:
-                value = pickle.load(f)
-            with open(path, "wb") as f:
-                value["integrity"] = True
-                f.write(pickle.dumps(value))
+            # with open(path, "rb") as f:
+            #     value = pickle.load(f)
+            # with open(path, "wb") as f:
+            #     value["integrity"] = True
+            #     f.write(pickle.dumps(value))
+            with open(path, "r+b") as f:
+                original_value = pickle.load(f)
+                original_value["integrity"] = True
+                pickle.dump(original_value, f)
+            logger.info("integrity confirmed")
         else:
             logger.info("Tried to confirm integrity of non existing file")
 

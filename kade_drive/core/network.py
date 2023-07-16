@@ -175,7 +175,7 @@ class Server:
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
         """
-
+        logger.warning(f"Set diges with value {value}")
         node = Node(dkey)
         assert node is not None
         nearest = FileSystemProtocol.router.find_neighbors(node)
@@ -282,7 +282,7 @@ class Server:
         spider = ConfirmIntegritySpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         result = spider.find(is_metadata)
         print("None Result:", result is None)
-        print("result:", result)
+        print("result of IntegritySpider:", result)
         return result
 
     @staticmethod
@@ -631,7 +631,7 @@ class ServerService(Service):
 
             return self.rpc_find_node(sender, nodeid, key)
 
-        value = FileSystemProtocol.storage.get(key, metadata)
+        value = FileSystemProtocol.storage.get(key, metadata=metadata)
         logger.debug(f"returning value {value}")
         return {"value": value}
 
