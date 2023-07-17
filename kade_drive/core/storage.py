@@ -240,17 +240,31 @@ class PersistentStorage:
             path = os.path.join(self.metadata_path, str_key)
         else:
             path = os.path.join(self.values_path, str_key)
-        with open(path, "wb") as f:
-            # try
-            logger.debug("writting data  to file")
-            f.write(value_to_set)
-            # except TypeError:
-            #     logger.warning("writting with unicode_escape")
-            #     f.write(value_to_set.encode("unicode_escape"))
+        lock = FileLock(str(path) + ".lock")
+        value = None
+        try:
+            with lock.acquire(timeout=10):
+                with open(path, "wb") as f:
+                    # try
+                    logger.debug("writting data  to file")
+                    f.write(value_to_set)
+                    # except TypeError:
+                    #     logger.warning("writting with unicode_escape")
+                    #     f.write(value_to_set.encode("unicode_escape"))
 
-        with open(os.path.join(self.keys_path, str_key), "wb") as f:
-            f.write(key)
-
+                with open(os.path.join(self.keys_path, str_key), "wb") as f:
+                    f.write(key)
+        except Timeout:
+            logger.info(
+               "Another instance of this application currently holds the lock."
+            )
+            sleep(random.randint(2, 10))
+        except Exception as e:
+            logger.error(f"error in prepare metadata {e}")
+        finally:
+            lock.release()
+            os.remove(str(path) + ".lock")
+        
         # self.confirm_integrity(key, metadata=metadata)
 
     # def delete_value(self, key: bytes):

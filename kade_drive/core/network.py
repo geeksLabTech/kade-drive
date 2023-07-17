@@ -79,10 +79,10 @@ class Server:
         threading.Thread(target=Server.listen, args=(port, ip)).start()
         threading.Thread(target=Server._detect_alone).start()
 
-        # refresh_thread = threading.Thread(
-        #     target=Server._refresh_table, args=(config.refresh_sleep,)
-        # )
-        # refresh_thread.start()
+        refresh_thread = threading.Thread(
+            target=Server._refresh_table, args=(config.refresh_sleep,)
+        )
+        refresh_thread.start()
 
     @staticmethod
     def listen(port, interface="0.0.0.0"):
@@ -362,7 +362,7 @@ class Server:
                         Server.bootstrap([(target_host, target_port)])
 
     @staticmethod
-    def _refresh_table(refresh_sleep):
+    def _refresh_table(refresh_sleep=60):
         while True:
             try:
                 sleep(refresh_sleep)
@@ -401,7 +401,8 @@ class Server:
                         _, local_last_write = Server.storage.check_if_new_value_exists(
                             key
                         )
-
+                        
+                        # check for value4 lock
                         Server.set_digest(
                             key,
                             Server.storage.get(
