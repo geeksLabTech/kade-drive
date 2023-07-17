@@ -207,10 +207,23 @@ class PersistentStorage:
 
         result = None
         if os.path.exists(path):
-            with open(path, "rb") as f:
-                # logger.warning('READING HERE')
-                result = f.read()
-                logger.warning("PASS READ")
+            lock = FileLock(str(path) + ".lock")
+            try:
+                with lock.acquire(timeout=1):
+                    with open(path, "rb") as f:
+                        # logger.warning('READING HERE')
+                        result = f.read()
+                        logger.warning("PASS READ")
+            except Timeout:
+                logger.info(
+                    "Another instance of this application currently holds the lock."
+                )
+                sleep(random.randint(2, 10))
+            except Exception as e:
+                logger.error(f"error in prepare metadata {e}")
+            finally:
+                lock.release()
+                os.remove(str(path) + ".lock")
 
         if result is not None:
             data = pickle.loads(result)
