@@ -209,7 +209,7 @@ class PersistentStorage:
         if os.path.exists(path):
             lock = FileLock(str(path) + ".lock")
             try:
-                with lock.acquire(timeout=1):
+                with lock.acquire(timeout=3):
                     with open(path, "rb") as f:
                         # logger.warning('READING HERE')
                         result = f.read()
