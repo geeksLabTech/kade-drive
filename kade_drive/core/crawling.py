@@ -1,4 +1,5 @@
 from collections import Counter
+from itertools import chain
 import logging
 import rpyc
 from kade_drive.core.node import Node, NodeHeap
@@ -331,7 +332,7 @@ class LsSpiderCrawl(SpiderCrawl):
             if not response.happened():
                 toremove.append(peer_id)
             elif response.has_value():
-                found_values.add(response.get_value())
+                found_values = found_values.union(response.get_value())
             else:
                 peer = self.nearest.get_node(peer_id)
                 self.nearest.push(peer)

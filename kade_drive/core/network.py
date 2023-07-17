@@ -539,10 +539,10 @@ class ServerService(Service):
         logging.info("Getting all file names")
         nearest = FileSystemProtocol.router.find_neighbors(Server.node)
         if isinstance(nearest, list) and len(nearest) == 0:
-            return {"value": Server.storage.get_all_metadata_keys()}
+            return Server.storage.get_all_metadata_keys()
         spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
         metadata_list = spider.find()
-        return {"value": metadata_list}
+        return metadata_list
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
@@ -750,7 +750,7 @@ class ServerService(Service):
             # logger.info(f"wellcome_If_new in rpc_confirm_integrity {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
 
-        return Server.storage.get_all_metadata_keys()
+        return {"value": Server.storage.get_all_metadata_keys() }
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
