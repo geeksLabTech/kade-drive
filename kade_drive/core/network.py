@@ -179,6 +179,9 @@ class Server:
         Set the given SHA1 digest key (bytes) to the given value in the
         network.
         """
+        if value is None:
+            return
+        
         logger.warning(f"Set diges with value {value}")
         node = Node(dkey)
         assert node is not None

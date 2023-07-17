@@ -139,7 +139,7 @@ class PersistentStorage:
         value = None
         while True:
             try:
-                with lock.acquire(timeout=10):
+                with lock.acquire(timeout=60):
                     with open(path, "rb") as f:
                         chunks_data = f.read()
                         chunks_data = pickle.loads(chunks_data)
@@ -240,6 +240,7 @@ class PersistentStorage:
             path = os.path.join(self.metadata_path, str_key)
         else:
             path = os.path.join(self.values_path, str_key)
+            
         lock = FileLock(str(path) + ".lock")
         value = None
         try:
