@@ -324,7 +324,7 @@ class LsSpiderCrawl(SpiderCrawl):
         return self._find(FileSystemProtocol.call_get_metadata_list, True)
 
     def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
-        logger.debug("Entry in _nodes_found DeleteSpiderCrawl")
+        logger.info("Entry in _nodes_found LsSpider")
         toremove = []
         found_values = set()
         for peer_id, response in response_dict.items():
@@ -337,7 +337,7 @@ class LsSpiderCrawl(SpiderCrawl):
                 peer = self.nearest.get_node(peer_id)
                 self.nearest.push(peer)
         self.nearest.remove(toremove)
-        logger.debug(f"found values in _nodes_found {found_values}")
+        logger.info(f"found values in _nodes_found {found_values}")
         if len(found_values) > 0:
             return self._handle_found_values(found_values)
         if self.nearest.have_contacted_all():

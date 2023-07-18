@@ -1,6 +1,7 @@
 """
 General catchall for functions that don't make sense as methods.
 """
+import datetime
 import hashlib
 import operator
 import logging
@@ -59,3 +60,17 @@ def is_port_in_use(host, port):
     finally:
         # Close the socket
         sock.close()
+
+
+def it_is_necessary_to_write(local_last_write, contains, date):
+    valid_data = True
+    if not isinstance(date, datetime.datetime):
+        valid_data = False
+    if (
+        local_last_write is None
+        or date is None
+        or (valid_data and date < local_last_write)
+        or not contains
+    ):
+        return True
+    return False

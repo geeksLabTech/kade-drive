@@ -185,6 +185,7 @@ class PersistentStorage:
                     except Exception as e:
                         logger.error(f"Error in delete corrupted data {e}")
                         continue
+                    
                     if (
                         not value["integrity"]
                         and (datetime.now() - value["integrity_date"]).seconds
@@ -193,7 +194,7 @@ class PersistentStorage:
                         logger.info(
                             f"Removing file {file}, beacuse it has not been checked his integrity in {self.ttl/60} minutes"
                         )
-
+                        logger.critical(f'mira el value a borrar {value}')
                         self._delete_data(str(file), is_metadata=is_metadata)
 
             # sleep(self.ttl)
@@ -335,6 +336,7 @@ class PersistentStorage:
                 continue
             final_result.add(x)
 
+        logger.info(f"metadata list to return {final_result}")
         return final_result
 
     # def delete_metadata(self, key):

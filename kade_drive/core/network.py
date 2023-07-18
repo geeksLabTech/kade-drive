@@ -29,7 +29,7 @@ from kade_drive.core.crawling import (
 )
 
 from kade_drive.core.crawling import NodeSpiderCrawl
-from kade_drive.core.utils import is_port_in_use
+from kade_drive.core.utils import is_port_in_use, it_is_necessary_to_write
 
 # from models.file import File
 
@@ -181,7 +181,7 @@ class Server:
         """
         if value is None:
             return
-        
+
         logger.warning(f"Set diges with value {value}")
         node = Node(dkey)
         assert node is not None
@@ -190,7 +190,7 @@ class Server:
 
         if not nearest or len(nearest) == 0:
             return Server._handle_empty_neighbors(
-                dkey, metadata, value, exclude_current
+                dkey, metadata, value, exclude_current, local_last_write
             )
         spider = NodeSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         nodes = spider.find()
@@ -198,16 +198,18 @@ class Server:
 
         if not nodes or len(nodes) == 0:
             return Server._handle_empty_neighbors(
-                dkey, metadata, value, exclude_current
+                dkey, metadata, value, exclude_current, local_last_write
             )
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
         if Server.node.distance_to(node) < biggest and not exclude_current:
-            if metadata:
-                Server.storage.set_metadata(dkey, value, False)
-            else:
-                Server.storage.set_value(dkey, value, False)
+            contains, date = Server.storage.check_if_new_value_exists(dkey)
+            if it_is_necessary_to_write(local_last_write, contains, date):
+                if metadata:
+                    Server.storage.set_metadata(dkey, value, False)
+                else:
+                    Server.storage.set_value(dkey, value, False)
 
         responses = []
         for n in nodes:
@@ -219,16 +221,8 @@ class Server:
                 contains, date = None, None
                 if response is not None:
                     contains, date = response
-                # patch to make sure no invalid data is compared
-                valid_data = True
-                if not type(date) == type(datetime.datetime.now()):
-                    valid_data = False
 
-                if (
-                    local_last_write is None
-                    or date is None
-                    or (valid_data and date < local_last_write)
-                ):
+                if it_is_necessary_to_write(local_last_write, contains, date):
                     result = FileSystemProtocol.call_store(
                         conn, n, node, value, metadata
                     )
@@ -246,7 +240,9 @@ class Server:
         return all(responses)
 
     @staticmethod
-    def _handle_empty_neighbors(dkey, metadata, value, exclude_current):
+    def _handle_empty_neighbors(
+        dkey, metadata, value, exclude_current, local_last_write
+    ):
         logger.debug("There are no known neighbors to set key %s", dkey.hex())
 
         if not exclude_current:
@@ -391,7 +387,13 @@ class Server:
                     is_metadata,
                     last_write,
                 ) in Server.storage.iter_older_than(5):
-                    Server.set_digest(key, value, is_metadata, exclude_current=True)
+                    Server.set_digest(
+                        key,
+                        value,
+                        is_metadata,
+                        exclude_current=True,
+                        local_last_write=last_write,
+                    )
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 
@@ -404,7 +406,7 @@ class Server:
                         _, local_last_write = Server.storage.check_if_new_value_exists(
                             key
                         )
-                        
+
                         # check for value4 lock
                         Server.set_digest(
                             key,
@@ -542,6 +544,7 @@ class ServerService(Service):
             return Server.storage.get_all_metadata_keys()
         spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
         metadata_list = spider.find()
+        logger.info(f"Metadata list in ls is {metadata_list}")
         return metadata_list
 
     @rpyc.exposed
@@ -750,7 +753,7 @@ class ServerService(Service):
             # logger.info(f"wellcome_If_new in rpc_confirm_integrity {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
 
-        return {"value": Server.storage.get_all_metadata_keys() }
+        return {"value": Server.storage.get_all_metadata_keys()}
 
     @rpyc.exposed
     def set_key(self, key, value, apply_hash_to_key=True):
