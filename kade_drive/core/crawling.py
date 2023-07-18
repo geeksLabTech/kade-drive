@@ -350,7 +350,7 @@ class LsSpiderCrawl(SpiderCrawl):
         return self.find(is_metadata)
 
     def _handle_found_values(self, values):
-        return list(values)
+        return values
 
 
 class RPCFindResponse:

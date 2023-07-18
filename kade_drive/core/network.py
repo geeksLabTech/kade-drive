@@ -206,7 +206,7 @@ class Server:
         biggest = max([n.distance_to(node) for n in nodes])
         responses = []
         if Server.node.distance_to(node) < biggest and not exclude_current:
-            contains, date = Server.storage.check_if_new_value_exists(dkey)
+            contains, date = Server.storage.check_if_new_value_exists(dkey, metadata)
             if it_is_necessary_to_write(local_last_write, contains, date):
                 if metadata:
                     Server.storage.set_metadata(dkey, value, False, key_name=key_name)
@@ -219,7 +219,7 @@ class Server:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
                 response = FileSystemProtocol.call_check_if_new_value_exists(
-                    conn, n, node
+                    conn, n, node, metadata
                 )
                 contains, date = None, None
                 if response is None:
@@ -266,7 +266,7 @@ class Server:
         dkey, metadata, value, exclude_current, local_last_write, key_name
     ):
         logger.debug("There are no known neighbors to set key %s", dkey.hex())
-        contains, date = Server.storage.check_if_new_value_exists(dkey)
+        contains, date = Server.storage.check_if_new_value_exists(dkey, metadata)
         if not exclude_current and it_is_necessary_to_write(
             local_last_write, contains, date
         ):
@@ -332,23 +332,27 @@ class Server:
 
         return_list = []
         delete_list = []
-        
+
         for k in keys_dict:
             logger.debug(k)
-            if len(keys_dict[k])+1 < Server.ksize:
-                logger.critical("key %s len %s ksize %s", k, len(keys_dict[k]), Server.ksize)
+            if len(keys_dict[k]) + 1 < Server.ksize:
+                logger.critical(
+                    "key %s len %s ksize %s", k, len(keys_dict[k]), Server.ksize
+                )
                 return_list.append(k)
-            elif len(keys_dict[k])+1 > Server.ksize:
-                delete_list.append((k,keys_dict[k]))
-        
-        for key,item in delete_list:
+            elif len(keys_dict[k]) + 1 > Server.ksize:
+                delete_list.append((k, keys_dict[k]))
+
+        for key, item in delete_list:
             node = Node(key[0])
             sorted_list = sorted(item, key=node.distance_to)
-            
-            for node in sorted_list[Server.ksize:]:
+
+            for node in sorted_list[Server.ksize :]:
                 with ServerSession(node.ip, node.port) as conn:
                     logger.info("To many replicas of %s, removing on %s", key, node)
-                    delete = FileSystemProtocol.call_delete(conn, node, Node(key[0]), is_metadata=key[1])
+                    delete = FileSystemProtocol.call_delete(
+                        conn, node, Node(key[0]), is_metadata=key[1]
+                    )
                     if not delete:
                         logger.warning("Failed to delete replica")
         return return_list
@@ -357,7 +361,6 @@ class Server:
     def _detect_alone():
         while True:
             try:
-
                 node = Node(digest("test"))
                 assert node is not None
                 nearest = FileSystemProtocol.router.find_neighbors(node)
@@ -442,7 +445,7 @@ class Server:
                 if len(keys_to_replicate) > 0:
                     for key, is_metadata in keys_to_replicate:
                         _, local_last_write = Server.storage.check_if_new_value_exists(
-                            key
+                            key, is_metadata
                         )
                         logger.info("replicating key %s", key)
                         # check for value4 lock
@@ -554,12 +557,11 @@ class ServerService(Service):
     def get_all_file_names(self):
         logging.info("Getting all file names")
         nearest = FileSystemProtocol.router.find_neighbors(Server.node)
-        if isinstance(nearest, list) and len(nearest) == 0:
-            return Server.storage.get_all_metadata_keys()
+        initial_metadata = Server.storage.get_all_metadata_keys()
         spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
         metadata_list = spider.find()
         logger.info(f"Metadata list in ls is {metadata_list}")
-        return metadata_list
+        return list(metadata_list.union(initial_metadata))
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
@@ -739,7 +741,7 @@ class ServerService(Service):
             # logger.info(f"wellcome_If_new in check_if_new_value {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
         # get value from storage
-        return FileSystemProtocol.storage.check_if_new_value_exists(key)
+        return FileSystemProtocol.storage.check_if_new_value_exists(key, is_metadata)
 
     @rpyc.exposed
     def rpc_delete(self, sender, node_id: bytes, key: bytes, is_metadata: bool):

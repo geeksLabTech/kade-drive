@@ -42,16 +42,8 @@ class PersistentStorage:
         self.timestamp_path = "timestamps"
         self.db = []
         self.ttl = ttl
-        # self.stop_del_thread = False
-
-        # self.del_thread = threading.Thread(target=self.delete_old)
-        # self.del_thread.start()
 
         self.ensure_dir_paths()
-
-    # def stop_thread(self):
-    #     self.stop_del_thread = True
-    #     self.del_thread.join()
 
     def ensure_dir_paths(self):
         os.makedirs(self.db_path, exist_ok=True)
@@ -64,16 +56,7 @@ class PersistentStorage:
 
         os.makedirs(self.timestamp_path, exist_ok=True)
 
-    # def get_local_filenames(self):
-    #     data = []
-    #     for path,dir,files in walk(self.metadata_path):
-    #         for file in files:
-    #             val = self.get_value(file,update_timestamp=False, metadata=True)
-    #             print(file, val)
-    #             data.append(val)
-    #     return data
-
-    def update_timestamp(self, filename: str, republish_data=False, is_write=False):
+    def update_timestamp(self, filename: str, republish_data=False):
         self.ensure_dir_paths()
         data = {}
         if os.path.exists(os.path.join(self.timestamp_path, str(filename))):
@@ -82,11 +65,6 @@ class PersistentStorage:
 
         data["date"] = datetime.now()
         data["republish"] = republish_data
-
-        if is_write:
-            data["last_write"] = datetime.strptime(
-                (datetime.now().strftime("%m/%d/%y %H:%M:%S")), "%m/%d/%y %H:%M:%S"
-            )
 
         logger.debug(f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:
@@ -251,17 +229,23 @@ class PersistentStorage:
         metadata=True,
         republish_data=False,
         key_name="NOT DEFINED",
+        last_write=None,
     ):
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
-        self.update_timestamp(str_key, republish_data, is_write=True)
+        self.update_timestamp(str_key, republish_data)
         logger.warning(f"VAlue to set is {value}")
+        if last_write is None:
+            last_write = datetime.strptime(
+                (datetime.now().strftime("%m/%d/%y %H:%M:%S")), "%m/%d/%y %H:%M:%S"
+            )
         value_to_set = pickle.dumps(
             {
                 "integrity": False,
                 "value": value,
                 "integrity_date": datetime.now(),
                 "key_name": key_name,
+                "last_write": last_write,
             }
         )
 
@@ -330,11 +314,6 @@ class PersistentStorage:
         logger.info(f"metadata list to return {final_result}")
         return final_result
 
-    # def delete_metadata(self, key):
-    #     self.ensure_dir_paths()
-    #     self.delete_value(key, True, )
-    #     self.cull()
-
     def cull(self):
         """
         Check if there exist data older that {self.ttl} and remove it.
@@ -389,24 +368,19 @@ class PersistentStorage:
 
         return True
 
-    def check_if_new_value_exists(self, key: bytes):
+    def check_if_new_value_exists(self, key: bytes, is_metadata: bool):
         str_key = str(base64.urlsafe_b64encode(key))
-        path = Path(os.path.join(self.timestamp_path, str_key))
+        if is_metadata:
+            path = Path(os.path.join(self.metadata_path, str_key))
+        else:
+            path = Path(os.path.join(self.values_path, str_key))
         if not path.exists():
             return False, None
 
-        with open(os.path.join(self.timestamp_path, str_key), "rb") as f:
+        with open(path, "rb") as f:
             data = pickle.load(f)
 
         return True, data["last_write"]
-
-    # def __getitem__(self, key: bytes):
-    #     self.cull()
-    #     str_key = str(base64.urlsafe_b64encode(key))
-    #     result = self.get(str_key)
-    #     if result is None:
-    #         raise KeyError()
-    #     return result
 
     def __repr__(self):
         ...
@@ -429,7 +403,7 @@ class PersistentStorage:
                             logger.info("ignoring bad value in iter older")
                             continue
 
-                        yield key, value["value"], is_metadata, data[
+                        yield key, value["value"], is_metadata, value[
                             "last_write"
                         ], value["key_name"]
 
@@ -461,7 +435,7 @@ class PersistentStorage:
         ikey_names: list = []
         for i, ik in enumerate(ikeys):
             ivalues.append(self.get(ik, update_timestamp=False, metadata=imetadata[i]))
-            contains, last_write = self.check_if_new_value_exists(ik)
+            contains, last_write = self.check_if_new_value_exists(ik, imetadata[i])
             ilast_writes.append(last_write)
             ikey_names.append(
                 self.get_key_name(ik, update_timestamp=False, metadata=imetadata[i])
