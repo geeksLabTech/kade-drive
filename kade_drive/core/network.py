@@ -561,6 +561,8 @@ class ServerService(Service):
         spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
         metadata_list = spider.find()
         logger.info(f"Metadata list in ls is {metadata_list}")
+        if metadata_list is None:
+            return list(initial_metadata)
         return list(metadata_list.union(initial_metadata))
 
     @rpyc.exposed
