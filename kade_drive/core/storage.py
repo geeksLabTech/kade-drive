@@ -84,7 +84,9 @@ class PersistentStorage:
         data["republish"] = republish_data
 
         if is_write:
-            data["last_write"] = datetime.now()
+            data["last_write"] = datetime.strptime(
+                (datetime.now().strftime("%m/%d/%y %H:%M:%S")), "%m/%d/%y %H:%M:%S"
+            )
 
         logger.debug(f"mira ruta {os.path.join(self.timestamp_path, str(filename))}")
         with open(os.path.join(self.timestamp_path, str(filename)), "wb") as f:

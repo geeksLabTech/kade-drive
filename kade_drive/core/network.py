@@ -350,7 +350,8 @@ class Server:
                 with ServerSession(node.ip, node.port) as conn:
                     logger.info("To many replicas of %s, removing on %s", key, node)
                     delete = FileSystemProtocol.call_delete(conn, node, Node(key[0]), is_metadata=key[1])
-
+                    if not delete:
+                        logger.warning("Failed to delete replica")
         return return_list
 
     @staticmethod
