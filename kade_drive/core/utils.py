@@ -63,9 +63,11 @@ def is_port_in_use(host, port):
 
 
 def it_is_necessary_to_write(local_last_write, contains, date):
-    valid_data = True
-    if not isinstance(date, datetime.datetime):
-        valid_data = False
+    valid_data = False
+    if date is not None:
+        str_date = date.strftime("%m/%d/%y %H:%M:%S")
+        date = datetime.datetime.strptime(str_date, '%m/%d/%y %H:%M:%S')
+        valid_data = True
     if (
         local_last_write is None
         or date is None
