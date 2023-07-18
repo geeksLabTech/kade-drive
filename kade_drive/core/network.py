@@ -338,7 +338,7 @@ class Server:
                         keys_dict[(k, is_metadata)].add(n)
 
         return_list = []
-        delete_list = []
+        delete_list = set()
 
         for k, values in keys_dict.items():
             if len(values) < Server.ksize:
@@ -346,7 +346,7 @@ class Server:
                 return_list.append(k)
             elif len(values) > Server.ksize:
                 logger.critical("key %s replicas %s", k, len(values))
-                delete_list.append((k, values))
+                delete_list.add((k, values))
 
         for key, item in delete_list:
             key, is_metadata = key
