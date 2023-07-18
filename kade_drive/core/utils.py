@@ -7,6 +7,9 @@ import operator
 import logging
 import socket
 
+logger = logging.getLogger(__name__)
+
+
 
 def digest(string):
     if not isinstance(string, bytes):
@@ -74,5 +77,9 @@ def it_is_necessary_to_write(local_last_write, contains, date):
         or (valid_data and date < local_last_write)
         or not contains
     ):
+        logger.critical("VA A ESCRIBIR")
+        logger.info(f" date {date} local_last_write {local_last_write},contains {contains}")
+        if valid_data and local_last_write:
+            logger.info("comp %s", date < local_last_write)
         return True
     return False

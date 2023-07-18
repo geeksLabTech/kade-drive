@@ -463,7 +463,7 @@ class Server:
                         )
                         if not response:
                             logger.warning("Failed set keys_to_replicate in refresh")
-
+                logger.info("Finishied replication")
             except Exception as e:
                 logger.error("Thrown Exception %s", str(e))
                 pass
