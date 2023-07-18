@@ -342,8 +342,7 @@ class Server:
         delete_list = []
 
         for k, values in keys_dict.items():
-            logger.debug(k)
-            logger.critical("delete params %s %s", len(values), Server.ksize)
+
             if len(values) < Server.ksize:
                 logger.critical(
                     "key %s len %s ksize %s", k, len(values), Server.ksize
@@ -358,7 +357,7 @@ class Server:
             node = Node(key[0])
             sorted_list = sorted(item, key=node.distance_to)
 
-            for node in sorted_list[Server.ksize:]:
+            for node in sorted_list[Server.ksize+1:]:
                 logger.info("To many replicas of %s, removing on %s", key, node)
                 with ServerSession(node.ip, node.port) as conn:
                     delete = FileSystemProtocol.call_delete(
