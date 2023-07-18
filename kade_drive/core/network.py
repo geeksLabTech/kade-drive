@@ -554,12 +554,11 @@ class ServerService(Service):
     def get_all_file_names(self):
         logging.info("Getting all file names")
         nearest = FileSystemProtocol.router.find_neighbors(Server.node)
-        if isinstance(nearest, list) and len(nearest) == 0:
-            return Server.storage.get_all_metadata_keys()
+        initial_metadata = Server.storage.get_all_metadata_keys()
         spider = LsSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
         metadata_list = spider.find()
         logger.info(f"Metadata list in ls is {metadata_list}")
-        return metadata_list
+        return list(metadata_list.union(initial_metadata))
 
     @rpyc.exposed
     def get_file_chunk_location(self, chunk_key):
