@@ -221,6 +221,7 @@ class Server:
                 contains, date = None, None
                 if response is not None:
                     contains, date = response
+                    # logger.critical(f'dict of date:  {type(date)} and {type(date.copy())}')
 
                 if it_is_necessary_to_write(local_last_write, contains, date):
                     result = FileSystemProtocol.call_store(
@@ -387,13 +388,15 @@ class Server:
                     is_metadata,
                     last_write,
                 ) in Server.storage.iter_older_than(5):
-                    Server.set_digest(
+                    digest_response = Server.set_digest(
                         key,
                         value,
                         is_metadata,
                         exclude_current=True,
                         local_last_write=last_write,
                     )
+                    if digest_response:
+                        Server.confirm_integrity_of_data(key, is_metadata)
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 

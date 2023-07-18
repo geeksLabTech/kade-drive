@@ -1,4 +1,3 @@
-
 import os
 import pickle
 from datetime import datetime
@@ -185,7 +184,7 @@ class PersistentStorage:
                     except Exception as e:
                         logger.error(f"Error in delete corrupted data {e}")
                         continue
-                    
+
                     if (
                         not value["integrity"]
                         and (datetime.now() - value["integrity_date"]).seconds
@@ -194,7 +193,7 @@ class PersistentStorage:
                         logger.info(
                             f"Removing file {file}, beacuse it has not been checked his integrity in {self.ttl/60} minutes"
                         )
-                        logger.critical(f'mira el value a borrar {value}')
+                        logger.critical(f"mira el value a borrar {value}")
                         self._delete_data(str(file), is_metadata=is_metadata)
 
             # sleep(self.ttl)
@@ -229,7 +228,7 @@ class PersistentStorage:
         if result is not None:
             data = pickle.loads(result)
             logger.warning(f"pass pickle with result {data}")
-            logger.warning(f'key was {str_key}')
+            logger.warning(f"key was {str_key}")
             # logger.info("Data", data)
             # if not data["integrity"]:
             #     return None
@@ -237,7 +236,9 @@ class PersistentStorage:
                 self.update_timestamp(str_key, republish_data=True)
             return data
         if not result:
-            logger.warning(f"tried to get non existing data with key {str_key} and metadata {metadata}")
+            logger.warning(
+                f"tried to get non existing data with key {str_key} and metadata {metadata}"
+            )
 
         return result
 
@@ -254,7 +255,7 @@ class PersistentStorage:
             path = os.path.join(self.metadata_path, str_key)
         else:
             path = os.path.join(self.values_path, str_key)
-            
+
         lock = FileLock(str(path) + ".lock")
         value = None
         try:
@@ -271,7 +272,7 @@ class PersistentStorage:
                     f.write(key)
         except Timeout:
             logger.info(
-               "Another instance of this application currently holds the lock."
+                "Another instance of this application currently holds the lock."
             )
             sleep(random.randint(2, 10))
         except Exception as e:
@@ -279,7 +280,7 @@ class PersistentStorage:
         finally:
             lock.release()
             os.remove(str(path) + ".lock")
-        
+
         # self.confirm_integrity(key, metadata=metadata)
 
     # def delete_value(self, key: bytes):
@@ -390,7 +391,7 @@ class PersistentStorage:
 
         return True
 
-    def check_if_new_value_exists(self, key):
+    def check_if_new_value_exists(self, key: bytes):
         str_key = str(base64.urlsafe_b64encode(key))
         path = Path(os.path.join(self.timestamp_path, str_key))
         if not path.exists():
@@ -408,7 +409,7 @@ class PersistentStorage:
     #     if result is None:
     #         raise KeyError()
     #     return result
- 
+
     def __repr__(self):
         ...
 
@@ -456,7 +457,9 @@ class PersistentStorage:
 
         logger.debug("ikeys: %s", ikeys)
         ivalues: list[bytes] = []
-
+        ilast_writes: list = []
         for i, ik in enumerate(ikeys):
             ivalues.append(self.get(ik, update_timestamp=False, metadata=imetadata[i]))
-        return zip(ikeys, ivalues, imetadata)
+            contains, last_write = self.check_if_new_value_exists(ik)
+            ilast_writes.append(last_write)
+        return zip(ikeys, ivalues, imetadata, ilast_writes)
