@@ -303,21 +303,30 @@ class Server:
 
     @staticmethod
     def find_replicas():
-        nearest = FileSystemProtocol.router.find_neighbors(
-            Server.node, Server.alpha, exclude=Server.node
-        )
-        spider = NodeSpiderCrawl(Server.node, nearest, Server.ksize, Server.alpha)
-
-        nodes = spider.find()
         keys_to_find = Server.storage.keys()
         keys_dict = {}
-        for n in nodes:
-            with ServerSession(n.ip, n.port) as conn:
-                for k, is_metadata in keys_to_find:
+        
+        for k, is_metadata in keys_to_find:
+            node_created = Node(k)
+            
+            nearest = FileSystemProtocol.router.find_neighbors(
+                node_created, Server.alpha, exclude=Server.node
+            )
+            spider = NodeSpiderCrawl(node_created, nearest,
+                                    Server.ksize, Server.alpha)
+
+            nodes = spider.find()
+            
+            logger.error("nodes %s", nodes)
+            
+            for n in nodes:
+                with ServerSession(n.ip, n.port) as conn:
+                    logger.critical("looking for key %s in %s",k, n)
                     contains = FileSystemProtocol.call_contains(
                         conn, n, Node(k), is_metadata
                     )
                     if contains:
+                        logger.critical("Found")
                         if (k, is_metadata) not in keys_dict:
                             keys_dict[(k, is_metadata)] = set()
                         keys_dict[(k, is_metadata)].add(n)
@@ -325,21 +334,24 @@ class Server:
         return_list = []
         delete_list = []
 
-        for k in keys_dict:
+        for k, values in keys_dict.items():
             logger.debug(k)
-            if len(keys_dict[k]) + 1 < Server.ksize:
+            logger.critical("delete params %s %s", len(values), Server.ksize)
+            if len(values) + 1 < Server.ksize:
                 logger.critical(
-                    "key %s len %s ksize %s", k, len(keys_dict[k]), Server.ksize
+                    "key %s len %s ksize %s", k, len(values), Server.ksize
                 )
                 return_list.append(k)
-            elif len(keys_dict[k]) + 1 > Server.ksize:
-                delete_list.append((k, keys_dict[k]))
-
+            elif len(values)+1 > Server.ksize:
+                logger.critical("key %s replicas %s", k, len(values))
+                delete_list.append((k, values))
+                
+        logger.critical("delete list %s ", delete_list)
         for key, item in delete_list:
             node = Node(key[0])
             sorted_list = sorted(item, key=node.distance_to)
 
-            for node in sorted_list[Server.ksize :]:
+            for node in sorted_list[Server.ksize:]:
                 with ServerSession(node.ip, node.port) as conn:
                     logger.info("To many replicas of %s, removing on %s", key, node)
                     delete = FileSystemProtocol.call_delete(
