@@ -202,7 +202,9 @@ class FileSystemProtocol:
         response = None
 
         if conn:
-            response = conn.rpc_ping(address, FileSystemProtocol.source_node.id)
+            response = conn.rpc_ping(
+                address, FileSystemProtocol.source_node.id, node_to_ask.id
+            )
 
         logger.debug(f"Got Response {response}")
 

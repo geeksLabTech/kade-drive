@@ -312,23 +312,22 @@ class Server:
     def find_replicas():
         keys_to_find = Server.storage.keys()
         keys_dict = {}
-        
+
         for k, is_metadata in keys_to_find:
             node_created = Node(k)
-            
+
             nearest = FileSystemProtocol.router.find_neighbors(
                 node_created, Server.alpha, exclude=Server.node
             )
-            spider = NodeSpiderCrawl(node_created, nearest,
-                                    Server.ksize, Server.alpha)
+            spider = NodeSpiderCrawl(node_created, nearest, Server.ksize, Server.alpha)
 
             nodes = spider.find()
-            
+
             logger.error("nodes %s", nodes)
-            
+
             for n in nodes:
                 with ServerSession(n.ip, n.port) as conn:
-                    logger.critical("looking for key %s in %s",k, n)
+                    logger.critical("looking for key %s in %s", k, n)
                     contains = FileSystemProtocol.call_contains(
                         conn, n, Node(k), is_metadata
                     )
@@ -342,24 +341,21 @@ class Server:
         delete_list = []
 
         for k, values in keys_dict.items():
-
             if len(values) < Server.ksize:
-                logger.critical(
-                    "key %s len %s ksize %s", k, len(values), Server.ksize
-                )
+                logger.critical("key %s len %s ksize %s", k, len(values), Server.ksize)
                 return_list.append(k)
             elif len(values) > Server.ksize:
                 logger.critical("key %s replicas %s", k, len(values))
                 delete_list.append((k, values))
-                
+
         for key, item in delete_list:
-            key,is_metadata = key
-            
+            key, is_metadata = key
+
             node = Node(key)
             sorted_list = sorted(item, key=node.distance_to)
             logger.info("ITEMS %s", sorted_list)
 
-            for node in sorted_list[Server.ksize:]:
+            for node in sorted_list[Server.ksize :]:
                 logger.info("To many replicas of %s, removing on %s", key, node)
                 if node.ip == Server.node.ip and node.port == Server.node.port:
                     Server.storage.delete(key=key, is_metadata=is_metadata)
@@ -724,7 +720,7 @@ class ServerService(Service):
         return {"value": value}
 
     @rpyc.exposed
-    def rpc_ping(self, sender, nodeid: bytes):
+    def rpc_ping(self, sender, nodeid: bytes, remote_id: bytes):
         """Probe a Node to see if pc is online
 
         Args:
@@ -742,6 +738,8 @@ class ServerService(Service):
             logger.info(f"wellcome_If_new in ping {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
         logger.debug("return ping")
+        if remote_id != FileSystemProtocol.source_node.id:
+            return None
         return FileSystemProtocol.source_node.id
 
     @rpyc.exposed
