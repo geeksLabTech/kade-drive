@@ -209,9 +209,17 @@ class Server:
             contains, date = Server.storage.check_if_new_value_exists(dkey, metadata)
             if it_is_necessary_to_write(local_last_write, contains, date):
                 if metadata:
-                    Server.storage.set_metadata(dkey, value, False, key_name=key_name)
+                    Server.storage.set_metadata(
+                        dkey,
+                        value,
+                        False,
+                        key_name=key_name,
+                        last_write=local_last_write,
+                    )
                 else:
-                    Server.storage.set_value(dkey, value, False)
+                    Server.storage.set_value(
+                        dkey, value, False, last_write=local_last_write
+                    )
                 Server.storage.confirm_integrity(dkey, metadata)
                 responses.append(True)
 
@@ -231,7 +239,7 @@ class Server:
 
                 if it_is_necessary_to_write(local_last_write, contains, date):
                     result = FileSystemProtocol.call_store(
-                        conn, n, node, value, metadata, key_name
+                        conn, n, node, value, metadata, key_name, local_last_write
                     )
                     if result:
                         confirm_response = FileSystemProtocol.call_confirm_integrity(
@@ -272,9 +280,13 @@ class Server:
         ):
             logger.info("storing in current server")
             if metadata:
-                Server.storage.set_metadata(dkey, value, False, key_name=key_name)
+                Server.storage.set_metadata(
+                    dkey, value, False, key_name=key_name, last_write=local_last_write
+                )
             else:
-                Server.storage.set_value(dkey, value, False)
+                Server.storage.set_value(
+                    dkey, value, False, last_write=local_last_write
+                )
         Server.storage.confirm_integrity(dkey, metadata)
         return True
 
@@ -624,19 +636,8 @@ class ServerService(Service):
         value,
         metadata=True,
         key_name="NOT DEFINED",
+        local_last_write=None,
     ):
-        """Instructs a node to store a value
-
-        Args:
-            sender : Sender Node
-            nodeid (bytes): Node to be told to store info
-            key (bytes): key to the value to store
-            value : value to store
-
-        Returns:
-            bool: True if operation successful
-        """
-
         logger.debug("Entry in rpc_store")
         source = Node(nodeid, sender[0], sender[1])
         # if a new node is sending the request, give all data it should contain
@@ -652,10 +653,16 @@ class ServerService(Service):
         # store values and report success
         if metadata:
             Server.storage.set_metadata(
-                key, value, republish_data=False, key_name=key_name
+                key,
+                value,
+                republish_data=False,
+                key_name=key_name,
+                last_write=local_last_write,
             )
         else:
-            Server.storage.set_value(key, value, metadata=False)
+            Server.storage.set_value(
+                key, value, metadata=False, last_write=local_last_write
+            )
         return True
 
     @rpyc.exposed

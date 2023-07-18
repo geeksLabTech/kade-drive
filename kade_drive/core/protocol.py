@@ -48,6 +48,7 @@ class FileSystemProtocol:
         value,
         is_metadata=True,
         key_name="NOT DEFINED",
+        local_last_write=None,
     ):
         """
         async function to call the find store rpc method
@@ -62,6 +63,7 @@ class FileSystemProtocol:
                 value,
                 is_metadata,
                 key_name,
+                local_last_write,
             )
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -284,7 +286,13 @@ class FileSystemProtocol:
                         contains, date = response
                     if it_is_necessary_to_write(local_last_write, contains, date):
                         store_response = FileSystemProtocol.call_store(
-                            conn, node, node_to_find, value, is_metadata, key_name
+                            conn,
+                            node,
+                            node_to_find,
+                            value,
+                            is_metadata,
+                            key_name,
+                            local_last_write,
                         )
                         if store_response:
                             FileSystemProtocol.call_confirm_integrity(

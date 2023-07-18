@@ -295,10 +295,17 @@ class PersistentStorage:
             logger.info("Tried to confirm integrity of non existing file")
 
     def set_metadata(
-        self, key: bytes, value: bytes, republish_data: bool, key_name: str
+        self,
+        key: bytes,
+        value: bytes,
+        republish_data: bool,
+        key_name: str,
+        last_write=None,
     ):
         self.ensure_dir_paths()
-        self.set_value(key, value, True, republish_data, key_name=key_name)
+        self.set_value(
+            key, value, True, republish_data, key_name=key_name, last_write=last_write
+        )
         self.cull()
 
     def get_all_metadata_keys(self) -> set[str]:
