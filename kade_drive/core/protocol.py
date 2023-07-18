@@ -234,7 +234,6 @@ class FileSystemProtocol:
             return
         # add node to table
 
-        logger.debug("Adding new node to contacts")
         FileSystemProtocol.router.add_contact(node)
 
         logger.info(f"never seen {node} before, adding to router")
@@ -263,11 +262,12 @@ class FileSystemProtocol:
                     FileSystemProtocol.source_node.distance_to(keynode) < first
                 )
             # if not neighbors, store data in the node
-            if not neighbors or (new_node_close and this_closest):
+            if not neighbors or (new_node_close and this_closest) or len(neighbors) == 1:
                 logger.debug("calling call_store in wellcome_if_new")
                 with ServerSession(node.ip, node.port) as conn:
+                    node_to_find = Node(key)
                     response = FileSystemProtocol.call_check_if_new_value_exists(
-                        conn, node, FileSystemProtocol.source_node
+                        conn, node, node_to_find
                     )
                     contains, date = None, None
                     if response is not None:
@@ -276,7 +276,7 @@ class FileSystemProtocol:
                         store_response = FileSystemProtocol.call_store(
                             conn,
                             node,
-                            FileSystemProtocol.source_node,
+                            node_to_find,
                             value,
                             is_metadata,
                             key_name
@@ -285,14 +285,14 @@ class FileSystemProtocol:
                             FileSystemProtocol.call_confirm_integrity(
                                 conn,
                                 node,
-                                FileSystemProtocol.source_node,
+                                node_to_find,
                                 is_metadata,
                             )
                         else:
                             FileSystemProtocol.call_delete(
                                 conn,
                                 node,
-                                FileSystemProtocol.source_node,
+                                node_to_find,
                                 is_metadata,
                             )
 
