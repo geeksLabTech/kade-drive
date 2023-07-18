@@ -368,7 +368,7 @@ class Server:
                 sleep(15)
                 continue
             if nearest is not None and len(nearest) > 0:
-                logger.info(f"nearest in _detect_alone is {nearest}")
+                # logger.info(f"nearest in _detect_alone is {nearest}")
                 sleep(15)
                 continue
             else:
