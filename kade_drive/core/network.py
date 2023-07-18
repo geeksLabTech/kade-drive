@@ -332,18 +332,20 @@ class Server:
 
         return_list = []
         delete_list = []
+        
         for k in keys_dict:
             logger.debug(k)
-            if len(keys_dict[k]) < Server.ksize:
+            if len(keys_dict[k])+1 < Server.ksize:
+                logger.critical("key %s len %s ksize %s", k, len(keys_dict[k]), Server.ksize)
                 return_list.append(k)
-            elif len(keys_dict[k]) > Server.ksize:
+            elif len(keys_dict[k])+1 > Server.ksize:
                 delete_list.append((k,keys_dict[k]))
         
         for key,item in delete_list:
             node = Node(key[0])
             sorted_list = sorted(item, key=node.distance_to)
             
-            for node in sorted_list[Server.ksize+1:]:
+            for node in sorted_list[Server.ksize:]:
                 with ServerSession(node.ip, node.port) as conn:
                     logger.info("To many replicas of %s, removing on %s", key, node)
                     delete = FileSystemProtocol.call_delete(conn, node, Node(key[0]), is_metadata=key[1])
@@ -437,12 +439,12 @@ class Server:
                     "Republishing keys that have less replicas than the replication factor"
                 )
 
-                if len(keys_to_replicate):
+                if len(keys_to_replicate) > 0:
                     for key, is_metadata in keys_to_replicate:
                         _, local_last_write = Server.storage.check_if_new_value_exists(
                             key
                         )
-
+                        logger.info("replicating key %s", key)
                         # check for value4 lock
                         response = Server.set_digest(
                             key,
