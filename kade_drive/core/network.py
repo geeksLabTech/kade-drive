@@ -72,7 +72,7 @@ class Server:
         Server.node = Node(
             node_id or digest(random.getrandbits(255)), ip=ip, port=str(port)
         )
-        logger.debug(f"NODE ID: {Server.node.id}")
+        logger.info(f"NODE ID: {Server.node.id}")
         Server.routing = RoutingTable(Server.ksize, Server.node)
         FileSystemProtocol.init(Server.routing, Server.storage)
         logger.debug(f"{port}, {ip}")
@@ -127,7 +127,7 @@ class Server:
         nodes = [node for node in cos if node is not None]
         spider = NodeSpiderCrawl(Server.node, nodes, Server.ksize, Server.alpha)
         res = spider.find()
-        logger.debug("results of spider find: %s", res)
+        # logger.debug("results of spider find: %s", res)
 
         return res
 
@@ -183,11 +183,11 @@ class Server:
         if value is None:
             return
 
-        logger.warning(f"Set diges with value {value}")
+        # logger.warning(f"Set diges with value {value}")
         node = Node(dkey)
         assert node is not None
         nearest = FileSystemProtocol.router.find_neighbors(node)
-        logger.info(f"nearest in set_digest is {nearest}")
+        # logger.info(f"nearest in set_digest is {nearest}")
 
         if not nearest or len(nearest) == 0:
             return Server._handle_empty_neighbors(
@@ -195,7 +195,7 @@ class Server:
             )
         spider = NodeSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         nodes = spider.find()
-        logger.debug("setting '%s' on %s", dkey, list(map(str, nodes)))
+        # logger.debug("setting '%s' on %s", dkey, list(map(str, nodes)))
 
         if not nodes or len(nodes) == 0:
             return Server._handle_empty_neighbors(
@@ -305,11 +305,8 @@ class Server:
             Server.storage.confirm_integrity(key, is_metadata)
             return True
 
-        print("Nearest", nearest)
         spider = ConfirmIntegritySpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         result = spider.find(is_metadata)
-        print("None Result:", result is None)
-        print("result of IntegritySpider:", result)
         return result
 
     @staticmethod
@@ -358,7 +355,6 @@ class Server:
     def _detect_alone():
         while True:
             try:
-                logger.info(f"Message")
 
                 node = Node(digest("test"))
                 assert node is not None
@@ -372,7 +368,6 @@ class Server:
                 sleep(15)
                 continue
             else:
-                logger.critical("LISTENING")
                 ms = MessageSystem()
                 hosts = []
 
@@ -382,7 +377,6 @@ class Server:
                     except OSError as e:
                         msg = None
                         logger.debug(f"Error in broadcasting new neighbors: {e}")
-                    logger.info(f"Message")
                     if (
                         msg is None
                         or not Server.node.ip + " " + str(Server.node.port) in msg
