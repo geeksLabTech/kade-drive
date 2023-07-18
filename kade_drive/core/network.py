@@ -175,6 +175,7 @@ class Server:
         exclude_current=False,
         local_last_write=None,
         key_name="NOT DEFINED",
+        do_confirmation=False,
     ):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
@@ -241,7 +242,13 @@ class Server:
                         conn, n, node, value, metadata, key_name, local_last_write
                     )
                     if result:
-                        responses.append(True)
+                        if do_confirmation:
+                            r = FileSystemProtocol.call_confirm_integrity(
+                                conn, n, node, metadata
+                            )
+                            responses.append(r)
+                        else:
+                            responses.append(True)
                     else:
                         responses.append(False)
                 else:
@@ -424,12 +431,11 @@ class Server:
                         exclude_current=True,
                         local_last_write=last_write,
                         key_name=key_name,
+                        do_confirmation=True,
                     )
-                    if digest_response:
-                        Server.confirm_integrity_of_data(key, is_metadata)
-                    else:
-                        logger.warning('Failed set_digest in iter_older than')
-                    
+                    if not digest_response:
+                        logger.warning("Failed set_digest in iter_older than")
+
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 
@@ -455,6 +461,7 @@ class Server:
                             key_name=Server.storage.get_key_name(
                                 key, metadata=is_metadata, update_timestamp=False
                             ),
+                            do_confirmation=True,
                         )
                         if not response:
                             logger.warning("Failed set keys_to_replicate in refresh")
@@ -570,7 +577,7 @@ class ServerService(Service):
         if not all(results):
             logger.warning("It was not possible to confirm integrity of all chunks")
             return False
-        
+
         logger.info(f"Here key of metadata is {dkey}")
         result = Server.confirm_integrity_of_data(dkey, True)
         if not result:
