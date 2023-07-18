@@ -345,7 +345,7 @@ class Server:
         delete_list = set()
 
         for k, values in keys_dict.items():
-            
+            logger.critical("ids %s", ids_set)
             if len(ids_set[k]) < Server.ksize:
                 logger.critical("key %s len %s ksize %s", k, len(values), Server.ksize)
                 return_list.append(k)
