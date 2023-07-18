@@ -411,7 +411,7 @@ class Server:
                         )
 
                         # check for value4 lock
-                        Server.set_digest(
+                        response = Server.set_digest(
                             key,
                             Server.storage.get(
                                 key, metadata=is_metadata, update_timestamp=False
@@ -420,6 +420,8 @@ class Server:
                             exclude_current=True,
                             local_last_write=local_last_write,
                         )
+                        if response:
+                            Server.confirm_integrity_of_data(key, is_metadata)
 
             except Exception as e:
                 logger.error("Thrown Exception %s", str(e))
