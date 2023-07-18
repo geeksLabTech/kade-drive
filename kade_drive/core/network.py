@@ -355,11 +355,11 @@ class Server:
         for key, item in delete_list:
             key,is_metadata = key
             
-            node = Node(key[0])
+            node = Node(key)
             sorted_list = sorted(item, key=node.distance_to)
             logger.info("ITEMS %s", sorted_list)
 
-            for node in sorted_list[Server.ksize+1:]:
+            for node in sorted_list[Server.ksize:]:
                 logger.info("To many replicas of %s, removing on %s", key, node)
                 if node.ip == Server.node.ip and node.port == Server.node.port:
                     Server.storage.delete(key=key, is_metadata=is_metadata)
