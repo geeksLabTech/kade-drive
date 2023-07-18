@@ -137,7 +137,7 @@ class Server:
         with ServerSession(addr[0], addr[1]) as conn:
             if conn:
                 response = conn.rpc_ping(
-                    (Server.node.ip, Server.node.port), Server.node.id
+                    (Server.node.ip, Server.node.port), Server.node.id, None
                 )
                 node = Node(response, addr[0], addr[1]) if response else None
                 response = FileSystemProtocol.process_response(conn, response, node)
@@ -720,7 +720,7 @@ class ServerService(Service):
         return {"value": value}
 
     @rpyc.exposed
-    def rpc_ping(self, sender, nodeid: bytes, remote_id: bytes):
+    def rpc_ping(self, sender, nodeid: bytes, remote_id):
         """Probe a Node to see if pc is online
 
         Args:
@@ -738,7 +738,7 @@ class ServerService(Service):
             logger.info(f"wellcome_If_new in ping {address}")
             FileSystemProtocol.wellcome_if_new(conn, source)
         logger.debug("return ping")
-        if remote_id != FileSystemProtocol.source_node.id:
+        if remote_id is not None and remote_id != FileSystemProtocol.source_node.id:
             return None
         return FileSystemProtocol.source_node.id
 
