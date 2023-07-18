@@ -323,7 +323,7 @@ class Server:
             node = Node(key[0])
             sorted_list = sorted(item, key=node.distance_to)
             
-            for node in sorted_list[-Server.ksize:]:
+            for node in sorted_list[Server.ksize+1:]:
                 with ServerSession(node.ip, node.port) as conn:
                     logger.info("To many replicas of %s, removing on %s", key, node)
                     delete = FileSystemProtocol.call_delete(conn, node, Node(key[0]), is_metadata=key[1])
