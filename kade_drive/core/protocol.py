@@ -4,7 +4,7 @@ import rpyc
 
 from kade_drive.core.node import Node
 from kade_drive.core.storage import logger, PersistentStorage
-from kade_drive.core.utils import digest
+from kade_drive.core.utils import digest, it_is_necessary_to_write
 
 
 # Create a file handler
@@ -236,7 +236,7 @@ class FileSystemProtocol:
 
         logger.info(f"Adding new Node to contacts {node}")
 
-        for key, value, is_metadata in FileSystemProtocol.storage:
+        for key, value, is_metadata, local_last_write in FileSystemProtocol.storage:
             logger.debug("entry for")
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
@@ -260,7 +260,34 @@ class FileSystemProtocol:
             if not neighbors or (new_node_close and this_closest):
                 logger.debug("calling call_store in wellcome_if_new")
                 with ServerSession(node.ip, node.port) as conn:
-                    FileSystemProtocol.call_store(conn, node, key, value, is_metadata)
+                    response = FileSystemProtocol.call_check_if_new_value_exists(
+                        conn, node, FileSystemProtocol.source_node
+                    )
+                    contains, date = None, None
+                    if response is not None:
+                        contains, date = response
+                    if it_is_necessary_to_write(local_last_write, contains, date):
+                        store_response = FileSystemProtocol.call_store(
+                            conn,
+                            node,
+                            FileSystemProtocol.source_node,
+                            value,
+                            is_metadata,
+                        )
+                        if store_response:
+                            FileSystemProtocol.call_confirm_integrity(
+                                conn,
+                                node,
+                                FileSystemProtocol.source_node,
+                                is_metadata,
+                            )
+                        else:
+                            FileSystemProtocol.call_delete(
+                                conn,
+                                node,
+                                FileSystemProtocol.source_node,
+                                is_metadata,
+                            )
 
     @staticmethod
     def process_response(conn, response, node: Node):

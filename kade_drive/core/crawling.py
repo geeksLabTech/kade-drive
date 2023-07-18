@@ -1,4 +1,5 @@
 from collections import Counter
+from itertools import chain
 import logging
 import rpyc
 from kade_drive.core.node import Node, NodeHeap
@@ -69,24 +70,28 @@ class SpiderCrawl:
         # return the info from those nodes
         for peer in self.nearest.get_uncontacted()[:count]:
             logger.debug("Peer %s %s", type(peer), peer)
-            
+
             # if peer.ip == "192.168.133.1":
             #     continue
-            
+
             try:
                 session = rpyc.connect(host=peer.ip, port=peer.port)
                 conn = session.root
             except (ConnectionError, OSError) as cu_ex:
-                logger.warning("Failed to connect to %d %s, e: %s", peer.id,peer.ip,cu_ex)
+                logger.warning(
+                    "Failed to connect to %d %s, e: %s", peer.id, peer.ip, cu_ex
+                )
                 session = None
                 conn = None
 
             logger.debug(
-                "Connection is %s and self.node is %s"
-                , conn is not None, self.node is not None)
-            
-            logger.debug("Calling : %s",rpcmethod)
-            
+                "Connection is %s and self.node is %s",
+                conn is not None,
+                self.node is not None,
+            )
+
+            logger.debug("Calling : %s", rpcmethod)
+
             if is_metadata is None:
                 response = rpcmethod(conn, peer, self.node)
             else:
@@ -135,7 +140,7 @@ class ValueSpiderCrawl(SpiderCrawl):
                 self.nearest_without_value.push(peer)
                 self.nearest.push(response.get_node_list())
         self.nearest.remove(toremove)
-        logger.debug("found values in _nodes_found %s",found_values)
+        logger.debug("found values in _nodes_found %s", found_values)
         if len(found_values) > 0:
             return self._handle_found_values(found_values)
         if self.nearest.have_contacted_all():
@@ -234,7 +239,7 @@ class ChunkLocationSpiderCrawl(SpiderCrawl):
         self.nearest.remove(toremove)
 
         if len(found_values) > 0:
-            logger.critical(f'values of chunkSPider {found_values}')
+            logger.critical(f"values of chunkSPider {found_values}")
             return found_values
         if self.nearest.have_contacted_all():
             # not found!
@@ -323,7 +328,7 @@ class LsSpiderCrawl(SpiderCrawl):
         return self._find(FileSystemProtocol.call_get_metadata_list, True)
 
     def _nodes_found(self, response_dict: dict, is_metadata: None | bool):
-        logger.debug("Entry in _nodes_found DeleteSpiderCrawl")
+        logger.info("Entry in _nodes_found LsSpider")
         toremove = []
         found_values = set()
         for peer_id, response in response_dict.items():
@@ -331,12 +336,12 @@ class LsSpiderCrawl(SpiderCrawl):
             if not response.happened():
                 toremove.append(peer_id)
             elif response.has_value():
-                found_values.add(response.get_value())
+                found_values = found_values.union(response.get_value())
             else:
                 peer = self.nearest.get_node(peer_id)
                 self.nearest.push(peer)
         self.nearest.remove(toremove)
-        logger.debug(f"found values in _nodes_found {found_values}")
+        logger.info(f"found values in _nodes_found {found_values}")
         if len(found_values) > 0:
             return self._handle_found_values(found_values)
         if self.nearest.have_contacted_all():
