@@ -203,6 +203,7 @@ class Server:
 
         # if this node is close too, then store here as well
         biggest = max([n.distance_to(node) for n in nodes])
+        responses = []
         if Server.node.distance_to(node) < biggest and not exclude_current:
             contains, date = Server.storage.check_if_new_value_exists(dkey)
             if it_is_necessary_to_write(local_last_write, contains, date):
@@ -210,8 +211,9 @@ class Server:
                     Server.storage.set_metadata(dkey, value, False)
                 else:
                     Server.storage.set_value(dkey, value, False)
+                Server.storage.confirm_integrity(dkey, metadata)
+                responses.append(True)
 
-        responses = []
         for n in nodes:
             address = (n.ip, n.port)
             with ServerSession(address[0], address[1]) as conn:
@@ -219,26 +221,42 @@ class Server:
                     conn, n, node
                 )
                 contains, date = None, None
+                if response is None:
+                    responses.append(False)
+                    continue
+
                 if response is not None:
                     contains, date = response
-                    # logger.critical(f'dict of date:  {type(date)} and {type(date.copy())}')
 
                 if it_is_necessary_to_write(local_last_write, contains, date):
                     result = FileSystemProtocol.call_store(
                         conn, n, node, value, metadata
                     )
                     if result:
-                        responses.append(True)
+                        confirm_response = FileSystemProtocol.call_confirm_integrity(
+                            conn, n, node, metadata
+                        )
+                        if confirm_response:
+                            responses.append(True)
+                        else:
+                            logger.warning(
+                                "Failed confirm_integrity, rolling back change"
+                            )
+                            delete = FileSystemProtocol.call_delete(
+                                conn, n, node, metadata
+                            )
+                            if not delete:
+                                logger.warning("Failed rolling back")
+                            responses.append(False)
                     else:
+                        logger.warning("Failed call_store, rolling back change")
+                        delete = FileSystemProtocol.call_delete(conn, n, node, metadata)
+                        if not delete:
+                            logger.warning(False)
                         responses.append(False)
-                    continue
-                if contains is not None:
-                    responses.append(True)
-                else:
-                    responses.append(False)
 
         # return true only if at least one store call succeeded
-        return all(responses)
+        return any(responses)
 
     @staticmethod
     def _handle_empty_neighbors(
@@ -252,7 +270,7 @@ class Server:
                 Server.storage.set_metadata(dkey, value, False)
             else:
                 Server.storage.set_value(dkey, value, False)
-
+        Server.storage.confirm_integrity(dkey, metadata)
         return True
 
     @staticmethod
@@ -395,8 +413,8 @@ class Server:
                         exclude_current=True,
                         local_last_write=last_write,
                     )
-                    if digest_response:
-                        Server.confirm_integrity_of_data(key, is_metadata)
+                    if not digest_response:
+                        logger.warning("Failed set key older than in refresh")
                     Server.storage.update_republish(key)
                 keys_to_replicate = Server.find_replicas()
 
@@ -420,8 +438,8 @@ class Server:
                             exclude_current=True,
                             local_last_write=local_last_write,
                         )
-                        if response:
-                            Server.confirm_integrity_of_data(key, is_metadata)
+                        if not response:
+                            logger.warning("Failed set keys_to_replicate in refresh")
 
             except Exception as e:
                 logger.error("Thrown Exception %s", str(e))
@@ -495,15 +513,9 @@ class ServerService(Service):
         for c in processed_chunks:
             chunks_responses.append(Server.set_digest(c[0], c[1], metadata=False))
         if not all(chunks_responses):
-            logger.info("Failed to set chunks, rolling back changes")
-            responses = []
-            for c in processed_chunks:
-                responses.append(
-                    Server.delete_data_from_network(key=c[0], is_metadata=False)
-                )
-            if not all(responses):
-                logger.warning("Rolling back changes of chuncks was not completed")
+            logger.warning("Failed to set chunks, rolling back changes")
             return False
+
         logger.info("Writting key metadata")
         if apply_hash_to_key:
             key = digest(key)
@@ -511,31 +523,7 @@ class ServerService(Service):
         set_metadata_response = Server.set_digest(key, metadata_list)
 
         if not set_metadata_response:
-            logger.warning("Failed set_digest of metadata, rolling back changes")
-            responses = []
-            for c in processed_chunks:
-                responses.append(
-                    Server.delete_data_from_network(key=c[0], is_metadata=False)
-                )
-            if not all(responses):
-                logger.warning(
-                    "Rolling back changes of chuncks with failed metadata was not completed"
-                )
-            return False
-
-        results = []
-        logger.critical("len pocessed chunks %d", len(list(processed_chunks)))
-        for c in list(processed_chunks):
-            logger.critical("confiming %s", c[0])
-            results.append(Server.confirm_integrity_of_data(c[0], False))
-
-        if not all(results):
-            logger.warning("It was not possible to confirm integrity of all chunks")
-            return False
-        logger.info(f"Here key of metadata is {key}")
-        result = Server.confirm_integrity_of_data(key, True)
-        if not result:
-            logger.warning("It was not possible to confirm integrity of metadata")
+            logger.warning("Failed set_digest of metadata")
             return False
 
         logger.info("File uploaded successfully")
