@@ -325,14 +325,27 @@ class Server:
                     )
                     if contains:
                         if (k, is_metadata) not in keys_dict:
-                            keys_dict[(k, is_metadata)] = 0
-                        keys_dict[(k, is_metadata)] += 1
+                            keys_dict[(k, is_metadata)] = set()
+                        keys_dict[(k, is_metadata)].add(n)
 
         return_list = []
+        delete_list = []
         for k in keys_dict:
             logger.debug(k)
-            if keys_dict[k] < Server.ksize:
+            if len(keys_dict[k]) < Server.ksize:
                 return_list.append(k)
+            elif len(keys_dict[k]) > Server.ksize:
+                delete_list.append((k,keys_dict[k]))
+        
+        for key,item in delete_list:
+            node = Node(key[0])
+            sorted_list = sorted(item, key=node.distance_to)
+            
+            for node in sorted_list[Server.ksize+1:]:
+                with ServerSession(node.ip, node.port) as conn:
+                    logger.info("To many replicas of %s, removing on %s", key, node)
+                    delete = FileSystemProtocol.call_delete(conn, node, Node(key[0]), is_metadata=key[1])
+
         return return_list
 
     @staticmethod
