@@ -335,7 +335,7 @@ class Server:
                     if contains:
                         logger.critical("Found")
                         if (k, is_metadata) not in keys_dict:
-                            keys_dict[(k, is_metadata)] = set()
+                            keys_dict[(k, is_metadata)] = set([Server.node])
                         keys_dict[(k, is_metadata)].add(n)
 
         return_list = []
@@ -344,12 +344,12 @@ class Server:
         for k, values in keys_dict.items():
             logger.debug(k)
             logger.critical("delete params %s %s", len(values), Server.ksize)
-            if len(values) + 1 < Server.ksize:
+            if len(values) < Server.ksize:
                 logger.critical(
                     "key %s len %s ksize %s", k, len(values), Server.ksize
                 )
                 return_list.append(k)
-            elif len(values)+1 > Server.ksize:
+            elif len(values) > Server.ksize:
                 logger.critical("key %s replicas %s", k, len(values))
                 delete_list.append((k, values))
                 
@@ -359,8 +359,8 @@ class Server:
             sorted_list = sorted(item, key=node.distance_to)
 
             for node in sorted_list[Server.ksize:]:
+                logger.info("To many replicas of %s, removing on %s", key, node)
                 with ServerSession(node.ip, node.port) as conn:
-                    logger.info("To many replicas of %s, removing on %s", key, node)
                     delete = FileSystemProtocol.call_delete(
                         conn, node, Node(key[0]), is_metadata=key[1]
                     )
