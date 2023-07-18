@@ -61,7 +61,7 @@ class FileSystemProtocol:
                 node_to_find.id,
                 value,
                 is_metadata,
-                key_name
+                key_name,
             )
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -132,7 +132,7 @@ class FileSystemProtocol:
         if conn:
             address = (node_to_ask.ip, node_to_ask.port)
             response = conn.rpc_check_if_new_value_exists(
-                address, FileSystemProtocol.source_node.id, node_to_find.id
+                address, FileSystemProtocol.source_node.id, node_to_find.id, is_metadata
             )
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -241,7 +241,13 @@ class FileSystemProtocol:
 
         logger.info(f"Adding new Node to contacts {node}")
 
-        for key, value, is_metadata, local_last_write, key_name in FileSystemProtocol.storage:
+        for (
+            key,
+            value,
+            is_metadata,
+            local_last_write,
+            key_name,
+        ) in FileSystemProtocol.storage:
             logger.debug("entry for")
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
@@ -262,24 +268,23 @@ class FileSystemProtocol:
                     FileSystemProtocol.source_node.distance_to(keynode) < first
                 )
             # if not neighbors, store data in the node
-            if not neighbors or (new_node_close and this_closest) or len(neighbors) == 1:
+            if (
+                not neighbors
+                or (new_node_close and this_closest)
+                or len(neighbors) == 1
+            ):
                 logger.debug("calling call_store in wellcome_if_new")
                 with ServerSession(node.ip, node.port) as conn:
                     node_to_find = Node(key)
                     response = FileSystemProtocol.call_check_if_new_value_exists(
-                        conn, node, node_to_find
+                        conn, node, node_to_find, is_metadata
                     )
                     contains, date = None, None
                     if response is not None:
                         contains, date = response
                     if it_is_necessary_to_write(local_last_write, contains, date):
                         store_response = FileSystemProtocol.call_store(
-                            conn,
-                            node,
-                            node_to_find,
-                            value,
-                            is_metadata,
-                            key_name
+                            conn, node, node_to_find, value, is_metadata, key_name
                         )
                         if store_response:
                             FileSystemProtocol.call_confirm_integrity(
