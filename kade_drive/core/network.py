@@ -352,19 +352,24 @@ class Server:
                 logger.critical("key %s replicas %s", k, len(values))
                 delete_list.append((k, values))
                 
-        logger.critical("delete list %s ", delete_list)
         for key, item in delete_list:
+            key,is_metadata = key
+            
             node = Node(key[0])
             sorted_list = sorted(item, key=node.distance_to)
+            logger.info("ITEMS %s", sorted_list)
 
             for node in sorted_list[Server.ksize+1:]:
                 logger.info("To many replicas of %s, removing on %s", key, node)
-                with ServerSession(node.ip, node.port) as conn:
-                    delete = FileSystemProtocol.call_delete(
-                        conn, node, Node(key[0]), is_metadata=key[1]
-                    )
-                    if not delete:
-                        logger.warning("Failed to delete replica")
+                if node.ip == Server.node.ip and node.port == Server.node.port:
+                    Server.storage.delete(key=key, is_metadata=is_metadata)
+                else:
+                    with ServerSession(node.ip, node.port) as conn:
+                        delete = FileSystemProtocol.call_delete(
+                            conn, node, Node(key), is_metadata=is_metadata
+                        )
+                        if not delete:
+                            logger.warning("Failed to delete replica")
         return return_list
 
     @staticmethod
