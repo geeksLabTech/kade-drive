@@ -242,13 +242,25 @@ class PersistentStorage:
 
         return result
 
-    def set_value(self, key: bytes, value: bytes, metadata=True, republish_data=False):
+    def set_value(
+        self,
+        key: bytes,
+        value: bytes,
+        metadata=True,
+        republish_data=False,
+        key_name="NOT DEFINED",
+    ):
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
         self.update_timestamp(str_key, republish_data, is_write=True)
         logger.warning(f"VAlue to set is {value}")
         value_to_set = pickle.dumps(
-            {"integrity": False, "value": value, "integrity_date": datetime.now()}
+            {
+                "integrity": False,
+                "value": value,
+                "integrity_date": datetime.now(),
+                "key_name": key_name,
+            }
         )
 
         if metadata:
@@ -257,16 +269,11 @@ class PersistentStorage:
             path = os.path.join(self.values_path, str_key)
 
         lock = FileLock(str(path) + ".lock")
-        value = None
         try:
             with lock.acquire(timeout=10):
                 with open(path, "wb") as f:
-                    # try
                     logger.debug("writting data  to file")
                     f.write(value_to_set)
-                    # except TypeError:
-                    #     logger.warning("writting with unicode_escape")
-                    #     f.write(value_to_set.encode("unicode_escape"))
 
                 with open(os.path.join(self.keys_path, str_key), "wb") as f:
                     f.write(key)
@@ -280,27 +287,6 @@ class PersistentStorage:
         finally:
             lock.release()
             os.remove(str(path) + ".lock")
-
-        # self.confirm_integrity(key, metadata=metadata)
-
-    # def delete_value(self, key: bytes):
-    #     str_key = str(base64.urlsafe_b64encode(key))
-    #     self.ensure_dir_paths()
-    #     self.delete_timestamp(str_key, republish_data, is_write=True)
-
-    #     path = os.path.join(self.metadata_path, str_key)
-
-    #     if os.path.exists(path):
-    #         os.remove(path)
-    #     path = os.path.join(self.values_path, str_key)
-
-    #     if os.path.exists(path):
-    #         os.remove(path)
-
-    #     key_path = os.path.join(self.keys_path, str_key)
-
-    #     if os.path.exists(key_path):
-    #         os.remove(key_path)
 
     def confirm_integrity(self, key: bytes, metadata=True):
         str_key = str(base64.urlsafe_b64encode(key))
@@ -322,9 +308,11 @@ class PersistentStorage:
         else:
             logger.info("Tried to confirm integrity of non existing file")
 
-    def set_metadata(self, key: bytes, value: bytes, republish_data: bool):
+    def set_metadata(
+        self, key: bytes, value: bytes, republish_data: bool, key_name: str
+    ):
         self.ensure_dir_paths()
-        self.set_value(key, value, True, republish_data)
+        self.set_value(key, value, True, republish_data, key_name=key_name)
         self.cull()
 
     def get_all_metadata_keys(self) -> set[str]:
@@ -335,7 +323,7 @@ class PersistentStorage:
             # This is for handle case where exist metadata with integrity in false
             if result is None or not result["integrity"]:
                 continue
-            final_result.add(x)
+            final_result.add(result["key_name"])
 
         logger.info(f"metadata list to return {final_result}")
         return final_result
@@ -356,8 +344,16 @@ class PersistentStorage:
             str_key, update_timestamp=update_timestamp, metadata=metadata
         )
         if result is not None and result["integrity"]:
-            logger.info(f"checkeo antes de return {result}")
             return result["value"]
+        return None
+
+    def get_key_name(self, key: bytes, update_timestamp=True, metadata=True):
+        str_key = str(base64.urlsafe_b64encode(key))
+        result = self.get_value(
+            str_key, update_timestamp=update_timestamp, metadata=metadata
+        )
+        if result is not None and result["integrity"]:
+            return result["key_name"]
         return None
 
     def get_key_in_bytes(self, key: str):
@@ -431,7 +427,9 @@ class PersistentStorage:
                             logger.info("ignoring bad value in iter older")
                             continue
 
-                        yield key, value["value"], is_metadata, data["last_write"]
+                        yield key, value["value"], is_metadata, data[
+                            "last_write"
+                        ], value["key_name"]
 
     def keys(self):
         ikeys_files = os.listdir(os.path.join(self.keys_path))
@@ -458,8 +456,12 @@ class PersistentStorage:
         logger.debug("ikeys: %s", ikeys)
         ivalues: list[bytes] = []
         ilast_writes: list = []
+        ikey_names: list = []
         for i, ik in enumerate(ikeys):
             ivalues.append(self.get(ik, update_timestamp=False, metadata=imetadata[i]))
             contains, last_write = self.check_if_new_value_exists(ik)
             ilast_writes.append(last_write)
-        return zip(ikeys, ivalues, imetadata, ilast_writes)
+            ikey_names.append(
+                self.get_key_name(ik, update_timestamp=False, metadata=imetadata[i])
+            )
+        return zip(ikeys, ivalues, imetadata, ilast_writes, ikey_names)

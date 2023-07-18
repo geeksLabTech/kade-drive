@@ -129,13 +129,13 @@ class ClientSession:
 
         return nodes_to_try, remaining_attempts_to_reconnect
 
-    def get(self, key, apply_hash_to_key=True) -> tuple:
+    def get(self, key) -> tuple:
         if not self.connection:
             logger.error("No connection stablished to do get")
             return None, None
 
         try:
-            metadata_list = self.connection.root.get(key, apply_hash_to_key)
+            metadata_list = self.connection.root.get(key)
         except EOFError as e:
             logger.error(f"Connection lost in get when doing get rpc, exception: {e}")
             return None, None
@@ -207,11 +207,11 @@ class ClientSession:
             logger.error(e)
             return None, self.connection
 
-    def put(self, key, value: bytes, apply_hash_to_key=True) -> tuple:
+    def put(self, key, value: bytes) -> tuple:
         if self.connection:
             try:
                 response = self.connection.root.upload_file(
-                    key=key, data=value, apply_hash_to_key=apply_hash_to_key
+                    key_name=key, key=key, data=value
                 )
                 sleep(1)
                 message = "put > Success" if response else "put failed"
@@ -225,11 +225,11 @@ class ClientSession:
 
         return False, None
 
-    def delete(self, key, apply_hash_to_key=True):
+    def delete(self, key):
         if self.connection:
             try:
                 response = self.connection.root.delete(
-                    key=key, apply_hash_to_key=apply_hash_to_key
+                    key=key
                 )
                 sleep(1)
                 message = "Delete > Success" if response else "Delete failed"

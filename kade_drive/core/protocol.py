@@ -42,7 +42,12 @@ class FileSystemProtocol:
 
     @staticmethod
     def call_store(
-        conn, node_to_ask: Node, node_to_find: Node, value, is_metadata=True
+        conn,
+        node_to_ask: Node,
+        node_to_find: Node,
+        value,
+        is_metadata=True,
+        key_name="NOT DEFINED",
     ):
         """
         async function to call the find store rpc method
@@ -56,6 +61,7 @@ class FileSystemProtocol:
                 node_to_find.id,
                 value,
                 is_metadata,
+                key_name
             )
 
         return FileSystemProtocol.process_response(conn, response, node_to_ask)
@@ -236,7 +242,7 @@ class FileSystemProtocol:
 
         logger.info(f"Adding new Node to contacts {node}")
 
-        for key, value, is_metadata, local_last_write in FileSystemProtocol.storage:
+        for key, value, is_metadata, local_last_write, key_name in FileSystemProtocol.storage:
             logger.debug("entry for")
             # Create fictional node to calculate distance
             keynode = Node(digest(key))
@@ -273,6 +279,7 @@ class FileSystemProtocol:
                             FileSystemProtocol.source_node,
                             value,
                             is_metadata,
+                            key_name
                         )
                         if store_response:
                             FileSystemProtocol.call_confirm_integrity(

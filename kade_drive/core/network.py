@@ -174,6 +174,7 @@ class Server:
         metadata=True,
         exclude_current=False,
         local_last_write=None,
+        key_name="NOT DEFINED",
     ):
         """
         Set the given SHA1 digest key (bytes) to the given value in the
@@ -190,7 +191,7 @@ class Server:
 
         if not nearest or len(nearest) == 0:
             return Server._handle_empty_neighbors(
-                dkey, metadata, value, exclude_current, local_last_write
+                dkey, metadata, value, exclude_current, local_last_write, key_name
             )
         spider = NodeSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
         nodes = spider.find()
@@ -198,7 +199,7 @@ class Server:
 
         if not nodes or len(nodes) == 0:
             return Server._handle_empty_neighbors(
-                dkey, metadata, value, exclude_current, local_last_write
+                dkey, metadata, value, exclude_current, local_last_write, key_name
             )
 
         # if this node is close too, then store here as well
@@ -208,7 +209,7 @@ class Server:
             contains, date = Server.storage.check_if_new_value_exists(dkey)
             if it_is_necessary_to_write(local_last_write, contains, date):
                 if metadata:
-                    Server.storage.set_metadata(dkey, value, False)
+                    Server.storage.set_metadata(dkey, value, False, key_name=key_name)
                 else:
                     Server.storage.set_value(dkey, value, False)
                 Server.storage.confirm_integrity(dkey, metadata)
@@ -230,7 +231,7 @@ class Server:
 
                 if it_is_necessary_to_write(local_last_write, contains, date):
                     result = FileSystemProtocol.call_store(
-                        conn, n, node, value, metadata
+                        conn, n, node, value, metadata, key_name
                     )
                     if result:
                         confirm_response = FileSystemProtocol.call_confirm_integrity(
@@ -254,20 +255,24 @@ class Server:
                         if not delete:
                             logger.warning(False)
                         responses.append(False)
-
+                else:
+                    if response:
+                        responses.append(True)
         # return true only if at least one store call succeeded
         return any(responses)
 
     @staticmethod
     def _handle_empty_neighbors(
-        dkey, metadata, value, exclude_current, local_last_write
+        dkey, metadata, value, exclude_current, local_last_write, key_name
     ):
         logger.debug("There are no known neighbors to set key %s", dkey.hex())
-
-        if not exclude_current:
+        contains, date = Server.storage.check_if_new_value_exists(dkey)
+        if not exclude_current and it_is_necessary_to_write(
+            local_last_write, contains, date
+        ):
             logger.info("storing in current server")
             if metadata:
-                Server.storage.set_metadata(dkey, value, False)
+                Server.storage.set_metadata(dkey, value, False, key_name=key_name)
             else:
                 Server.storage.set_value(dkey, value, False)
         Server.storage.confirm_integrity(dkey, metadata)
@@ -405,6 +410,7 @@ class Server:
                     value,
                     is_metadata,
                     last_write,
+                    key_name,
                 ) in Server.storage.iter_older_than(5):
                     digest_response = Server.set_digest(
                         key,
@@ -412,6 +418,7 @@ class Server:
                         is_metadata,
                         exclude_current=True,
                         local_last_write=last_write,
+                        key_name=key_name,
                     )
                     if not digest_response:
                         logger.warning("Failed set key older than in refresh")
@@ -437,6 +444,9 @@ class Server:
                             is_metadata,
                             exclude_current=True,
                             local_last_write=local_last_write,
+                            key_name=Server.storage.get_key_name(
+                                key, metadata=is_metadata, update_timestamp=False
+                            ),
                         )
                         if not response:
                             logger.warning("Failed set keys_to_replicate in refresh")
@@ -456,7 +466,7 @@ class ServerService(Service):
         return Server.storage.get(key, metadata=False)
 
     @rpyc.exposed
-    def get(self, key, apply_hash_to_key=True):
+    def get(self, key):
         """
         Get a key if the network has it.
 
@@ -465,16 +475,16 @@ class ServerService(Service):
         """
 
         logger.debug(f"Looking up key {key}")
-        if apply_hash_to_key:
-            key = digest(key)
 
-        node = Node(key)
+        dkey = digest(key)
+
+        node = Node(dkey)
         nearest = FileSystemProtocol.router.find_neighbors(node)
         if not nearest or len(nearest) == 0:
-            logger.debug(f"There are no known neighbors to get key {key}")
-            if Server.storage.contains(key):
+            logger.debug(f"There are no known neighbors to get key {dkey}")
+            if Server.storage.contains(dkey):
                 logger.debug("Getting key from this same node")
-                data = Server.storage.get(key, True)
+                data = Server.storage.get(dkey, True)
                 if data is None:
                     return None
                 return pickle.loads(data)
@@ -493,16 +503,15 @@ class ServerService(Service):
         return metadata_list
 
     @rpyc.exposed
-    def delete(self, key: bytes, apply_hash_to_key=True, is_metadata=True):
-        if apply_hash_to_key:
-            key = digest(key)
+    def delete(self, key, is_metadata=True):
+        key = digest(key)
 
         return Server.storage.delete(
             key, is_metadata
         ) and Server.delete_data_from_network(key, is_metadata)
 
     @rpyc.exposed
-    def upload_file(self, key: bytes, data: bytes, apply_hash_to_key=True) -> bool:
+    def upload_file(self, key_name: str, key: str, data: bytes) -> bool:
         chunks = Server.split_data(data, 1000)
         logger.debug(f"chunks {len(chunks)}, {chunks}")
         digested_chunks = [digest(c) for c in chunks]
@@ -517,10 +526,12 @@ class ServerService(Service):
             return False
 
         logger.info("Writting key metadata")
-        if apply_hash_to_key:
-            key = digest(key)
 
-        set_metadata_response = Server.set_digest(key, metadata_list)
+        dkey = digest(key)
+
+        set_metadata_response = Server.set_digest(
+            dkey, metadata_list, key_name=key_name
+        )
 
         if not set_metadata_response:
             logger.warning("Failed set_digest of metadata")
@@ -591,7 +602,15 @@ class ServerService(Service):
     ############################################################################
 
     @rpyc.exposed
-    def rpc_store(self, sender, nodeid: bytes, key: bytes, value, metadata=True):
+    def rpc_store(
+        self,
+        sender,
+        nodeid: bytes,
+        key: bytes,
+        value,
+        metadata=True,
+        key_name="NOT DEFINED",
+    ):
         """Instructs a node to store a value
 
         Args:
@@ -618,7 +637,9 @@ class ServerService(Service):
         )
         # store values and report success
         if metadata:
-            Server.storage.set_metadata(key, value, republish_data=False)
+            Server.storage.set_metadata(
+                key, value, republish_data=False, key_name=key_name
+            )
         else:
             Server.storage.set_value(key, value, metadata=False)
         return True
