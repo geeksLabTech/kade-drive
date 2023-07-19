@@ -360,11 +360,9 @@ class Server:
             sorted_list = sorted(item, key=node.distance_to)
             logger.info("ITEMS %s", sorted_list)
 
-            for node in sorted_list[Server.ksize :]:
-                logger.info("To many replicas of %s, removing on %s", key, node)
-                if node.ip == Server.node.ip and node.port == Server.node.port:
-                    Server.storage.delete(key=key, is_metadata=is_metadata)
-                else:
+            if sorted_list[0].ip == Server.node.ip and sorted_list[0].port == Server.node.port:
+                for node in sorted_list[Server.ksize :]:
+                    logger.info("To many replicas of %s, removing on %s", key, node)
                     with ServerSession(node.ip, node.port) as conn:
                         delete = FileSystemProtocol.call_delete(
                             conn, node, Node(key), is_metadata=is_metadata
