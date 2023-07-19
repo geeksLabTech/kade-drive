@@ -43,6 +43,10 @@ class Node:
     def __str__(self):
         return "%s:%s" % (self.ip, str(self.port))
 
+    def __hash__(self) -> int:
+        if self.ip:
+            return hash(self.ip)
+        return self.long_id
 
 class NodeHeap:
     """
