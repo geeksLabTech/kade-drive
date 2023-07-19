@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kade_drive"
-version = "0.8.1"
+version = "0.9.0"
 description = "distributed file system based on kademlia dht"
 authors = ["DanielUH2019 <danielcardenascabrera2016@gmail.com>", "JavierOramas <javiale2000@gmail.com>", "Lia001218 <liazerqueraf@gmail.com>"]
 license = "MIT"
