@@ -312,7 +312,6 @@ class Server:
     def find_replicas():
         keys_to_find = Server.storage.keys()
         keys_dict = {}
-        ids_set = {}
         for k, is_metadata in keys_to_find:
             node_created = Node(k)
 
@@ -336,20 +335,18 @@ class Server:
                     if contains:
                         logger.critical("Found")
                         if (k, is_metadata) not in keys_dict:
-                            ids_set[(k, is_metadata)] = set()
-                            keys_dict[(k, is_metadata)] = []
+                            keys_dict[(k, is_metadata)] = set()
                         keys_dict[(k, is_metadata)].append (n)
-                        ids_set[(k, is_metadata)].add(FileSystemProtocol.call_ping(conn, n))
 
         return_list = []
         delete_list = set()
-
+        logger.info("IDSSSSSS %s",keys_dict)
         for k, values in keys_dict.items():
-            logger.critical("ids %s", ids_set)
-            if len(ids_set[k]) < Server.ksize:
+
+            if len(keys_dict[k]) < Server.ksize:
                 logger.critical("key %s len %s ksize %s", k, len(values), Server.ksize)
                 return_list.append(k)
-            elif len(ids_set[k]) > Server.ksize:
+            elif len(keys_dict[k]) > Server.ksize:
                 logger.critical("key %s replicas %s", k, len(values))
                 delete_list.add((k, values))
 
