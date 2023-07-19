@@ -35,10 +35,9 @@ nav:
   - 1.2 - ejemplos: ejemplos.md
   - 2 - por-que-kademlia: por-que-kademlia.md
   - 3 - descripcion: descripcion.md
-  - 4 - persistencia: persistencia.md
-  - 5 - cliente: cliente.md
-  - 6 - autodescubrimiento: autodescubrimiento.md
-  - 7 - replicacion: replicacion.md
-  - 8 - tolerancia-fallas: tolerancia-fallas.md
-  - 9 - analisis-cap: analisis-cap.md
-  - 10 - recomendaciones: recomendaciones.md
+  - 4 - cliente: cliente.md
+  - 5 - autodescubrimiento: autodescubrimiento.md
+  - 6 - replicacion: replicacion.md
+  - 7 - tolerancia-fallas: tolerancia-fallas.md
+  - 8 - analisis-cap: analisis-cap.md
+  - 9 - recomendaciones: recomendaciones.md

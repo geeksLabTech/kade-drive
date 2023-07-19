@@ -17,7 +17,7 @@
         <link rel="next" href="../cap-analysis/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.19">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.26e3688c.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.eebd395e.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ecc896b0.min.css">
@@ -321,21 +321,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../persistence/" class="md-nav__link">
-        Persistence
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../client/" class="md-nav__link">
         Client
       </a>
@@ -456,17 +441,17 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
       
       
       
-        <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
           ES
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_14">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_13">
           <span class="md-nav__icon md-icon"></span>
           ES
         </label>
@@ -536,20 +521,6 @@
     <li class="md-nav__item">
       <a href="../es/description/" class="md-nav__link">
         descripcion
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../es/persistence/" class="md-nav__link">
-        persistencia
       </a>
     </li>
   
@@ -702,7 +673,7 @@
 <p>Data Replication: If the failed node was storing data, other nodes in the network can assume the responsibility of maintaining replicas of that data. This way, the data remains available even if the original node becomes disconnected. The nodes that will take up this responsibility will be those that are closest using the same XOR metric with IDs to keep the network as optimized as possible.</p>
 </li>
 <li>
-<p>Routing Information Update: Nodes that had the failed node in their routing table update that entry by removing it. This way, the nodes avoid sending messages or performing actions towards a node that is no longer available.</p>
+<p>Routing Information Update: Nodes that had the failed node in their routing table update that entry by removing it. This way, the nodes avoid sending messages or performing actions towards a node that is no longer available. In the event that a node runs out of neighbors, it can execute a broadcast to try to discover other nodes in the network.</p>
 </li>
 <li>
 <p>Contact expiration ensures that the information stored in the network remains accessible even when individual nodes fail. By removing inactive nodes from the buckets, it ensures that routing paths are updated and kept efficient.</p>

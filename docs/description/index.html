@@ -14,10 +14,10 @@
         <link rel="prev" href="../why-kademlia/">
       
       
-        <link rel="next" href="../persistence/">
+        <link rel="next" href="../client/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.18">
+      <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.19">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.26e3688c.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.eebd395e.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ecc896b0.min.css">
@@ -331,21 +331,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../persistence/" class="md-nav__link">
-        Persistence
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../client/" class="md-nav__link">
         Client
       </a>
@@ -456,17 +441,17 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
       
       
       
-        <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
           ES
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_14">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_13">
           <span class="md-nav__icon md-icon"></span>
           ES
         </label>
@@ -536,20 +521,6 @@
     <li class="md-nav__item">
       <a href="../es/description/" class="md-nav__link">
         descripcion
-      </a>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../es/persistence/" class="md-nav__link">
-        persistencia
       </a>
     </li>
   
@@ -706,20 +677,31 @@
 <li><code>CONTAINS</code>: Determines if a key is in a node. This is used for both information replication and to find if a node has the desired information.</li>
 <li><code>GET-FILE-CHUNKS</code>: Retrieves the list of chunk locations for the information.</li>
 <li><code>SET-KEY</code>: Stores a key-value pair in the system.</li>
+<li><code>DELETE</code>: Deletes a file from the network.</li>
+<li><code>GET-ALL-FILE-NAMES</code>: Performs the function of the <code>ls</code> command in Linux, returns a list of all files in the system (all metadata keys).</li>
 </ul>
 <p>The system also includes a persistence module called <code>PersistentStorage</code>, which handles data read and write operations. It uses the following paths:</p>
 <ul>
 <li><code>static/metadata</code>: stores the filenames representing the hashes of the data divided into chunks of up to 1000kb. These files contain Python lists saved with pickle, which contain the hashes of each chunk obtained by splitting the data.</li>
 <li><code>static/keys</code>: stores the filenames representing the hashes of the stored data, either complete data or chunks. These files contain the corresponding hashes in bytes.</li>
 <li><code>static/values</code>: stores the filenames representing the hashes of the stored chunks, excluding the hashes of undivided data.</li>
-<li><code>timestamps</code>: stores the filenames representing the hashes of the stored data, similar to the <code>keys</code> path, but containing a Python dictionary saved with pickle. This dictionary has keys such as <code>date</code> with the value <code>datetime.now()</code>, <code>republish</code> with a boolean value, and <code>last_write</code>, which is a datetime representing the last time the file was overwritten. This information is used to keep track of the last time a key was accessed and to determine whether it is necessary to republish the information in case of frequent accesses or network partition to maintain eventual consistency.</li>
+<li><code>timestamps</code>: The file names representing the hashes of the stored data are stored, similar to the keys path, but they contain a Python dictionary saved with Pickle. This dictionary has keys such as date with the value datetime.now() and republish with a boolean value. This information is used to keep track of the last time a key was accessed and to determine if it is necessary to republish the information in order to maintain the system's property that the closest nodes to it are the ones that have it.</li>
 </ul>
 <p>When a <code>(key, value)</code> pair is received as bytes, the <code>PersistentStorage</code> module encodes the key using <code>base64.urlsafe_b64encode</code> to obtain a string that can be used as a filename. Then, a file is written with that name in the <code>keys</code> and <code>values</code> paths, where the key is saved as bytes in the keys file and the value is saved as bytes in the values file. In the case of storing metadata, the value as bytes is written in the metadata path. In both cases, a corresponding file is also created in the timestamps path.</p>
+<p>Before writing a value or metadata, a dictionary is created with the following keys:</p>
+<ul>
+<li><code>integrity</code>: Used to determine if the file is corrupt. If it is, it is never returned.</li>
+<li><code>value</code>: Value to be written.</li>
+<li><code>integrity_date</code>: The moment when the integrity is first set. If a certain amount of time has passed since this date and integrity is still False, the file is automatically deleted.</li>
+<li><code>key_name</code>: String representing the file's key. It is used to retrieve the original file names if the <code>ls</code> command is executed on the client.</li>
+<li><code>last_write</code>: The moment when the file was last written. It is used to handle cases where, after a partition, if the same keys were written in both partitions, the most recently written values are maintained after network recovery.</li>
+</ul>
 <p>Routing in the system utilizes a routing table structure similar to Kademlia. The routing table is a binary tree composed of k-buckets. Each k-bucket contains nodes with a common prefix in their IDs, and the prefix determines the position of the k-bucket in the binary tree. The k-buckets cover different parts of the ID space and together cover the entire 160-bit ID space without overlap. Nodes are dynamically assigned to k-buckets as needed.</p>
 <p>To ensure data replication, nodes must periodically republish keys. This is because some of the k nodes that initially obtain a key-value pair may leave the network, and new nodes with IDs closer to the key may join the network. Therefore, nodes that store the key-value pair must republish it to ensure it is available on the k nodes closest to the key.</p>
 <p>When a client requests a certain value from the system, they are returned a list of locations of the different data chunks, which may be on different PCs. The client then establishes a connection with the PC closest to the information to retrieve the data and unify it. Once a node sends information, it marks the file as pending republishing and updates its timestamp, informing neighbors that they should also replicate the information.</p>
 <p>When a server discovers a new node, for each key in storage, the system retrieves the k closest nodes. If the new node is closer than the furthest node in that list, and the node for this server is closer than the closest node in that list, then the key/value pair is stored on the new node.</p>
 <p>The server spawns a thread for each connection, supporting multiple clients.</p>
+<p>When the client starts uploading a file, the data is divided into chunks of a maximum size of 1000kb, and they are stored in the file system with integrity set to False. Then, the metadata of the file is stored, which contains the necessary information to unify the chunks and reconstruct the original file, also with integrity set to False. Once it is confirmed that all the chunks and metadata could be successfully stored, the integrity of each chunk in the network is verified, followed by the integrity of the metadata. In case an error occurs at any point in the process, everything stored is deleted, mimicking a rollback effect.</p>
 
 
 

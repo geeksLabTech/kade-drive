@@ -8,6 +8,6 @@ Cuando un nodo detecta la inactividad de otro nodo, actualiza su tabla de enruta
 
 - Replicación de datos: Si el nodo fallido almacenaba datos, otros nodos de la red pueden asumir la responsabilidad de mantener réplicas de esos datos. De esta manera, los datos permanecen disponibles incluso si el nodo original se desconecta. Los nodos que asumirán esta responsabilidad serán aquellos que estén más cercanos utilizando la misma métrica de XOR con los IDs para mantener la red lo más optimizada posible.
 
-- Actualización de información de enrutamiento: Los nodos que tenían al nodo fallido en su tabla de enrutamiento actualizan esa entrada eliminándola. De esta manera, los nodos evitan enviar mensajes o realizar acciones hacia un nodo que ya no está disponible.
+- Actualización de información de enrutamiento: Los nodos que tenían al nodo fallido en su tabla de enrutamiento actualizan esa entrada eliminándola. De esta manera, los nodos evitan enviar mensajes o realizar acciones hacia un nodo que ya no está disponible. En caso de quedarse sin vecinos un nodo puede ejecutar un broadcast para tratar de descubrir otros nodos en la red.
 
 - La expiración de contacto garantiza que la información almacenada en la red permanezca accesible incluso cuando los nodos individuales fallan. Al eliminar los nodos inactivos de los buckets, se asegura de que las rutas de enrutamiento se actualicen y se mantengan eficientes.

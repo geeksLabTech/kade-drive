@@ -14,15 +14,25 @@ The Kademlia protocol is used, which includes the PING, STORE, FINDNODE, and FIN
 - `CONTAINS`: Determines if a key is in a node. This is used for both information replication and to find if a node has the desired information.
 - `GET-FILE-CHUNKS`: Retrieves the list of chunk locations for the information.
 - `SET-KEY`: Stores a key-value pair in the system.
+- `DELETE`: Deletes a file from the network.
+- `GET-ALL-FILE-NAMES`: Performs the function of the `ls` command in Linux, returns a list of all files in the system (all metadata keys).
 
 The system also includes a persistence module called `PersistentStorage`, which handles data read and write operations. It uses the following paths:
 
 - `static/metadata`: stores the filenames representing the hashes of the data divided into chunks of up to 1000kb. These files contain Python lists saved with pickle, which contain the hashes of each chunk obtained by splitting the data.
 - `static/keys`: stores the filenames representing the hashes of the stored data, either complete data or chunks. These files contain the corresponding hashes in bytes.
 - `static/values`: stores the filenames representing the hashes of the stored chunks, excluding the hashes of undivided data.
-- `timestamps`: stores the filenames representing the hashes of the stored data, similar to the `keys` path, but containing a Python dictionary saved with pickle. This dictionary has keys such as `date` with the value `datetime.now()`, `republish` with a boolean value, and `last_write`, which is a datetime representing the last time the file was overwritten. This information is used to keep track of the last time a key was accessed and to determine whether it is necessary to republish the information in case of frequent accesses or network partition to maintain eventual consistency.
+- `timestamps`: The file names representing the hashes of the stored data are stored, similar to the keys path, but they contain a Python dictionary saved with Pickle. This dictionary has keys such as date with the value datetime.now() and republish with a boolean value. This information is used to keep track of the last time a key was accessed and to determine if it is necessary to republish the information in order to maintain the system's property that the closest nodes to it are the ones that have it.
 
 When a `(key, value)` pair is received as bytes, the `PersistentStorage` module encodes the key using `base64.urlsafe_b64encode` to obtain a string that can be used as a filename. Then, a file is written with that name in the `keys` and `values` paths, where the key is saved as bytes in the keys file and the value is saved as bytes in the values file. In the case of storing metadata, the value as bytes is written in the metadata path. In both cases, a corresponding file is also created in the timestamps path.
+
+Before writing a value or metadata, a dictionary is created with the following keys:
+
+- `integrity`: Used to determine if the file is corrupt. If it is, it is never returned.
+- `value`: Value to be written.
+- `integrity_date`: The moment when the integrity is first set. If a certain amount of time has passed since this date and integrity is still False, the file is automatically deleted.
+- `key_name`: String representing the file's key. It is used to retrieve the original file names if the `ls` command is executed on the client.
+- `last_write`: The moment when the file was last written. It is used to handle cases where, after a partition, if the same keys were written in both partitions, the most recently written values are maintained after network recovery.
 
 Routing in the system utilizes a routing table structure similar to Kademlia. The routing table is a binary tree composed of k-buckets. Each k-bucket contains nodes with a common prefix in their IDs, and the prefix determines the position of the k-bucket in the binary tree. The k-buckets cover different parts of the ID space and together cover the entire 160-bit ID space without overlap. Nodes are dynamically assigned to k-buckets as needed.
 
@@ -33,3 +43,5 @@ When a client requests a certain value from the system, they are returned a list
 When a server discovers a new node, for each key in storage, the system retrieves the k closest nodes. If the new node is closer than the furthest node in that list, and the node for this server is closer than the closest node in that list, then the key/value pair is stored on the new node.
 
 The server spawns a thread for each connection, supporting multiple clients.
+
+When the client starts uploading a file, the data is divided into chunks of a maximum size of 1000kb, and they are stored in the file system with integrity set to False. Then, the metadata of the file is stored, which contains the necessary information to unify the chunks and reconstruct the original file, also with integrity set to False. Once it is confirmed that all the chunks and metadata could be successfully stored, the integrity of each chunk in the network is verified, followed by the integrity of the metadata. In case an error occurs at any point in the process, everything stored is deleted, mimicking a rollback effect.
