@@ -163,28 +163,32 @@ class ClientSession:
                 continue
 
             logger.info(f"locations for chunk_key {chunk_key} are {locations}")
-            
-            if len(locations)>0:
-                while len(locations)>0:
+
+            if len(locations) > 0:
+                while len(locations) > 0:
                     conn, locations = self._ensure_connection(
                         locations,
-                        self.connection,
+                        None,
                         use_broadcast_if_needed=False,
                         update_boostrap_nodes=False,
                     )
                     if conn:
                         try:
-                            data_received.append(
-                                conn.root.rpc_get_file_chunk_value(chunk_key)
-                            )
+                            data_to_add = conn.root.rpc_get_file_chunk_value(chunk_key)
+                            if data_to_add is None:
+                                locations.pop(0)
+                                continue
+                            data_received.append(data_to_add)
+                            break
                         except EOFError as e:
                             logger.error(
                                 f"Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}"
                             )
+
                             continue
-                    else:
-                        logger.warning("No Servers to get chunk")
-                        break
+            elif len(locations) == 0:
+                logger.warning("No Servers to get chunk")
+                break
 
         logger.debug(f"len data received {len(data_received)} {type(data_received)}")
         if len(data_received) == 0:
@@ -219,9 +223,7 @@ class ClientSession:
     def delete(self, key):
         if self.connection:
             try:
-                response = self.connection.root.delete(
-                    key=key
-                )
+                response = self.connection.root.delete(key=key)
                 sleep(1)
                 message = "Delete > Success" if response else "Delete failed"
                 logger.info(message)

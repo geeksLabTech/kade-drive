@@ -230,14 +230,18 @@ class FileSystemProtocol:
             return
 
         # TODO uncomment this
-        if str(node.ip) == str(FileSystemProtocol.source_node.ip) and str(node.port) == str(FileSystemProtocol.source_node.port):
+        if str(node.ip) == str(FileSystemProtocol.source_node.ip) and str(
+            node.port
+        ) == str(FileSystemProtocol.source_node.port):
             logger.debug("called wellcome if new in self")
             return
         # add node to table
 
         FileSystemProtocol.router.add_contact(node)
 
-        logger.info(f"never seen {node} before, adding to router at {FileSystemProtocol.source_node}")
+        logger.info(
+            f"never seen {node} before, adding to router at {FileSystemProtocol.source_node}"
+        )
         # iterate over storage
 
         logger.info(f"Adding new Node to contacts {node}")
@@ -338,7 +342,9 @@ class ServerSession:
     def __enter__(self):
         try:
             self.server_session = rpyc.connect(
-                self.server_ip, port=self.port, config={"allow_pickle": True}
+                self.server_ip,
+                port=self.port,
+                config={"allow_pickle": True, "sync_request_timeout": None},
             )
             return self.server_session.root
         except ConnectionRefusedError:
