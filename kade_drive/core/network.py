@@ -316,9 +316,10 @@ class Server:
             node_created = Node(k)
 
             nearest = FileSystemProtocol.router.find_neighbors(
-                node_created, Server.alpha, exclude=Server.node
+                node_created, 2*Server.ksize
             )
-            spider = NodeSpiderCrawl(node_created, nearest, Server.ksize, Server.alpha)
+            logger.error("Nearest in find replicas %s", nearest)
+            spider = NodeSpiderCrawl(node_created, nearest, 2*Server.ksize, Server.alpha)
 
             nodes = spider.find()
 
@@ -335,20 +336,20 @@ class Server:
                     if contains:
                         # logger.critical("Found")
                         if (k, is_metadata) not in keys_dict:
-                            keys_dict[(k, is_metadata)] = set(Server.node)
-                        keys_dict[(k, is_metadata)].add(n)
+                            keys_dict[(k, is_metadata)] = []
+                        keys_dict[(k, is_metadata)].append(n)
 
         return_list = []
-        delete_list = set()
+        delete_list = []
         logger.info("IDSSSSSS %s",keys_dict)
         for k, values in keys_dict.items():
-
+            
             if len(keys_dict[k]) < Server.ksize:
-                logger.critical("key %s len %s ksize %s", k, len(values), Server.ksize)
+                logger.critical("\n\n\n key %s len %s ksize %s", k, len(values), Server.ksize)
                 return_list.append(k)
             elif len(keys_dict[k]) > Server.ksize:
-                logger.critical("key %s replicas %s", k, len(values))
-                delete_list.add((k, values))
+                logger.critical("\n\n\n key %s replicas %s", k, len(values))
+                delete_list.append((k, values))
 
         for key, item in delete_list:
             key, is_metadata = key
@@ -357,9 +358,12 @@ class Server:
             sorted_list = sorted(item, key=node.distance_to)
             logger.info("ITEMS %s", sorted_list)
 
-            if sorted_list[0].ip == Server.node.ip and sorted_list[0].port == Server.node.port:
-                for node in sorted_list[Server.ksize :]:
+            if str(sorted_list[0].ip) == str(Server.node.ip) and str(sorted_list[0].port) == str(Server.node.port):
+                for node in sorted_list[Server.ksize:]:
                     logger.info("To many replicas of %s, removing on %s", key, node)
+                    if node.ip == Server.node.ip and node.port == Server.node.port:
+                        continue
+                    
                     with ServerSession(node.ip, node.port) as conn:
                         delete = FileSystemProtocol.call_delete(
                             conn, node, Node(key), is_metadata=is_metadata
@@ -420,7 +424,7 @@ class Server:
                 for node_id in FileSystemProtocol.get_refresh_ids():
                     node = Node(node_id)
                     nearest = FileSystemProtocol.router.find_neighbors(
-                        node, Server.alpha
+                        node
                     )
                     spider = NodeSpiderCrawl(node, nearest, Server.ksize, Server.alpha)
 
@@ -478,7 +482,7 @@ class Server:
                         if not response:
                             logger.warning("Failed set keys_to_replicate in refresh")
                 logger.info("Finishied replication")
-            except Exception as e:
+            except EOFError as e:
                 logger.error("Thrown Exception %s", str(e))
                 pass
 

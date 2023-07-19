@@ -79,7 +79,7 @@ class SpiderCrawl:
                 conn = session.root
             except (ConnectionError, OSError) as cu_ex:
                 logger.warning(
-                    "Failed to connect to %d %s, e: %s", peer.id, peer.ip, cu_ex
+                    "Failed to connect to %s %s, e: %s", peer.id, peer.ip, cu_ex
                 )
                 session = None
                 conn = None

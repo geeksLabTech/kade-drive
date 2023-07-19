@@ -230,17 +230,14 @@ class FileSystemProtocol:
             return
 
         # TODO uncomment this
-        if (node.ip, node.port) == (
-            FileSystemProtocol.source_node.ip,
-            FileSystemProtocol.source_node.port,
-        ):
+        if str(node.ip) == str(FileSystemProtocol.source_node.ip) and str(node.port) == str(FileSystemProtocol.source_node.port):
             logger.debug("called wellcome if new in self")
             return
         # add node to table
 
         FileSystemProtocol.router.add_contact(node)
 
-        logger.info(f"never seen {node} before, adding to router")
+        logger.info(f"never seen {node} before, adding to router at {FileSystemProtocol.source_node}")
         # iterate over storage
 
         logger.info(f"Adding new Node to contacts {node}")
