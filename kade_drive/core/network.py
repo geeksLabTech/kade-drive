@@ -418,8 +418,8 @@ class Server:
     @staticmethod
     def _refresh_table(refresh_sleep=60):
         while True:
+            sleep(refresh_sleep)
             try:
-                sleep(refresh_sleep)
                 logger.info("Checking corrupted data")
                 Server.storage.delete_corrupted_data()
                 logger.info("Refreshing table")
@@ -440,7 +440,7 @@ class Server:
                     is_metadata,
                     last_write,
                     key_name,
-                ) in Server.storage.iter_older_than(5):
+                ) in Server.storage.iter_older_than(refresh_sleep):
                     digest_response = Server.set_digest(
                         key,
                         value,
@@ -454,8 +454,15 @@ class Server:
                         logger.warning("Failed set_digest in iter_older than")
 
                     Server.storage.update_republish(key)
-                keys_to_replicate = Server.find_replicas()
+            
+            except Exception as e:
+                logger.error("Thrown Exception %s in republish old keys", str(e))
+                pass
+            
+            logger.info("Deleting extra replicas")
+            keys_to_replicate = Server.find_replicas()
 
+            try:
                 logger.info(
                     "Republishing keys that have less replicas than the replication factor"
                 )
@@ -483,8 +490,8 @@ class Server:
                         if not response:
                             logger.warning("Failed set keys_to_replicate in refresh")
                 logger.info("Finishied replication")
-            except StopIteration as e:
-                logger.error("Thrown Exception %s", str(e))
+            except Exception as e:
+                logger.error("Thrown Exception %s in republish under replicated data", str(e))
                 pass
 
 
