@@ -163,42 +163,33 @@ class ClientSession:
                 continue
 
             logger.info(f"locations for chunk_key {chunk_key} are {locations}")
-            if (
-                not locations is None
-                and len(locations) > 0
-                and self.bootstrap_nodes[0] in locations
-            ):
-                logger.debug("Using primary connection to get chunk")
-                try:
-                    data_received.append(
-                        self.connection.root.rpc_get_file_chunk_value(chunk_key)
+            
+            if len(locations)>0:
+                while len(locations)>0:
+                    conn, locations = self._ensure_connection(
+                        locations,
+                        self.connection,
+                        use_broadcast_if_needed=False,
+                        update_boostrap_nodes=False,
                     )
-                except EOFError as e:
-                    logger.error(
-                        f"Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}"
-                    )
-                    return None, None
-            else:
-                conn, _ = self._ensure_connection(
-                    locations,
-                    None,
-                    use_broadcast_if_needed=False,
-                    update_boostrap_nodes=False,
-                )
-                if conn:
-                    try:
-                        data_received.append(
-                            conn.root.rpc_get_file_chunk_value(chunk_key)
-                        )
-                    except EOFError as e:
-                        logger.error(
-                            f"Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}"
-                        )
-                        return None, None
-                else:
-                    logger.warning("No Servers to get chunk")
+                    if conn:
+                        try:
+                            data_received.append(
+                                conn.root.rpc_get_file_chunk_value(chunk_key)
+                            )
+                        except EOFError as e:
+                            logger.error(
+                                f"Connection lost in get when doing rpc_get_file_chunk_value, exception: {e}"
+                            )
+                            continue
+                    else:
+                        logger.warning("No Servers to get chunk")
+                        break
 
         logger.debug(f"len data received {len(data_received)} {type(data_received)}")
+        if len(data_received) == 0:
+            logger.error("len of data_received is 0")
+            return None, self.connection
         data_received = b"".join(data_received)
         try:
             data_to_return = pickle.loads(data_received)
