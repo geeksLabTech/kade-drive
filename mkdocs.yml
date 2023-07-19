@@ -54,7 +54,6 @@ nav:
   - Examples: examples.md
   - Why Kademlia?: why-kademlia.md
   - Description: description.md
-  - Persistence: persistence.md
   - Client: client.md
   - Autodiscovery: autodiscovery.md
   - Replication: replication.md
@@ -68,7 +67,6 @@ nav:
     - ejemplos: es/examples.md
     - por-que-kademlia: es/why-kademlia.md
     - descripcion: es/description.md
-    - persistencia: es/persistence.md
     - cliente: es/client.md
     - autodescubrimiento: es/autodiscovery.md
     - replicacion: es/replication.md
