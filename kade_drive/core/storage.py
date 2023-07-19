@@ -155,11 +155,11 @@ class PersistentStorage:
                         # logger.info("in Try delete_corrupted data")
                         value = self.get_value(str(file), metadata=False)
                         is_metadata = False
-                        logger.info("PASS")
+                        # logger.info("PASS")
                         if value is None:
                             value = self.get_value(str(file), metadata=True)
                             is_metadata = True
-                            logger.info("MMMM")
+                            # logger.info("MMMM")
                         assert value is not None
                     except Exception as e:
                         logger.error(f"Error in delete corrupted data {e}")
@@ -193,7 +193,7 @@ class PersistentStorage:
                     with open(path, "rb") as f:
                         # logger.warning('READING HERE')
                         result = f.read()
-                        logger.warning("PASS READ")
+                        # logger.warning("PASS READ")
             except Timeout:
                 logger.info(
                     "Another instance of this application currently holds the lock."
@@ -207,8 +207,8 @@ class PersistentStorage:
 
         if result is not None:
             data = pickle.loads(result)
-            logger.warning(f"pass pickle with result {data}")
-            logger.warning(f"key was {str_key}")
+            # logger.warning(f"pass pickle with result {data}")
+            # logger.warning(f"key was {str_key}")
             # logger.info("Data", data)
             # if not data["integrity"]:
             #     return None
@@ -234,7 +234,7 @@ class PersistentStorage:
         str_key = str(base64.urlsafe_b64encode(key))
         self.ensure_dir_paths()
         self.update_timestamp(str_key, republish_data)
-        logger.warning(f"VAlue to set is {value}")
+        # logger.warning(f"VAlue to set is {value}")
         if last_write is None:
             last_write = datetime.strptime(
                 (datetime.now().strftime("%m/%d/%y %H:%M:%S")), "%m/%d/%y %H:%M:%S"

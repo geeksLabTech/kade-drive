@@ -385,5 +385,5 @@ class RPCFindResponse:
         be set.
         """
         nodelist = self.response or []
-        logger.critical(f"Node list is {nodelist}")
+        # logger.critical(f"Node list is {nodelist}")
         return [Node(*nodeple) for nodeple in nodelist]

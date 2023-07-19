@@ -316,7 +316,7 @@ class Server:
             node_created = Node(k)
 
             nearest = FileSystemProtocol.router.find_neighbors(
-                node_created, Server.alpha
+                node_created, Server.alpha, exclude=Server.node
             )
             spider = NodeSpiderCrawl(node_created, nearest, Server.ksize, Server.alpha)
 
@@ -328,15 +328,15 @@ class Server:
 
             for n in nodes:
                 with ServerSession(n.ip, n.port) as conn:
-                    logger.critical("looking for key %s in %s", k, n)
+                    # logger.critical("looking for key %s in %s", k, n)
                     contains = FileSystemProtocol.call_contains(
                         conn, n, node_created, is_metadata
                     )
                     if contains:
-                        logger.critical("Found")
+                        # logger.critical("Found")
                         if (k, is_metadata) not in keys_dict:
-                            keys_dict[(k, is_metadata)] = set()
-                        keys_dict[(k, is_metadata)].append (n)
+                            keys_dict[(k, is_metadata)] = set(Server.node)
+                        keys_dict[(k, is_metadata)].add(n)
 
         return_list = []
         delete_list = set()
